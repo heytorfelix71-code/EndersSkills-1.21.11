@@ -15,6 +15,13 @@ public final class EnderSkillsClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		ClientPlayNetworking.registerGlobalReceiver(EsNetwork.OpenAltar.TYPE, (payload, context) ->
 				Minecraft.getInstance().setScreen(new AltarScreen(payload)));
+		ClientAbilities.init();
+		ClientPlayNetworking.registerGlobalReceiver(EsNetwork.AbilitySync.TYPE, (payload, context) -> ClientAbilities.apply(payload));
+		net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ClientAbilities.reset());
+		net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(ClientAbilities::tick);
+		net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry.attachElementBefore(
+				net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements.CHAT, dev.enderskills.EnderSkills.id("abilities"),
+				ClientAbilities::render);
 		BlockRenderLayerMap.putBlock(ModContent.CRYSTAL, ChunkSectionLayer.TRANSLUCENT);
 		BlockRenderLayerMap.putBlocks(ChunkSectionLayer.CUTOUT, ModContent.OAK_ALTAR, ModContent.SPRUCE_ALTAR, ModContent.BIRCH_ALTAR,
 				ModContent.JUNGLE_ALTAR, ModContent.ACACIA_ALTAR, ModContent.DARK_OAK_ALTAR, ModContent.ULTIMATE_ALTAR);

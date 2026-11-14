@@ -47,7 +47,7 @@ public final class AttributeEffects {
 		}
 	}
 
-	private static void set(ServerPlayer player, Holder<Attribute> attribute, String name, double value,
+	static void set(ServerPlayer player, Holder<Attribute> attribute, String name, double value,
 			AttributeModifier.Operation operation) {
 		AttributeInstance instance = player.getAttribute(attribute);
 		if (instance == null) {
@@ -65,7 +65,8 @@ public final class AttributeEffects {
 		if (amount <= 0 || source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
 			return amount;
 		}
-		if (source.getEntity() instanceof Player attacker && source.getDirectEntity() == attacker && attacker != victim) {
+		if (!AbilityManager.skillDamage && source.getEntity() instanceof Player attacker && source.getDirectEntity() == attacker
+				&& attacker != victim) {
 			double stealth = modifier(attacker, "stealth_damage");
 			if (stealth > 0 && !inSight(victim, attacker)) {
 				amount *= (float) (1.0 + stealth);

@@ -52,9 +52,47 @@ public final class EsNetwork {
 		}
 	}
 
+	/** Client → server: use an ability (dx/dz = horizontal direction for Dash and Warp). */
+	public record UseAbility(String skill, float dx, float dz) implements CustomPacketPayload {
+		public static final Type<UseAbility> TYPE = new Type<>(EnderSkills.id("use_ability"));
+		public static final StreamCodec<RegistryFriendlyByteBuf, UseAbility> CODEC = StreamCodec.composite(
+				ByteBufCodecs.STRING_UTF8, UseAbility::skill,
+				ByteBufCodecs.FLOAT, UseAbility::dx,
+				ByteBufCodecs.FLOAT, UseAbility::dz,
+				UseAbility::new);
+
+		@Override
+		public Type<? extends CustomPacketPayload> type() {
+			return TYPE;
+		}
+	}
+
+	/** Server → client: endurance, and remaining ticks of cooldowns and active abilities. */
+	public record AbilitySync(float endurance, float maxEndurance, java.util.Map<String, Integer> cooldowns,
+			java.util.Map<String, Integer> active) implements CustomPacketPayload {
+		public static final Type<AbilitySync> TYPE = new Type<>(EnderSkills.id("ability_sync"));
+		private static final StreamCodec<io.netty.buffer.ByteBuf, java.util.Map<String, Integer>> MAP =
+				ByteBufCodecs.map(java.util.HashMap::new, ByteBufCodecs.STRING_UTF8, ByteBufCodecs.VAR_INT);
+		public static final StreamCodec<RegistryFriendlyByteBuf, AbilitySync> CODEC = StreamCodec.composite(
+				ByteBufCodecs.FLOAT, AbilitySync::endurance,
+				ByteBufCodecs.FLOAT, AbilitySync::maxEndurance,
+				MAP, AbilitySync::cooldowns,
+				MAP, AbilitySync::active,
+				AbilitySync::new);
+
+		@Override
+		public Type<? extends CustomPacketPayload> type() {
+			return TYPE;
+		}
+	}
+
 	public static void init() {
 		PayloadTypeRegistry.playS2C().register(OpenAltar.TYPE, OpenAltar.CODEC);
+		PayloadTypeRegistry.playS2C().register(AbilitySync.TYPE, AbilitySync.CODEC);
 		PayloadTypeRegistry.playC2S().register(AltarAction.TYPE, AltarAction.CODEC);
+		PayloadTypeRegistry.playC2S().register(UseAbility.TYPE, UseAbility.CODEC);
+		ServerPlayNetworking.registerGlobalReceiver(UseAbility.TYPE, (payload, context) ->
+				dev.enderskills.logic.AbilityManager.use(context.player(), payload.skill(), payload.dx(), payload.dz()));
 		ServerPlayNetworking.registerGlobalReceiver(AltarAction.TYPE, (payload, context) ->
 				Progression.handle(context.player(), payload));
 	}

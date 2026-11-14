@@ -47,6 +47,31 @@ public final class EsSettings {
 	public double enderTokenDropRate = 0.07;
 	public boolean enderTokenDrops = true;
 
+	// ---- hurt timer (Better Hurt Timer, built in)
+	/** Each kind of damage has its own invulnerability time, so different sources can hurt at the same moment. */
+	public boolean hurtTimer = true;
+	/** Ticks before the same kind of damage can hurt again ("default" = kinds not listed). */
+	public java.util.Map<String, Integer> hurtTimerTicks = defaultHurtTicks();
+	/** Kinds of damage timed apart for each attacker (two archers can both hit you). */
+	public java.util.List<String> hurtTimerPerAttacker = new java.util.ArrayList<>(java.util.List.of(
+			"player", "mob", "arrow", "thrown", "trident", "indirectMagic", "fireball", "mobProjectile", "sting"));
+	/** Inside the wait, a hit this much stronger than the last one still hurts. */
+	public double hurtTimerDamageDifference = 0.5;
+
+	private static java.util.Map<String, Integer> defaultHurtTicks() {
+		java.util.Map<String, Integer> m = new java.util.LinkedHashMap<>();
+		m.put("default", 10);
+		m.put("player", 5);
+		m.put("mob", 10);
+		m.put("fall", 0);
+		m.put("flyIntoWall", 0);
+		m.put("generic", 5);
+		m.put("thorns", 5);
+		m.put("explosion.player", 5);
+		m.put("indirectMagic", 10);
+		return m;
+	}
+
 	public static EsSettings get() {
 		return instance;
 	}

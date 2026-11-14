@@ -50,7 +50,20 @@ public final class EnderSkills implements ModInitializer {
 
 		ServerPlayerEvents.JOIN.register(AttributeEffects::apply);
 		ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> AttributeEffects.apply(newPlayer));
-		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> Progression.forget(handler.getPlayer()));
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+			Progression.forget(handler.getPlayer());
+			dev.enderskills.logic.AbilityManager.forget(handler.getPlayer());
+		});
+		net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK.register(dev.enderskills.logic.AbilityManager::tick);
+		net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.ALLOW_DAMAGE.register(dev.enderskills.logic.HurtTimer::allow);
+		net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.AFTER_DAMAGE.register((victim, source, base, taken, blocked) -> {
+			dev.enderskills.logic.HurtTimer.after(victim);
+			if (victim instanceof ServerPlayer player && taken > 0) {
+				dev.enderskills.logic.AbilityManager.onHurt(player);
+			}
+		});
+		net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) ->
+				dev.enderskills.logic.AbilityManager.onDeath(entity));
 
 		BiomeModifications.addFeature(BiomeSelectors.foundInOverworld(), GenerationStep.Decoration.UNDERGROUND_ORES,
 				ResourceKey.create(Registries.PLACED_FEATURE, id("ender_ore")));
