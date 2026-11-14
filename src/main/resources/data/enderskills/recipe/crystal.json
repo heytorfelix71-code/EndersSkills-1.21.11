@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IGI",
+    "GMG",
+    "IGI"
+  ],
+  "key": {
+    "G": "#c:glass_blocks",
+    "M": "enderskills:token",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "enderskills:crystal",
+    "count": 1
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "GEG",
+    "IBI",
+    "GEG"
+  ],
+  "key": {
+    "G": "#c:glass_blocks",
+    "E": "minecraft:ender_pearl",
+    "I": "minecraft:diamond",
+    "B": "minecraft:redstone_block"
+  },
+  "result": {
+    "id": "enderskills:crystal_matrix",
+    "count": 1
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "##",
+    "##"
+  ],
+  "key": {
+    "#": "enderskills:ender_dust"
+  },
+  "result": {
+    "id": "minecraft:ender_pearl",
+    "count": 1
+  }
+}

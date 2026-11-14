@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "enderskills",
+  "version": "${version}",
+  "name": "Ender Skills",
+  "description": "Skills from the End: unlock Defense, Mobility and Offense skill trees at the altar. Fabric 1.21.11 port of Ender Skills (with Better Hurt Timer built in).",
+  "authors": ["Arekkuusu", "cybercat5555", "PandizeYT (original mod)", "AH Felix (port)"],
+  "contact": {
+    "sources": "https://github.com/heytorfelix71-code/EndersSkills-1.21.11"
+  },
+  "license": "MIT",
+  "icon": "assets/enderskills/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["dev.enderskills.EnderSkills"],
+    "client": ["dev.enderskills.client.EnderSkillsClient"]
+  },
+  "mixins": [
+    "enderskills.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.18.2",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " B ",
+    "IEI",
+    "WWW"
+  ],
+  "key": {
+    "B": "minecraft:book",
+    "I": "minecraft:iron_ingot",
+    "E": "minecraft:ender_pearl",
+    "W": "minecraft:jungle_planks"
+  },
+  "result": {
+    "id": "enderskills:jungle_break_altar",
+    "count": 1
+  }
+}

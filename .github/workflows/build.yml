@@ -1,0 +1,44 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build
+        run: chmod +x gradlew && ./gradlew build --stacktrace --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: ender-skills-jar
+          path: build/libs/*.jar
+
+      - name: Publish jar to the latest release and to the jar branch
+        if: success() && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          JAR=$(ls build/libs/*.jar | grep -v -E 'sources|dev' | head -1)
+          cp "$JAR" /tmp/enderskills.jar
+          gh release delete latest --yes --cleanup-tag 2>/dev/null || true
+          gh release create latest /tmp/enderskills.jar --title "Ender Skills (latest build)" --notes "Build automatico do commit ${GITHUB_SHA::7}" --target "$GITHUB_SHA"
+          git config user.name "github-actions"; git config user.email "actions@github.com"
+          git checkout --orphan jar && git rm -rf . -q && cp /tmp/enderskills.jar . && git add enderskills.jar
+          git commit -qm "jar for ${GITHUB_SHA::7}" && git push -f origin jar

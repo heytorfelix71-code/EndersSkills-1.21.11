@@ -1,0 +1,25 @@
+# Ender Skills — Fabric 1.21.11
+
+Port of **Ender Skills** (Minecraft 1.12.2, Forge) to **Minecraft 1.21.11 / Fabric**, with **Better Hurt Timer** built in.
+
+Original mod by Arekkuusu (BunnyCinnamon), cybercat5555 and PandizeYT — https://github.com/BunnyCinnamon/EnderSkills (MIT).
+Better Hurt Timer by Arekkuusu — https://github.com/BunnyCinnamon/BetterHurtTimer (MIT).
+Textures, skill values (`.cfg`) and texts come from the original mod under the MIT license (see `LICENSE`).
+
+## How it works
+- Craft a **Break Altar** (book, ender pearl, iron and planks) and right-click it.
+- Each class (**Defense**, **Mobility**, **Offense**) has element trees. A tree has a starter skill, two either/or pairs and an ultimate, plus 6 class attributes.
+- Skills cost **experience** (the altar can store XP) and your **Ender Level**: your N-th ability needs Ender Level N. **Ender Tokens** raise it (made from Ender Dust, found in Ender Ore between y 0 and 32).
+- **Crystal Blocks** within 5 blocks power the altar (3 for the first pair, 11 for the second pair, 32 = full). Drop an **Ender Matrix** on an altar to make it an **Ultimate Altar** (needed for the ultimates).
+- Every number is in `config/enderskills/` (one `.cfg` per skill, same format as the original) and `settings.json`.
+
+## Port status
+| Phase | Content | Status |
+|---|---|---|
+| 1 | Altar, tree rules and costs, Ender Level and tokens, XP storage, resets, items/blocks/ore, the 18 class attributes, config files | done (0.1.0) |
+| 2 | Ability system (keys, endurance, cooldowns, HUD) + Mobility abilities, Better Hurt Timer | next |
+| 3 | Defense abilities | |
+| 4 | Offense abilities | |
+| 5 | Status effects, potions, sounds, visual effects | |
+
+Commands (operators): `/enderskills level <n> [player]`, `/enderskills reset [player]`, `/enderskills reload`.
