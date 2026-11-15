@@ -167,6 +167,8 @@ public final class EsSettings {
 	public boolean invisibilityMobsForget = true;
 	/** While someone is invisible, no particle shows around them (potion swirls, steps, ability effects...). */
 	public boolean invisibilityHidesParticles = true;
+	/** From this Invisibility level on, taking damage no longer breaks it (0 = never breaks). */
+	public int invisibilityUnbreakableLevel = 50;
 
 	/** Teleport only when you aim at a block (never into the sky). */
 	public boolean teleportNoSky = true;

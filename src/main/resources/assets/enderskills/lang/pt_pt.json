@@ -636,5 +636,7 @@
   "entity.enderskills.shadow": "Sombra",
   "enderskills.shadows.title": "Sombras lutadoras",
   "enderskills.shadows.slider": "Sombras: %s",
-  "enderskills.shadows.count": "Sombras: %s (o teu nível permite %s)"
+  "enderskills.shadows.count": "Sombras: %s (o teu nível permite %s)",
+  "enderskills.config.invis_unbreakable": "Invisível: dano não quebra a partir do nível",
+  "enderskills.config.invis_unbreakable.desc": "A partir deste nível da Invisibilidade, levar dano não quebra mais ela (0 = nunca quebra)."
 }

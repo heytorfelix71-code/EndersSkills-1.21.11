@@ -636,5 +636,7 @@
   "entity.enderskills.shadow": "Shadow",
   "enderskills.shadows.title": "Fighting shadows",
   "enderskills.shadows.slider": "Shadows: %s",
-  "enderskills.shadows.count": "Shadows: %s (your level allows %s)"
+  "enderskills.shadows.count": "Shadows: %s (your level allows %s)",
+  "enderskills.config.invis_unbreakable": "Invisible: damage doesn't break it from level",
+  "enderskills.config.invis_unbreakable.desc": "From this Invisibility level on, taking damage no longer breaks it (0 = it never breaks)."
 }

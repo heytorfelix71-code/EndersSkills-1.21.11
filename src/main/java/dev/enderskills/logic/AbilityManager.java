@@ -888,7 +888,8 @@ public final class AbilityManager {
 	/** Called after a player took damage: Invisibility breaks. */
 	public static void onHurt(ServerPlayer player) {
 		State s = state(player);
-		if (active(s, "invisibility")) {
+		int keep = Math.min(EsSettings.get().invisibilityUnbreakableLevel, SkillConfigs.maxLevel("invisibility"));
+		if (active(s, "invisibility") && Progression.data(player).level("invisibility") < keep) {
 			s.activeUntil.remove("invisibility");
 			player.removeEffect(MobEffects.INVISIBILITY);
 			s.dirty = true;
