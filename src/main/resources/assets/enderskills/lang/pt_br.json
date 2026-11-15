@@ -543,5 +543,10 @@
   "enderskills.config.dome_max_radius": "Raio máximo da cúpula",
   "enderskills.config.dome_max_radius.desc": "A cúpula nunca fica mais larga que isso, em blocos (0 = sem limite).",
   "enderskills.config.dome_max_height": "Altura máxima da cúpula",
-  "enderskills.config.dome_max_height.desc": "A cúpula nunca fica mais alta que isso, em blocos (0 = sem limite)."
+  "enderskills.config.dome_max_height.desc": "A cúpula nunca fica mais alta que isso, em blocos (0 = sem limite).",
+  "enderskills.config.vfx_style": "Visual das habilidades",
+  "enderskills.config.vfx_style.desc": "Original: os modelos e shaders do mod original (buraco negro e nuvem cósmicos, punhos pretos, brilhos, auras). Atual: as partículas e formas 3D deste port. Ambos: tudo junto.",
+  "enderskills.config.vfx_style.original": "Original",
+  "enderskills.config.vfx_style.both": "Ambos",
+  "enderskills.config.vfx_style.current": "Atual"
 }

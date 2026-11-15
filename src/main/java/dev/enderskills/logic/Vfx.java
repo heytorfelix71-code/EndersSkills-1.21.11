@@ -20,6 +20,22 @@ public final class Vfx {
 	/** Skill whose effects are being drawn right now (for its particle amount and color). */
 	public static String skill = "";
 
+	/** Above 0 while ability code runs: in "original" style its particles are not sent (the client draws the original look). */
+	public static int casting;
+
+	public static boolean quiet() {
+		return casting > 0 && EsSettings.get().vfxStyle == EsSettings.VfxStyle.ORIGINAL;
+	}
+
+	public static void quietly(Runnable run) {
+		casting++;
+		try {
+			run.run();
+		} finally {
+			casting--;
+		}
+	}
+
 	/** Particle count scaled by the global and the skill's particle settings, never above the cap. */
 	public static int n(int count) {
 		EsSettings s = EsSettings.get();

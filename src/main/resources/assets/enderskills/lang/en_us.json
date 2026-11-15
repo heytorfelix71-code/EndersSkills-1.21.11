@@ -543,5 +543,10 @@
   "enderskills.config.dome_max_radius": "Dome max radius",
   "enderskills.config.dome_max_radius.desc": "The Dome is never wider than this, in blocks (0 = no limit).",
   "enderskills.config.dome_max_height": "Dome max height",
-  "enderskills.config.dome_max_height.desc": "The Dome is never taller than this, in blocks (0 = no limit)."
+  "enderskills.config.dome_max_height.desc": "The Dome is never taller than this, in blocks (0 = no limit).",
+  "enderskills.config.vfx_style": "Ability look",
+  "enderskills.config.vfx_style.desc": "Original: the models and shaders of the original mod (cosmic black hole and gas cloud, black fists, glow sprites, auras). Current: this port's particles and 3D shapes. Both: everything.",
+  "enderskills.config.vfx_style.original": "Original",
+  "enderskills.config.vfx_style.both": "Both",
+  "enderskills.config.vfx_style.current": "Current"
 }

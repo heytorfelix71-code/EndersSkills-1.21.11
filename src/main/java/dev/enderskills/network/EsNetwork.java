@@ -84,6 +84,32 @@ public final class EsNetwork {
 	}
 
 	/** Server → client: draw a 3D effect (see Shapes). */
+	/** What an ability is doing, for the original-style rendering on the client (see logic.Fx). */
+	public record SkillFx(String skill, int phase, int id, int entity, double x, double y, double z, double tx, double ty, double tz,
+			float radius, int ticks) implements CustomPacketPayload {
+		public static final Type<SkillFx> TYPE = new Type<>(EnderSkills.id("skill_fx"));
+		public static final StreamCodec<RegistryFriendlyByteBuf, SkillFx> CODEC = StreamCodec.of((buf, v) -> {
+			buf.writeUtf(v.skill());
+			buf.writeByte(v.phase());
+			buf.writeInt(v.id());
+			buf.writeVarInt(v.entity() + 1);
+			buf.writeDouble(v.x());
+			buf.writeDouble(v.y());
+			buf.writeDouble(v.z());
+			buf.writeDouble(v.tx());
+			buf.writeDouble(v.ty());
+			buf.writeDouble(v.tz());
+			buf.writeFloat(v.radius());
+			buf.writeInt(v.ticks());
+		}, buf -> new SkillFx(buf.readUtf(), buf.readByte(), buf.readInt(), buf.readVarInt() - 1, buf.readDouble(), buf.readDouble(),
+				buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readFloat(), buf.readInt()));
+
+		@Override
+		public Type<? extends CustomPacketPayload> type() {
+			return TYPE;
+		}
+	}
+
 	public record VfxShape(int kind, double x, double y, double z, float radius, float height, float dx, float dy, float dz,
 			int color, int ticks, int entity) implements CustomPacketPayload {
 		public static final Type<VfxShape> TYPE = new Type<>(EnderSkills.id("vfx_shape"));
@@ -132,6 +158,7 @@ public final class EsNetwork {
 		PayloadTypeRegistry.playS2C().register(OpenAltar.TYPE, OpenAltar.CODEC);
 		PayloadTypeRegistry.playS2C().register(AbilitySync.TYPE, AbilitySync.CODEC);
 		PayloadTypeRegistry.playS2C().register(VfxShape.TYPE, VfxShape.CODEC);
+		PayloadTypeRegistry.playS2C().register(SkillFx.TYPE, SkillFx.CODEC);
 		PayloadTypeRegistry.playC2S().register(AltarAction.TYPE, AltarAction.CODEC);
 		PayloadTypeRegistry.playC2S().register(UseAbility.TYPE, UseAbility.CODEC);
 		PayloadTypeRegistry.playC2S().register(UseAbilityAt.TYPE, UseAbilityAt.CODEC);

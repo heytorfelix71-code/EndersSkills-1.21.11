@@ -4,7 +4,8 @@
   "compatibilityLevel": "JAVA_21",
   "refmap": "enderskills.client.refmap.json",
   "client": [
-    "LivingEntityRendererMixin"
+    "LivingEntityRendererMixin",
+    "RenderTypeAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

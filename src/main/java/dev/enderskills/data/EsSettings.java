@@ -160,6 +160,11 @@ public final class EsSettings {
 	/** Status effects of the abilities: Minecraft's own (blindness, slowness...), the mod's own, or both. */
 	public enum EffectStyle { ORIGINAL, BOTH, CURRENT }
 
+	/** How abilities look: the original mod's models and shaders, the current particles, or both. */
+	public enum VfxStyle { ORIGINAL, BOTH, CURRENT }
+
+	public VfxStyle vfxStyle = VfxStyle.ORIGINAL;
+
 	public EffectStyle effectStyle = EffectStyle.CURRENT;
 
 	/** Sneak + ability key on Portal or Teleport asks for coordinates. */

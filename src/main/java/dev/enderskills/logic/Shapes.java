@@ -30,6 +30,9 @@ public final class Shapes {
 	}
 
 	public static void send(ServerLevel level, int type, Vec3 pos, double radius, double height, Vec3 dir, int color, int ticks, int entity) {
+		if (type != AFTERIMAGE && type != VIBRATE && EsSettings.get().vfxStyle == EsSettings.VfxStyle.ORIGINAL) {
+			return; // the client draws the original models instead
+		}
 		EsNetwork.VfxShape payload = new EsNetwork.VfxShape(type, pos.x, pos.y, pos.z, (float) radius, (float) height,
 				dir == null ? 0F : (float) dir.x, dir == null ? 0F : (float) dir.y, dir == null ? 0F : (float) dir.z, color, ticks, entity);
 		for (ServerPlayer p : level.players()) {

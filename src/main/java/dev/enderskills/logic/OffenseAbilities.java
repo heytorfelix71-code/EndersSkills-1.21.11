@@ -84,6 +84,7 @@ public final class OffenseAbilities {
 
 	/** Ability damage: a flat part and a part in percent of the target's max health ("Damage+"). */
 	private static void hit(ServerPlayer p, LivingEntity t, double damage, double truePercent) {
+		Fx.hit(t);
 		AbilityManager.damage(p, t, (float) ((damage + truePercent * t.getMaxHealth()) * AbilityManager.power(p)));
 	}
 
@@ -92,6 +93,7 @@ public final class OffenseAbilities {
 	}
 
 	private static void dot(ServerPlayer p, LivingEntity t, double dot, double truePercent, double ticks) {
+		Fx.hit(t);
 		if (truePercent > 0) {
 			AbilityManager.status(t, dev.enderskills.registry.ModEffects.BLACK_FLAME, null, (int) Math.max(20, ticks), 0);
 		}
@@ -99,6 +101,7 @@ public final class OffenseAbilities {
 	}
 
 	private static void burn(ServerPlayer p, LivingEntity t, String skill) {
+		Fx.hit(t);
 		DefenseAbilities.ignite(p, t, v(p, skill, "DOT") + v(p, skill, "TRUE_DOT") * t.getMaxHealth(), (int) v(p, skill, "DOT_DURATION"));
 	}
 
@@ -145,6 +148,7 @@ public final class OffenseAbilities {
 	private static void zone(ServerPlayer p, Vec3 center, double radius, int duration, int every, ParticleOptions particle,
 			Consumer<LivingEntity> action) {
 		ZONES.add(new Zone(p, (ServerLevel) p.level(), center, radius, now + Math.max(1, duration), Math.max(1, every), particle, action, Vfx.skill));
+		Fx.zone(p, center, radius, Math.max(1, duration));
 	}
 
 	private static void later(int ticks, Runnable run) {
@@ -198,6 +202,7 @@ public final class OffenseAbilities {
 		}
 		if (AbilityManager.tryPassive(p, "life_steal")) {
 			p.heal((float) (damage * v(p, "life_steal", "HEAL") * AbilityManager.power(p)));
+			Fx.hit(target);
 		}
 		if (AbilityManager.tryPassive(p, "fire_spirit")) {
 			burn(p, target, "fire_spirit");
@@ -674,9 +679,11 @@ public final class OffenseAbilities {
 			Bolt b = it.next();
 			Vfx.skill = b.skill;
 			if (!b.owner.isAlive() || b.owner.level() != b.level) {
+				Fx.boltEnd(b.level, b.skill, b, b.pos);
 				it.remove();
 				continue;
 			}
+			Fx.bolt(b.level, b.skill, b, b.pos, b.dir.scale(b.speed), b.radius);
 			if (b.wait > 0) {
 				b.wait--;
 				b.pos = b.pos.add(b.dir.scale(b.speed * 0.3));
@@ -688,6 +695,7 @@ public final class OffenseAbilities {
 				b.speed = 1.0;
 			}
 			if (!step(b)) {
+				Fx.boltEnd(b.level, b.skill, b, b.pos);
 				b.onEnd.accept(b.pos);
 				it.remove();
 			}

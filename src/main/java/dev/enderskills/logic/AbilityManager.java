@@ -91,7 +91,7 @@ public final class AbilityManager {
 	}
 
 	/** Toggle abilities: on until used again or out of endurance (their cost is drained every second). */
-	private static final java.util.Set<String> TOGGLES = java.util.Set.of("shocking_aura", "blazing_aura", "flares");
+	static final java.util.Set<String> TOGGLES = java.util.Set.of("shocking_aura", "blazing_aura", "flares");
 	private static MinecraftServer server;
 
 	public static ServerPlayer player(UUID id) {
@@ -152,6 +152,7 @@ public final class AbilityManager {
 		s.cooldownUntil.put(skill, now + (int) value(player, skill, "COOLDOWN"));
 		s.dirty = true;
 		ModEffectsHook.sound(player, skill);
+		Fx.cast(player, skill, player.position(), player.position());
 		return true;
 	}
 
@@ -276,6 +277,7 @@ public final class AbilityManager {
 	}
 
 	private static void switchOff(ServerPlayer player, State s, String toggle) {
+		Fx.end(player, toggle);
 		s.activeUntil.remove(toggle);
 		s.cooldownUntil.put(toggle, now + (int) value(player, toggle, "COOLDOWN"));
 		s.dirty = true;
@@ -373,9 +375,20 @@ public final class AbilityManager {
 	}
 
 	public static void use(ServerPlayer player, String skill, float dx, float dz, Vec3 aimAt) {
+		Vec3 origin = player.position();
+		Vfx.quietly(() -> {
+			if (use0(player, skill, dx, dz, aimAt)) {
+				Fx.cast(player, skill, origin, aimAt != null ? aimAt : aim((ServerLevel) player.level(), player,
+						Math.min(64, Math.max(4, value(player, skill, "RANGE")))));
+			}
+		});
+	}
+
+	/** True when the ability was really used. */
+	private static boolean use0(ServerPlayer player, String skill, float dx, float dz, Vec3 aimAt) {
 		SkillData data = Progression.data(player);
 		if (!data.owns(skill) || !Abilities.implemented(skill) || SkillConfigs.disabled(skill) || !player.isAlive() || player.isSpectator()) {
-			return;
+			return false;
 		}
 		State s = state(player);
 		ServerLevel level = (ServerLevel) player.level();
@@ -383,7 +396,7 @@ public final class AbilityManager {
 		boostFor(player, skill);
 		if (skill.equals("portal") && active(s, skill)) {
 			closePortals(player, s); // the portals stay until you close them
-			return;
+			return false;
 		}
 		double cost = value(player, skill, "ENDURANCE");
 		boolean secondPortal = skill.equals("portal") && s.portalEntrance != null;
@@ -392,23 +405,23 @@ public final class AbilityManager {
 			s.activeUntil.remove(skill);
 			s.cooldownUntil.put(skill, now + 20);
 			s.dirty = true;
-			return;
+			return false;
 		}
 		if (TOGGLES.contains(skill) && active(s, skill)) {
 			switchOff(player, s, skill);
-			return;
+			return false;
 		}
 		if (s.cooldownUntil.getOrDefault(skill, 0) > now) {
-			return;
+			return false;
 		}
 		if (skill.equals("extra_jump") && (player.onGround() || s.jumpsUsed >= (int) value(player, skill, "JUMPS"))) {
-			return;
+			return false;
 		}
 		if (skill.equals("smash") && (player.onGround() || s.smashing)) {
-			return;
+			return false;
 		}
 		if (!secondPortal && s.endurance < cost) {
-			return;
+			return false;
 		}
 		Vec3 eye = player.getEyePosition();
 		Vec3 look = player.getViewVector(1.0F);
@@ -448,7 +461,7 @@ public final class AbilityManager {
 				if (aimAt != null) {
 					if (aimAt.distanceTo(player.position()) > range) {
 						tooFar(player, range);
-						return;
+						return false;
 					}
 					Vec3 spot = safeSpot(level, player, aimAt, EsSettings.get().teleportGroundOnly);
 					done = spot != null && moveTo(level, player, spot);
@@ -457,7 +470,7 @@ public final class AbilityManager {
 							ClipContext.Fluid.NONE, player));
 					if (EsSettings.get().teleportNoSky && aimHit.getType() == HitResult.Type.MISS) {
 						player.displayClientMessage(net.minecraft.network.chat.Component.translatable("enderskills.teleport.no_target"), true);
-						return;
+						return false;
 					}
 					done = teleport(level, player, eye, look, range);
 				}
@@ -518,12 +531,12 @@ public final class AbilityManager {
 					Zones.add(new Zones.Zone(level, spot, 0.0, now + 1200, null, 0));
 					Zones.flash(level, spot);
 					level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.PORTAL_AMBIENT, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.5F, 1.4F);
-					return; // the exit is placed with the next use
+					return false; // the exit is placed with the next use
 				}
 				double range = scaled(player, skill, cfg.portalRangeStart, cfg.portalRangeMax);
 				if (s.portalEntrance.distanceTo(spot) > range) {
 					tooFar(player, range);
-					return;
+					return false;
 				}
 				int life = portalLife(player);
 				Zones.Zone a = new Zones.Zone(level, s.portalEntrance, 1.0, life, spot, 0);
@@ -545,13 +558,13 @@ public final class AbilityManager {
 					s.endurance -= cost;
 					s.lastUse = now;
 					s.dirty = true;
-					return; // the cooldown starts when switched off
+					return true; // the cooldown starts when switched off
 				}
 				done = DefenseAbilities.use(player, skill) || OffenseAbilities.use(player, skill);
 			}
 		}
 		if (!done) {
-			return;
+			return false;
 		}
 		s.endurance -= cost;
 		s.lastUse = now;
@@ -574,7 +587,9 @@ public final class AbilityManager {
 			s.cooldownUntil.put(skill, now + (int) cooldown);
 		}
 		s.dirty = true;
+		return true;
 	}
+
 
 	private static void effect(ServerLevel level, ServerPlayer player, net.minecraft.core.particles.SimpleParticleType particle, SoundEvent sound) {
 		level.sendParticles(particle, player.getX(), player.getY(0.3), player.getZ(), Vfx.n(20), 0.3, 0.3, 0.3, 0.02);

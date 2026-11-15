@@ -17,6 +17,10 @@ public final class EnderSkillsClient implements ClientModInitializer {
 				Minecraft.getInstance().setScreen(new AltarScreen(payload)));
 		ClientAbilities.init();
 		ClientPlayNetworking.registerGlobalReceiver(EsNetwork.VfxShape.TYPE, (payload, context) -> ShapeRenderer.add(payload));
+		ClientPlayNetworking.registerGlobalReceiver(EsNetwork.SkillFx.TYPE, (payload, context) -> dev.enderskills.client.fx.OriginalFx.add(payload));
+		net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(dev.enderskills.client.fx.OriginalFx::tick);
+		net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.AFTER_ENTITIES.register(dev.enderskills.client.fx.OriginalFx::render);
+		net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> dev.enderskills.client.fx.OriginalFx.reset());
 		net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(ShapeRenderer::tick);
 		net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.AFTER_ENTITIES.register(ShapeRenderer::render);
 		net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ShapeRenderer.reset());
