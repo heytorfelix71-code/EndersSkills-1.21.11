@@ -42,6 +42,10 @@ public final class EsConfigScreen {
 						.option(num("ability_damage_multiplier", def.abilityDamageMultiplier, 0, 1_000_000, () -> c.abilityDamageMultiplier, v -> c.abilityDamageMultiplier = v))
 						.option(num("max_level_overdrive", def.maxLevelOverdrive, 0, 1_000_000, () -> c.maxLevelOverdrive, v -> c.maxLevelOverdrive = v))
 						.option(num("overdrive_curve", def.overdriveCurve, 0.1, 10, () -> c.overdriveCurve, v -> c.overdriveCurve = v))
+						.option(num("cooldown_multiplier", def.cooldownMultiplier, 0, 1000, () -> c.cooldownMultiplier, v -> c.cooldownMultiplier = v))
+						.option(num("endurance_multiplier", def.enduranceCostMultiplier, 0, 1000, () -> c.enduranceCostMultiplier, v -> c.enduranceCostMultiplier = v))
+						.option(num("duration_multiplier", def.durationMultiplier, 0, 1000, () -> c.durationMultiplier, v -> c.durationMultiplier = v))
+						.option(num("range_multiplier", def.rangeMultiplier, 0, 1000, () -> c.rangeMultiplier, v -> c.rangeMultiplier = v))
 						.build());
 		for (Skills.Tab tab : Skills.Tab.values()) {
 			OptionGroup.Builder group = OptionGroup.createBuilder()
@@ -165,10 +169,97 @@ public final class EsConfigScreen {
 			sounds.group(group.build());
 		}
 
-		return YetAnotherConfigLib.createBuilder().title(t("title"))
+		YetAnotherConfigLib.Builder builder = YetAnotherConfigLib.createBuilder().title(t("title"))
 				.category(power.build()).category(portal).category(earth).category(sounds.build()).category(hud).category(rules)
-				.save(EsSettings::save)
-				.build().generateScreen(parent);
+				.save(EsSettings::save);
+		for (Skills.Tab tab : Skills.Tab.values()) {
+			builder.category(skillCategory(c, tab));
+		}
+		return builder.build().generateScreen(parent);
+	}
+
+	/** Every skill of a class: on/off, max level and each property at level 0 and at the max level. */
+	private static ConfigCategory skillCategory(EsSettings c, Skills.Tab tab) {
+		ConfigCategory.Builder cat = ConfigCategory.createBuilder()
+				.name(Component.translatable("enderskills.config.category.skills", Component.translatable("enderskills.tab." + tab.id)));
+		java.util.List<String[]> entries = new java.util.ArrayList<>();
+		for (Skills.Page page : Skills.pages(tab)) {
+			for (String id : page.abilities()) {
+				entries.add(new String[] {id, "enderskills.page." + page.element()});
+			}
+		}
+		for (String id : Skills.ATTRIBUTES.get(tab)) {
+			entries.add(new String[] {id, "enderskills.altar.attributes"});
+		}
+		for (String[] e : entries) {
+			String id = e[0];
+			OptionGroup.Builder g = OptionGroup.createBuilder().collapsed(true)
+					.name(Component.translatable(e[1]).withColor(tab.color).append(" · ").append(Component.translatable("skill.enderskills." + id)))
+					.description(OptionDescription.of(Component.translatable("skill.enderskills." + id + ".desc")));
+			g.option(Option.<Boolean>createBuilder().name(t("skill_enabled")).description(d("skill_enabled"))
+					.binding(true, () -> !c.disabledSkills.contains(id), v -> {
+						c.disabledSkills.remove(id);
+						if (!v) {
+							c.disabledSkills.add(id);
+						}
+					}).controller(TickBoxControllerBuilder::create).build());
+			int fileMax = dev.enderskills.dsl.SkillConfigs.fileMaxLevel(id);
+			g.option(Option.<Integer>createBuilder().name(t("skill_max_level")).description(d("skill_max_level"))
+					.binding(fileMax, () -> c.skillMaxLevel.getOrDefault(id, fileMax), v -> {
+						if (v == fileMax) {
+							c.skillMaxLevel.remove(id);
+						} else {
+							c.skillMaxLevel.put(id, v);
+						}
+					}).controller(o -> IntegerFieldControllerBuilder.create(o).range(0, 1000)).build());
+			for (String prop : dev.enderskills.dsl.SkillConfigs.get(id).map.keySet()) {
+				g.option(propOption(c, id, prop, 0));
+				g.option(propOption(c, id, prop, 1));
+			}
+			cat.group(g.build());
+		}
+		return cat.build();
+	}
+
+	/** Property value at level 0 (end 0) or at the max level (end 1), in display units. */
+	private static Option<Double> propOption(EsSettings c, String id, String prop, int end) {
+		dev.enderskills.dsl.Units u = dev.enderskills.dsl.Units.of(id, prop);
+		int cap = Math.max(1, dev.enderskills.dsl.SkillConfigs.fileMaxLevel(id));
+		double fileValue = round(u.toDisplay(dev.enderskills.dsl.SkillConfigs.raw(id, prop, end == 0 ? 0 : cap)));
+		Component unit = Component.literal(u.suffix.isEmpty() ? "" : " (" + u.suffix + ")");
+		return Option.<Double>createBuilder()
+				.name(Component.translatable(end == 0 ? "enderskills.config.at_level0" : "enderskills.config.at_max",
+						Component.translatable("enderskills.stat." + prop.toLowerCase())).append(unit))
+				.description(OptionDescription.of(Component.translatable("enderskills.config.prop.desc", fileValue)))
+				.binding(fileValue, () -> {
+					java.util.Map<String, double[]> m = c.skillTuning.get(id);
+					double[] r = m == null ? null : m.get(prop);
+					return r == null ? fileValue : r[end];
+				}, v -> {
+					java.util.Map<String, double[]> m = c.skillTuning.computeIfAbsent(id, k -> new java.util.LinkedHashMap<>());
+					double[] r = m.get(prop);
+					if (r == null) {
+						r = new double[] {round(u.toDisplay(dev.enderskills.dsl.SkillConfigs.raw(id, prop, 0))),
+								round(u.toDisplay(dev.enderskills.dsl.SkillConfigs.raw(id, prop, cap)))};
+					}
+					r[end] = v;
+					double a = round(u.toDisplay(dev.enderskills.dsl.SkillConfigs.raw(id, prop, 0)));
+					double b = round(u.toDisplay(dev.enderskills.dsl.SkillConfigs.raw(id, prop, cap)));
+					if (Math.abs(r[0] - a) < 1.0E-6 && Math.abs(r[1] - b) < 1.0E-6) {
+						m.remove(prop); // unchanged: keep the original curve
+						if (m.isEmpty()) {
+							c.skillTuning.remove(id);
+						}
+					} else {
+						m.put(prop, r);
+					}
+				})
+				.controller(o -> DoubleFieldControllerBuilder.create(o).range(-1.0E9, 1.0E9))
+				.build();
+	}
+
+	private static double round(double v) {
+		return Math.round(v * 1000.0) / 1000.0;
 	}
 
 	private static Option<Double> num(String key, double def, double min, double max, Supplier<Double> get, Consumer<Double> set) {

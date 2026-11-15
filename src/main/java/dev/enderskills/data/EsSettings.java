@@ -72,6 +72,19 @@ public final class EsSettings {
 		return m;
 	}
 
+	// ---- per-skill tuning (settings screen); values in display units: seconds, hearts, percent, blocks...
+	/** Skill -> property -> [value at level 0, value at the max level]; replaces the .cfg curve (straight line). */
+	public java.util.Map<String, java.util.Map<String, double[]>> skillTuning = new java.util.LinkedHashMap<>();
+	/** Skill -> highest level that can be bought (replaces the .cfg value). */
+	public java.util.Map<String, Integer> skillMaxLevel = new java.util.LinkedHashMap<>();
+	/** Skills switched off: they can't be unlocked or used and give no bonus. */
+	public java.util.List<String> disabledSkills = new java.util.ArrayList<>();
+	/** Multipliers for every ability. */
+	public double cooldownMultiplier = 1.0;
+	public double enduranceCostMultiplier = 1.0;
+	public double durationMultiplier = 1.0;
+	public double rangeMultiplier = 1.0;
+
 	// ---- ability power (meant to be pushed to the extreme)
 	/** Multiplies the damage and healing of every ability, from level 0. */
 	public double abilityDamageMultiplier = 2.0;

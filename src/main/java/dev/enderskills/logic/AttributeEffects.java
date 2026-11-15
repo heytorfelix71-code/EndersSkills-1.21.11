@@ -28,7 +28,7 @@ public final class AttributeEffects {
 	/** Attribute value ("MODIFIER" of its config) for a player, 0 if not owned. */
 	public static double modifier(Player player, String attribute) {
 		SkillData data = Progression.data(player);
-		int level = data.level(attribute);
+		int level = SkillConfigs.disabled(attribute) ? -1 : data.level(attribute);
 		return level < 0 ? 0.0 : SkillConfigs.value(attribute, "MODIFIER", level);
 	}
 

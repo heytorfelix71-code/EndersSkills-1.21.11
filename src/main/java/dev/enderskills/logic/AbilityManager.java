@@ -136,7 +136,7 @@ public final class AbilityManager {
 
 	/** Passive on-hit abilities: owned, off cooldown and enough endurance; pays and starts the cooldown. */
 	public static boolean tryPassive(ServerPlayer player, String skill) {
-		if (!Progression.data(player).owns(skill)) {
+		if (!Progression.data(player).owns(skill) || SkillConfigs.disabled(skill)) {
 			return false;
 		}
 		State s = state(player);
@@ -373,7 +373,7 @@ public final class AbilityManager {
 
 	public static void use(ServerPlayer player, String skill, float dx, float dz, Vec3 aimAt) {
 		SkillData data = Progression.data(player);
-		if (!data.owns(skill) || !Abilities.implemented(skill) || !player.isAlive() || player.isSpectator()) {
+		if (!data.owns(skill) || !Abilities.implemented(skill) || SkillConfigs.disabled(skill) || !player.isAlive() || player.isSpectator()) {
 			return;
 		}
 		State s = state(player);

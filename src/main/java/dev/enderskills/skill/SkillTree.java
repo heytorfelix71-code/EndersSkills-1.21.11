@@ -48,6 +48,9 @@ public final class SkillTree {
 		if (skill == null) {
 			return "unknown";
 		}
+		if (SkillConfigs.disabled(skillId)) {
+			return "disabled";
+		}
 		int level = data.level(skillId);
 		if (level >= SkillConfigs.maxLevel(skillId)) {
 			return "max";

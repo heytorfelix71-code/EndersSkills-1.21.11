@@ -61,3 +61,7 @@ Commands (operators): `/enderskills level <n> [player]`, `/enderskills reset [pl
 - Wall has side walls (1-2 blocks) folded towards you; Dome can have a roof.
 - From level 40 (configurable) both switch on/off with the ability key.
 - New settings category "Wall & Dome": width, height, thickness, side walls, distance, dome radius/height/roof, ground copy, fallback block.
+
+## 1.7.0
+- Every skill is configurable in the settings screen ("Skills: Defense / Mobility / Offense"): on/off, max level, and every property (cooldown, duration, range, damage, heal, endurance cost, XP cost...) at level 0 and at the max level, in seconds / blocks / hearts / percent.
+- Global multipliers for cooldown, endurance cost, duration and range.
