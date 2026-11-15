@@ -165,6 +165,16 @@ public final class EsSettings {
 
 	public VfxStyle vfxStyle = VfxStyle.ORIGINAL;
 
+	// ---- Fog
+	/** Radius of the Fog cloud around you (blocks); enemies inside are blinded. */
+	public double fogRadius = 8.0;
+	/** From this Fog level on, the fog stays until you use it again (or until the time below). */
+	public int fogToggleLevel = 50;
+	/** Longest time the fog stays at that level, in seconds. */
+	public int fogMaxSeconds = 60;
+	/** Extra step height while Speed Boost is on (1.4 = walks up 2 blocks). */
+	public double speedBoostStep = 1.4;
+
 	public EffectStyle effectStyle = EffectStyle.CURRENT;
 
 	/** Sneak + ability key on Portal or Teleport asks for coordinates. */

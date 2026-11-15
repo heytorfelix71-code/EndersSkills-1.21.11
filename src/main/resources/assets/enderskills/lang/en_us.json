@@ -531,7 +531,7 @@
   "enderskills.config.vfx_trails": "Afterimage trails",
   "enderskills.config.vfx_trails.desc": "See-through copies behind you with Dash, Warp, Teleport and Speed Boost.",
   "enderskills.config.vfx_vibrate": "Speed vibration",
-  "enderskills.config.vfx_vibrate.desc": "Blurred, shaking copies around a player under Speed Boost (like the Reverse Flash).",
+  "enderskills.config.vfx_vibrate.desc": "Blurred, shaking copies around a player under Hasten (like the Reverse Flash).",
   "enderskills.config.wall_scale": "Wall size",
   "enderskills.config.wall_scale.desc": "Shrinks or grows the Wall (1 = normal, 0.5 = half the width and height). Used when width/height below are 0.",
   "enderskills.config.wall_max_width": "Wall max width",
@@ -548,5 +548,13 @@
   "enderskills.config.vfx_style.desc": "Original: the models and shaders of the original mod (cosmic black hole and gas cloud, black fists, glow sprites, auras). Current: this port's particles and 3D shapes. Both: everything.",
   "enderskills.config.vfx_style.original": "Original",
   "enderskills.config.vfx_style.both": "Both",
-  "enderskills.config.vfx_style.current": "Current"
+  "enderskills.config.vfx_style.current": "Current",
+  "enderskills.config.fog_radius": "Fog radius",
+  "enderskills.config.fog_radius.desc": "Size of the cloud of fog and smoke around you; enemies inside are blinded and lose track of you.",
+  "enderskills.config.fog_toggle_level": "Fog: stays from level",
+  "enderskills.config.fog_toggle_level.desc": "From this level on, the fog stays until you use it again or until the time limit below.",
+  "enderskills.config.fog_max_seconds": "Fog: time limit (seconds)",
+  "enderskills.config.fog_max_seconds.desc": "At that level, the fog ends by itself after this time.",
+  "enderskills.config.speed_boost_step": "Step assist",
+  "enderskills.config.speed_boost_step.desc": "While Speed Boost is on you walk up blocks by yourself: extra step height in blocks (1.4 = 2 blocks, 0 = off)."
 }

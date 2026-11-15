@@ -531,7 +531,7 @@
   "enderskills.config.vfx_trails": "Rastro de sombras",
   "enderskills.config.vfx_trails.desc": "Cópias translúcidas atrás de você com Investida, Distorção, Teleporte e Impulso de Velocidade.",
   "enderskills.config.vfx_vibrate": "Tremor de velocidade",
-  "enderskills.config.vfx_vibrate.desc": "Cópias borradas e tremendo em volta de quem está com o Impulso de Velocidade (como o Flash Reverso).",
+  "enderskills.config.vfx_vibrate.desc": "Cópias borradas e tremendo em volta de quem está com Apressar (como o Flash Reverso).",
   "enderskills.config.wall_scale": "Tamanho da muralha",
   "enderskills.config.wall_scale.desc": "Diminui ou aumenta a muralha (1 = normal, 0,5 = metade da largura e da altura). Vale quando a largura/altura abaixo estão em 0.",
   "enderskills.config.wall_max_width": "Largura máxima da muralha",
@@ -548,5 +548,13 @@
   "enderskills.config.vfx_style.desc": "Original: os modelos e shaders do mod original (buraco negro e nuvem cósmicos, punhos pretos, brilhos, auras). Atual: as partículas e formas 3D deste port. Ambos: tudo junto.",
   "enderskills.config.vfx_style.original": "Original",
   "enderskills.config.vfx_style.both": "Ambos",
-  "enderskills.config.vfx_style.current": "Atual"
+  "enderskills.config.vfx_style.current": "Atual",
+  "enderskills.config.fog_radius": "Raio da névoa",
+  "enderskills.config.fog_radius.desc": "Tamanho da nuvem de névoa e fumaça ao seu redor; inimigos dentro ficam cegos e perdem você de vista.",
+  "enderskills.config.fog_toggle_level": "Névoa: fica a partir do nível",
+  "enderskills.config.fog_toggle_level.desc": "A partir deste nível, a névoa fica até você usar de novo ou até o tempo limite abaixo.",
+  "enderskills.config.fog_max_seconds": "Névoa: tempo limite (segundos)",
+  "enderskills.config.fog_max_seconds.desc": "Nesse nível, a névoa acaba sozinha depois desse tempo.",
+  "enderskills.config.speed_boost_step": "Subir blocos (step assist)",
+  "enderskills.config.speed_boost_step.desc": "Com o Impulso de Velocidade ligado você sobe blocos sozinho: altura extra do passo em blocos (1,4 = 2 blocos, 0 = desligado)."
 }

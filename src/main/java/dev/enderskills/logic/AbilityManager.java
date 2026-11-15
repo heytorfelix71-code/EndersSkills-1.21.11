@@ -197,6 +197,9 @@ public final class AbilityManager {
 		}
 		for (ServerPlayer player : srv.getPlayerList().getPlayers()) {
 			State s = state(player);
+			if (now % 5 == 0 && active(s, "fog")) {
+				fogPulse(player);
+			}
 			double max = maxEndurance(player);
 			if (s.endurance < 0) {
 				s.endurance = max;
@@ -283,6 +286,41 @@ public final class AbilityManager {
 		s.dirty = true;
 	}
 
+	/** From the toggle level on (50 by default) Fog stays until used again or until the time limit. */
+	private static boolean fogToggle(ServerPlayer player) {
+		int cap = Math.max(1, Math.min(EsSettings.get().fogToggleLevel, SkillConfigs.maxLevel("fog")));
+		return Progression.data(player).level("fog") >= cap;
+	}
+
+	/** Fog and smoke around the player; enemies inside are blinded and forget their target. */
+	private static void fogPulse(ServerPlayer player) {
+		ServerLevel level = (ServerLevel) player.level();
+		double r = Math.max(1.0, EsSettings.get().fogRadius);
+		Vec3 c = player.position();
+		Vfx.loud(() -> {
+			int count = Math.max(4, Vfx.n((int) (r * r * 0.8)));
+			for (int i = 0; i < count; i++) {
+				double a = level.getRandom().nextDouble() * Math.PI * 2;
+				double d = Math.sqrt(level.getRandom().nextDouble()) * r;
+				double x = c.x + Math.cos(a) * d;
+				double z = c.z + Math.sin(a) * d;
+				double y = c.y + level.getRandom().nextDouble() * 2.5;
+				level.sendParticles(i % 3 == 0 ? ParticleTypes.CAMPFIRE_COSY_SMOKE : ParticleTypes.LARGE_SMOKE, x, y, z, 1, 0.3, 0.2, 0.3, 0.005);
+				if (i % 4 == 0) {
+					level.sendParticles(ParticleTypes.CLOUD, x, y, z, 1, 0.4, 0.3, 0.4, 0.0);
+				}
+			}
+		});
+		for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(r),
+				x -> x != player && x.isAlive() && !x.isSpectator() && x.distanceToSqr(player) <= r * r && !DefenseAbilities.isAlly(player, x))) {
+			status(e, null, MobEffects.BLINDNESS, 60, 0);
+			if (e instanceof Mob mob) {
+				mob.setTarget(null);
+				FOGGED.put(mob, now + 40);
+			}
+		}
+	}
+
 	/** A timed ability ran out. */
 	private static void end(ServerPlayer player, String skill) {
 		if (skill.equals("portal")) {
@@ -293,6 +331,7 @@ public final class AbilityManager {
 		}
 		if (skill.equals("speed_boost")) {
 			AttributeEffects.set(player, Attributes.MOVEMENT_SPEED, "speed_boost", 0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+			AttributeEffects.set(player, Attributes.STEP_HEIGHT, "speed_boost_step", 0, AttributeModifier.Operation.ADD_VALUE);
 		}
 	}
 
@@ -407,6 +446,10 @@ public final class AbilityManager {
 			s.dirty = true;
 			return false;
 		}
+		if (skill.equals("fog") && active(s, skill) && fogToggle(player)) {
+			switchOff(player, s, skill); // from the toggle level on, using Fog again lifts it
+			return false;
+		}
 		if (TOGGLES.contains(skill) && active(s, skill)) {
 			switchOff(player, s, skill);
 			return false;
@@ -479,11 +522,16 @@ public final class AbilityManager {
 				s.activeUntil.put(skill, now + (int) value(player, skill, "DURATION"));
 				effect(level, player, ParticleTypes.CLOUD, SoundEvents.BREEZE_WIND_CHARGE_BURST.value());
 				Shapes.afterimage(player, skill, (int) value(player, skill, "DURATION"));
-				Shapes.vibrate(player, skill, (int) value(player, skill, "DURATION"));
+				// a real speed bonus (synced to the client, works with other mods); the camera FOV ignores it
+				AttributeEffects.set(player, Attributes.MOVEMENT_SPEED, "speed_boost", value(player, skill, "SPEED"),
+						AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+				AttributeEffects.set(player, Attributes.STEP_HEIGHT, "speed_boost_step", EsSettings.get().speedBoostStep,
+						AttributeModifier.Operation.ADD_VALUE);
 			}
 			case "hasten" -> {
 				s.activeUntil.put(skill, now + (int) value(player, skill, "DURATION"));
 				effect(level, player, ParticleTypes.ENCHANT, SoundEvents.BEACON_ACTIVATE);
+				Shapes.vibrate(player, skill, (int) value(player, skill, "DURATION"));
 			}
 			case "invisibility" -> {
 				int duration = (int) value(player, skill, "DURATION");
@@ -492,19 +540,11 @@ public final class AbilityManager {
 				effect(level, player, ParticleTypes.PORTAL, SoundEvents.ILLUSIONER_MIRROR_MOVE);
 			}
 			case "fog" -> {
-				LivingEntity target = lookTarget(player, 24.0);
-				if (target == null) {
-					done = false;
-				} else {
-					int duration = (int) value(player, skill, "DURATION");
-					status(target, null, MobEffects.BLINDNESS, duration, 0);
-					if (target instanceof Mob mob) {
-						mob.setTarget(null);
-						FOGGED.put(mob, now + duration);
-					}
-					level.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, target.getX(), target.getY(0.6), target.getZ(), 30, 0.5, 0.6, 0.5, 0.01);
-					level.playSound(null, target.blockPosition(), SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 0.6F);
-				}
+				// a cloud of fog and smoke around you: everyone else inside is blinded and loses track of you
+				int duration = fogToggle(player) ? 20 * Math.max(1, EsSettings.get().fogMaxSeconds) : (int) Math.max(20, value(player, skill, "DURATION"));
+				s.activeUntil.put(skill, now + duration);
+				fogPulse(player);
+				level.playSound(null, player.blockPosition(), SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 0.6F);
 			}
 			case "unstable_portal" -> {
 				Vec3 spot = aim(level, player, value(player, skill, "RANGE"));

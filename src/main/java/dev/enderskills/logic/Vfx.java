@@ -27,6 +27,17 @@ public final class Vfx {
 		return casting > 0 && EsSettings.get().vfxStyle == EsSettings.VfxStyle.ORIGINAL;
 	}
 
+	/** Particles that are part of the gameplay (the Fog cloud): sent in every style. */
+	public static void loud(Runnable run) {
+		int was = casting;
+		casting = 0;
+		try {
+			run.run();
+		} finally {
+			casting = was;
+		}
+	}
+
 	public static void quietly(Runnable run) {
 		casting++;
 		try {

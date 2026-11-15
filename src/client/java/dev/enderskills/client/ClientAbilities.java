@@ -137,7 +137,6 @@ public final class ClientAbilities {
 		countDown(COOLDOWNS);
 		countDown(ACTIVE);
 		SkillData data = data(player);
-		dev.enderskills.logic.SpeedHooks.clientBoost = ACTIVE.containsKey("speed_boost") ? value(data, "speed_boost", "SPEED") : 0.0;
 		if (data.skills().isEmpty()) {
 			return;
 		}

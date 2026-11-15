@@ -5,7 +5,8 @@
   "refmap": "enderskills.client.refmap.json",
   "client": [
     "LivingEntityRendererMixin",
-    "RenderTypeAccessor"
+    "RenderTypeAccessor",
+    "AbstractClientPlayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
