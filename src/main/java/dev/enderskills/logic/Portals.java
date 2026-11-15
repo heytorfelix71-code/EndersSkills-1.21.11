@@ -241,6 +241,12 @@ public final class Portals {
 				wait = new double[] {m.waiting.at().x, m.waiting.at().y, m.waiting.at().z};
 			}
 		}
+		// the unstable portals (and their ways back) that are still open: negative ids, closable from the menu
+		for (Zones.Zone z : Zones.unstableZones()) {
+			double left = z.until() - now > UnstableTravel.PIN / 2 ? -1 : Math.max(0, (z.until() - now) / 20.0);
+			list.add(new double[] {Zones.idOf(z), z.center().x, z.center().y, z.center().z, z.center().x, z.center().y, z.center().z, left});
+			pairDims.add(new String[] {dimId(z.level()), dimId(z.level())});
+		}
 		List<String> dims = new ArrayList<>();
 		for (ServerLevel l : p.level().getServer().getAllLevels()) {
 			dims.add(dimId(l));

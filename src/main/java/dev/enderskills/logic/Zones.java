@@ -36,6 +36,40 @@ public final class Zones {
 	private Zones() {
 	}
 
+	/** Unstable portals and the ways back they open (not the pairs of the Portal ability). */
+	public static List<Zone> unstableZones() {
+		List<Zone> out = new ArrayList<>();
+		for (Zone z : ZONES) {
+			if ((z.exit() == null && z.radius() > 0) || z.onUse() != null) {
+				out.add(z);
+			}
+		}
+		return out;
+	}
+
+	public static int idOf(Zone z) {
+		return -2 - (System.identityHashCode(z) & 0x3FFFFFFF);
+	}
+
+	/** Closes one of them by the id the portal menu got. */
+	public static boolean closeUnstable(int id) {
+		for (Zone z : unstableZones()) {
+			if (idOf(z) == id) {
+				ZONES.remove(z);
+				flash(z.level(), z.center());
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static void closeAllUnstable() {
+		for (Zone z : unstableZones()) {
+			ZONES.remove(z);
+			flash(z.level(), z.center());
+		}
+	}
+
 	public static void remove(Zone zone) {
 		ZONES.remove(zone);
 	}

@@ -446,7 +446,17 @@ public final class AbilityManager {
 			}
 		}
 		switch (action) {
-			case dev.enderskills.network.EsNetwork.PortalAction.CLOSE -> Portals.close(player, id);
+			case dev.enderskills.network.EsNetwork.PortalAction.CLOSE -> {
+				if (id <= -2) {
+					Zones.closeUnstable(id);
+				} else {
+					if (id == -1) {
+						Zones.closeAllUnstable();
+					}
+					Portals.close(player, id);
+				}
+				Portals.sync(player);
+			}
 			case dev.enderskills.network.EsNetwork.PortalAction.CANCEL_WAIT -> Portals.cancelWaiting(player);
 			case dev.enderskills.network.EsNetwork.PortalAction.MOVE -> {
 				if (!finite || !EsSettings.get().coordinateTargeting) {
@@ -986,20 +996,32 @@ public final class AbilityManager {
 		return Math.max(1.0, c.warpMinBlocks + (c.warpMaxBlocks - c.warpMinBlocks) * f);
 	}
 
-	/** The farthest free spot along where you look, within the distance; walls in between do not matter. */
+	/**
+	 * Warp: a few blocks straight ahead (the way you face, no aiming) onto the ground there, walls in between do not matter.
+	 * The farthest spot within the distance that has room to stand and ground under it; none = it does not go.
+	 */
 	private static boolean warpThrough(ServerLevel level, ServerPlayer p, double dist) {
-		Vec3 look = p.getViewVector(1.0F).normalize();
-		Vec3 eye = p.getEyePosition();
-		double eyeHeight = p.getEyeHeight();
-		for (double d = dist; d >= 0.75; d -= 0.25) {
-			Vec3 feet = eye.add(look.scale(d)).subtract(0, eyeHeight, 0);
-			net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(feet);
-			if (feet.y < level.getMinY() || !level.getWorldBorder().isWithinBounds(pos)
-					|| !level.noCollision(p, p.getBoundingBox().move(feet.subtract(p.position())))
-					|| level.getFluidState(pos).is(net.minecraft.tags.FluidTags.LAVA)) {
-				continue;
+		Vec3 h = new Vec3(p.getViewVector(1.0F).x, 0, p.getViewVector(1.0F).z);
+		h = h.lengthSqr() < 1.0E-4 ? Vec3.directionFromRotation(0, p.getYRot()) : h.normalize();
+		Vec3 base = p.position();
+		double[] ups = {0, 0.5, 1, -0.5, -1, 1.5, -1.5, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6};
+		for (double d = dist; d >= 1.0; d -= 0.5) {
+			double x = base.x + h.x * d;
+			double z = base.z + h.z * d;
+			for (double up : ups) {
+				Vec3 spot = new Vec3(x, base.y + up, z);
+				net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(spot);
+				net.minecraft.world.phys.AABB box = p.getBoundingBox().move(spot.subtract(base));
+				if (spot.y < level.getMinY() || !level.getWorldBorder().isWithinBounds(pos) || !level.noCollision(p, box)) {
+					continue;
+				}
+				net.minecraft.world.phys.AABB low = box.move(0, -0.25, 0);
+				if (level.noCollision(p, low) || level.containsAnyLiquid(box)
+						|| level.getFluidState(pos.below()).is(net.minecraft.tags.FluidTags.LAVA)) {
+					continue; // no ground there (or water / lava)
+				}
+				return moveTo(level, p, spot);
 			}
-			return moveTo(level, p, feet);
 		}
 		return false;
 	}

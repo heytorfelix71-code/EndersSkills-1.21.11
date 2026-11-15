@@ -897,15 +897,15 @@ public final class OriginalFx {
 					return;
 				}
 				Vec3 c = follow.subtract(cam);
-				FxDraw.disc(buffers.getBuffer(FxDraw.universeDark()), m, c.x, c.y - 0.02, c.z, 0.85, FxDraw.argb(0xFFFFFF, f), 24, time * 0.02);
-				FxDraw.disc(buffers.getBuffer(FxDraw.universe()), m, c.x, c.y - 0.04, c.z, 1.05, FxDraw.argb(color(e.skill, VOID), 0.6F * f), 24, -time * 0.03);
+				galaxyDisc(buffers, m, c.x, c.y - 0.03, c.z, 0.95, f, time, color(e.skill, 0xC84CFF));
 			}
 			case "teleport", "warp" -> {
 				if (life < 1) {
 					// a crack in reality: opens fast, stays a moment, closes (about 2 seconds in all)
 					double t = Math.max(0.0, Math.min(1.0, life));
-					double open = Math.min(1.0, t / 0.22) * Math.min(1.0, (1.0 - t) / 0.28);
-					open = open * open * (3 - 2 * open);
+					double up = Math.min(1.0, t / 0.3);
+					double down = Math.min(1.0, (1.0 - t) / 0.4);
+					double open = (1 - Math.pow(1 - up, 3)) * (1 - Math.pow(1 - down, 2)); // quick, soft opening; gentle closing
 					double h = e.skill.equals("warp") ? 1.9 : 1.5;
 					galaxy(buffers, m, e.pos.add(0, h, 0).subtract(cam), e.seed, 0.95, h, (float) open, 1F, time, 0xFFFFFF, 0xC84CFF, 9);
 					galaxy(buffers, m, e.dest.add(0, h, 0).subtract(cam), e.seed ^ 0x5DEECE66DL, 0.95, h, (float) open, 1F, time, 0xFFFFFF, 0xC84CFF, 9);
@@ -1158,7 +1158,7 @@ public final class OriginalFx {
 		Vec3 h = new Vec3(center.x, 0, center.z);
 		Vec3 right = h.lengthSqr() < 1.0E-6 ? new Vec3(1, 0, 0) : new Vec3(h.z, 0, -h.x).normalize();
 		Vec3 toCam = h.lengthSqr() < 1.0E-6 ? new Vec3(0, 0, 1) : h.normalize().scale(-1);
-		double w = rx * (0.25 + 0.75 * open);
+		double w = rx * (0.12 + 0.88 * open);
 		double hh = ry * open;
 		double[] px = new double[points];
 		double[] py = new double[points];
@@ -1197,6 +1197,40 @@ public final class OriginalFx {
 			glow.addVertex(m, (float) a1.x, (float) a1.y, (float) a1.z).setColor(in);
 			glow.addVertex(m, (float) b1.x, (float) b1.y, (float) b1.z).setColor(outc);
 			glow.addVertex(m, (float) b0.x, (float) b0.y, (float) b0.z).setColor(outc);
+		}
+	}
+
+	/** A flat disc of galaxy (nebula and stars) with a glowing, softly pulsing rim: the platform of Hover. */
+	private static void galaxyDisc(MultiBufferSource buffers, Matrix4f m, double cx, double cy, double cz, double radius, float fade, double time, int rim) {
+		if (fade <= 0.01F) {
+			return;
+		}
+		int seg = 32;
+		VertexConsumer vc = buffers.getBuffer(FxDraw.alpha("galaxy"));
+		int col = FxDraw.argb(0xFFFFFF, 0.92F * fade);
+		double spin = time * 0.01;
+		for (int i = 0; i < seg; i++) {
+			double a0 = Math.PI * 2 * i / seg;
+			double a1 = Math.PI * 2 * (i + 1) / seg;
+			double[][] p = {{0, 0}, {Math.cos(a0), Math.sin(a0)}, {Math.cos(a1), Math.sin(a1)}, {Math.cos(a1), Math.sin(a1)}};
+			for (double[] q : p) {
+				double u = 0.5 + 0.42 * (q[0] * Math.cos(spin) - q[1] * Math.sin(spin));
+				double v = 0.5 + 0.42 * (q[0] * Math.sin(spin) + q[1] * Math.cos(spin));
+				vc.addVertex(m, (float) (cx + q[0] * radius), (float) cy, (float) (cz + q[1] * radius)).setUv((float) u, (float) v).setColor(col);
+			}
+		}
+		VertexConsumer glow = buffers.getBuffer(RenderTypes.lightning());
+		float pulse = 0.55F + 0.15F * (float) Math.sin(time * 0.2);
+		int in = FxDraw.argb(rim, pulse * fade);
+		int out = FxDraw.argb(rim, 0F);
+		for (int i = 0; i < seg; i++) {
+			double a0 = Math.PI * 2 * i / seg;
+			double a1 = Math.PI * 2 * (i + 1) / seg;
+			double o = radius * 1.28;
+			glow.addVertex(m, (float) (cx + Math.cos(a0) * radius * 0.96), (float) (cy + 0.01), (float) (cz + Math.sin(a0) * radius * 0.96)).setColor(in);
+			glow.addVertex(m, (float) (cx + Math.cos(a1) * radius * 0.96), (float) (cy + 0.01), (float) (cz + Math.sin(a1) * radius * 0.96)).setColor(in);
+			glow.addVertex(m, (float) (cx + Math.cos(a1) * o), (float) (cy + 0.01), (float) (cz + Math.sin(a1) * o)).setColor(out);
+			glow.addVertex(m, (float) (cx + Math.cos(a0) * o), (float) (cy + 0.01), (float) (cz + Math.sin(a0) * o)).setColor(out);
 		}
 	}
 

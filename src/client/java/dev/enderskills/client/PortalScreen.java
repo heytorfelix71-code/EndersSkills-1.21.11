@@ -116,10 +116,12 @@ public class PortalScreen extends Screen {
 			double[] p = pairs.get(i);
 			int index = i;
 			int id = (int) p[0];
-			addRenderableWidget(Button.builder(Component.translatable("enderskills.portals.edit_a"), b -> startEdit(index, id, 0, p[1], p[2], p[3]))
-					.bounds(bx, rowY, 56, 20).build());
-			addRenderableWidget(Button.builder(Component.translatable("enderskills.portals.edit_b"), b -> startEdit(index, id, 1, p[4], p[5], p[6]))
-					.bounds(bx + 58, rowY, 56, 20).build());
+			if (id > -2) { // an unstable portal can only be closed
+				addRenderableWidget(Button.builder(Component.translatable("enderskills.portals.edit_a"), b -> startEdit(index, id, 0, p[1], p[2], p[3]))
+						.bounds(bx, rowY, 56, 20).build());
+				addRenderableWidget(Button.builder(Component.translatable("enderskills.portals.edit_b"), b -> startEdit(index, id, 1, p[4], p[5], p[6]))
+						.bounds(bx + 58, rowY, 56, 20).build());
+			}
 			addRenderableWidget(Button.builder(Component.translatable("enderskills.portals.close"), b -> send(PortalAction.CLOSE, id, 0, 0, 0, 0, ""))
 					.bounds(bx + 116, rowY, 54, 20).build());
 			rowY += ROW;
@@ -236,6 +238,12 @@ public class PortalScreen extends Screen {
 		for (int i = scroll; i < scroll + shown; i++) {
 			double[] p = pairs.get(i);
 			String[] dd = i < pairDims.size() ? pairDims.get(i) : new String[] {"", ""};
+			if ((int) p[0] <= -2) {
+				g.drawString(font, Component.translatable("enderskills.portals.unstable", pos(p[1], p[2], p[3]), shortDim(dd[0]), time(p[7])),
+						left + 10, rowY + 6, 0xFFFF9AE8);
+				rowY += ROW;
+				continue;
+			}
 			boolean edA = editId == (int) p[0] && editWhich == 0;
 			boolean edB = editId == (int) p[0] && editWhich == 1;
 			g.drawString(font, "#" + (int) p[0] + "  A: " + pos(p[1], p[2], p[3]) + " [" + shortDim(dd[0]) + "]   (" + time(p[7]) + ")",

@@ -234,27 +234,49 @@ public final class ClientAbilities {
 	}
 
 	private static final Tap DASH_TAP = new Tap();
-	private static boolean warpAiming;
+	private static final Tap WARP_TAP = new Tap();
+	/** The Teleport key being held (index of its slot), -1 = none: a shadow shows where it will land, release to go. */
+	private static int teleportSlot = -1;
 
-	/** The same spot the server picks for the Warp: the farthest free one along where you look, walls in between do not matter. */
-	private static Vec3 warpSpot(LocalPlayer p, SkillData data) {
+	/** About where the Teleport lands: along where you look, up to its range, settling on the ground like the server does. */
+	private static Vec3 teleportSpot(LocalPlayer p, SkillData data) {
 		dev.enderskills.data.EsSettings c = dev.enderskills.data.EsSettings.get();
-		int cap = Math.max(1, Math.min(50, SkillConfigs.maxLevel("warp")));
-		double f = Math.min(1.0, Math.max(0, data.level("warp")) / (double) cap);
-		double dist = Math.max(1.0, c.warpMinBlocks + (c.warpMaxBlocks - c.warpMinBlocks) * f);
-		Vec3 look = p.getViewVector(1.0F).normalize();
+		int cap = Math.max(1, Math.min(50, SkillConfigs.maxLevel("teleport")));
+		double f = Math.min(1.0, Math.max(0, data.level("teleport")) / (double) cap);
+		double start = Math.max(1.0, c.teleportRangeStart);
+		double range = start * Math.pow(Math.max(start, c.teleportRangeMax) / start, f);
+		range = Math.min(range, 160.0); // only what is loaded is shown
 		Vec3 eye = p.getEyePosition();
-		double eyeHeight = p.getEyeHeight();
+		Vec3 look = p.getViewVector(1.0F).normalize();
 		net.minecraft.world.level.Level level = p.level();
-		for (double d = dist; d >= 0.75; d -= 0.25) {
-			Vec3 feet = eye.add(look.scale(d)).subtract(0, eyeHeight, 0);
-			net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(feet);
-			if (feet.y < level.getMinY() || !level.getWorldBorder().isWithinBounds(pos)
-					|| !level.noCollision(p, p.getBoundingBox().move(feet.subtract(p.position())))
-					|| level.getFluidState(pos).is(net.minecraft.tags.FluidTags.LAVA)) {
-				continue;
+		net.minecraft.world.phys.BlockHitResult hit = level.clip(new net.minecraft.world.level.ClipContext(eye, eye.add(look.scale(range)),
+				net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, p));
+		double distance = hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS ? range : eye.distanceTo(hit.getLocation()) - 0.4;
+		Vec3 base = p.position();
+		double eyeOffset = eye.y - base.y;
+		for (double d = distance; d > 0.5; d -= 0.5) {
+			Vec3 feet = eye.add(look.scale(d)).subtract(0, eyeOffset > 1 ? 0.2 : eyeOffset, 0);
+			for (double up = 0; up <= 1.5; up += 0.5) {
+				Vec3 spot = feet.add(0, up, 0);
+				net.minecraft.world.phys.AABB box = p.getBoundingBox().move(spot.subtract(base));
+				if (!level.noCollision(p, box)) {
+					continue;
+				}
+				if (c.teleportGroundOnly) {
+					for (int i = 0; i < 128; i++) {
+						net.minecraft.world.phys.AABB low = p.getBoundingBox().move(spot.subtract(base)).move(0, -0.2, 0);
+						if (!level.noCollision(p, low) || level.containsAnyLiquid(low)) {
+							return spot;
+						}
+						spot = spot.add(0, -0.5, 0);
+						if (spot.y < level.getMinY()) {
+							break;
+						}
+					}
+					continue;
+				}
+				return spot;
 			}
-			return feet;
 		}
 		return null;
 	}
@@ -326,6 +348,8 @@ public final class ClientAbilities {
 					} else if (sneak && dev.enderskills.data.EsSettings.get().coordinateTargeting
 							&& skill.equals("teleport")) {
 						client.setScreen(new CoordScreen(skill));
+					} else if (skill.equals("teleport")) {
+						teleportSlot = i; // hold to see the shadow, release to go
 					} else {
 						send(skill, 0, 0);
 					}
@@ -354,22 +378,22 @@ public final class ClientAbilities {
 			COOLDOWNS.put("dash", (int) value(data, "dash", "COOLDOWN"));
 			send("dash", dir.x, dir.z);
 		}
-		// Warp (right Alt): hold to see a shadow where you will land, release to go there through walls (the server does it)
-		boolean warpHeld = warpKey.isDown() && data.owns("warp") && ready(data, "warp");
-		if (warpHeld && free) {
-			warpAiming = true;
-			Vec3 spot = warpSpot(player, data);
-			dev.enderskills.client.ShapeRenderer.warpPreview = spot;
-			if (spot == null) {
-				player.displayClientMessage(net.minecraft.network.chat.Component.translatable("enderskills.warp.blocked"), true);
-			}
-		} else if (warpAiming) {
-			boolean fire = free && !warpKey.isDown() && dev.enderskills.client.ShapeRenderer.warpPreview != null;
-			warpAiming = false;
-			dev.enderskills.client.ShapeRenderer.warpPreview = null;
-			if (fire) {
-				COOLDOWNS.put("warp", 5);
-				send("warp", 0, 0);
+		// Warp (right Alt, double tap): a few blocks straight ahead onto the ground, through walls (the server does it)
+		if (WARP_TAP.fired(free && warpKey.isDown(), doubleTap) && ready(data, "warp")) {
+			COOLDOWNS.put("warp", 5);
+			send("warp", 0, 0);
+		}
+		// Teleport: while its key is held a shadow shows where you will land, releasing it goes there
+		if (teleportSlot >= 0) {
+			if (!free || teleportSlot >= SLOT_KEYS.length) {
+				teleportSlot = -1;
+				dev.enderskills.client.ShapeRenderer.warpPreview = null;
+			} else if (SLOT_KEYS[teleportSlot].isDown()) {
+				dev.enderskills.client.ShapeRenderer.warpPreview = teleportSpot(player, data);
+			} else {
+				teleportSlot = -1;
+				dev.enderskills.client.ShapeRenderer.warpPreview = null;
+				send("teleport", 0, 0);
 			}
 		}
 		if (dashTicks > 0) {
