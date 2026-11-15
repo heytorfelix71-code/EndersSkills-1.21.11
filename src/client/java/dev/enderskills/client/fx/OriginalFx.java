@@ -935,8 +935,11 @@ public final class OriginalFx {
 			}
 			case "thorny" -> {
 				Vec3 c = follow.add(0, 1, 0).subtract(cam);
-				FxDraw.texSphere(buffers.getBuffer(FxDraw.alpha("thorny")), m, c.x, c.y, c.z, 1.1,
-						FxDraw.argb(color(e.skill, 0xFFFFFF), 0.8F * f), 10, 4F, 0F);
+				// oak-wood look: layers of light, medium and dark brown with the bark texture sliding at different speeds
+				VertexConsumer wood = buffers.getBuffer(FxDraw.alpha("thorny"));
+				FxDraw.texSphere(wood, m, c.x, c.y, c.z, 1.14, FxDraw.argb(color(e.skill, 0x6B4A25), 0.7F * f), 10, 4F, (float) (time * 0.004));
+				FxDraw.texSphere(wood, m, c.x, c.y, c.z, 1.1, FxDraw.argb(color(e.skill, 0xB8864B), 0.7F * f), 10, 3F, (float) (-time * 0.006));
+				FxDraw.texSphere(wood, m, c.x, c.y, c.z, 1.06, FxDraw.argb(0xD9B27A, 0.45F * f), 10, 5F, (float) (time * 0.003));
 			}
 			case "nearby_invincibility" -> {
 				Vec3 c = follow.add(0, 1, 0).subtract(cam);
