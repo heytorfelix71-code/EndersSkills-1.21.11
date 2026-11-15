@@ -659,8 +659,8 @@
   "enderskills.config.black_hole_pull_range.desc": "How far the Black Hole pulls and hurts, as a multiple of its drawn size (1 = only inside it).",
   "enderskills.config.black_hole_cooldown_after": "Cooldown starts when it ends",
   "enderskills.config.black_hole_cooldown_after.desc": "The Black Hole's cooldown only starts when the hole is gone (instead of when you cast it).",
-  "enderskills.config.black_hole_blocks": "Blocks pulled per tick",
-  "enderskills.config.black_hole_blocks.desc": "With \"destroy the environment\" on, the Black Hole rips this many blocks per tick out of the ground and swallows them: a crater.",
+  "enderskills.config.black_hole_blocks": "Most blocks per tick",
+  "enderskills.config.black_hole_blocks.desc": "Most blocks the Black Hole removes in one tick; the crater is spread over its life, so this is only a limit.",
   "enderskills.config.damage_passive": "Abilities hurt passive and neutral mobs",
   "enderskills.config.damage_passive.desc": "Off (like the original): abilities only hurt hostile mobs, or passive/neutral ones that are already aggressive. On: they hurt every mob that is not your ally.",
   "enderskills.shadows.exhausted": "The shadows are gone: no energy left",
@@ -752,5 +752,7 @@
   "enderskills.config.dash_step.desc": "How much higher the Dash climbs by itself (1 = one block more). It climbs blocks while you dash.",
   "enderskills.config.unstable_pin": "Unstable Portal stays open from level",
   "enderskills.config.unstable_pin.desc": "From this level on, the Unstable Portal stays open until you come back through the portal at the other end (0 = never). Then that one closes.",
-  "enderskills.unstable.return_open": "The way back is open beside you: it stays until you go back through it"
+  "enderskills.unstable.return_open": "The way back is open beside you: it stays until you go back through it",
+  "enderskills.config.black_hole_max_blocks": "Crater size at the top level (blocks)",
+  "enderskills.config.black_hole_max_blocks.desc": "How many blocks the Black Hole crater takes in all at the last level (about 10-20% of a mountain at 40000). It grows with the level squared. Bigger values can lag."
 }

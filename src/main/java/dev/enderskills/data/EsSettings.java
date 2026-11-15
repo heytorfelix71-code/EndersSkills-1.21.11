@@ -183,7 +183,7 @@ public final class EsSettings {
 	/** Tells you in the chat, once after you join, what your passives really do. */
 	public boolean passiveReport = true;
 	/** Black Hole: extra radius at the top level, in blocks (0 to 1000); it grows with the level. */
-	public double blackHoleTopBonus = 50.0;
+	public double blackHoleTopBonus = 65.0;
 	/** Black Hole: how far from its center it rips blocks out of the ground (with "destroy the environment"). */
 	public double blackHoleMaxBlockRadius = 96.0;
 	/** Black Hole: continuous damage to the mobs inside, as a share of its damage per second. */
@@ -298,15 +298,17 @@ public final class EsSettings {
 	/** Seconds the Gas Cloud holds a mob in place (it is also blinded). */
 	public double gasCloudHoldSeconds = 3.0;
 	/** Size and pull area of the Black Hole (1 = original). */
-	public double blackHoleSize = 2.2;
+	public double blackHoleSize = 2.6;
 	/** Extra time of the Black Hole, on top of the area time (1 = original). */
 	public double blackHoleDuration = 3.0;
 	/** Black Hole: how far it pulls and hurts, as a multiple of its size (the drawing keeps its size). */
 	public double blackHolePullRange = 1.6;
 	/** Black Hole: its cooldown starts when the hole is gone (instead of when you cast it). */
 	public boolean blackHoleCooldownAfter = true;
-	/** Black Hole with "destroy the environment": blocks torn out of the ground and swallowed, per tick. */
-	public int blackHoleBlocksPerTick = 12;
+	/** Black Hole with "destroy the environment": most blocks it removes in one tick (it spreads the crater over its life). */
+	public int blackHoleBlocksPerTick = 250;
+	/** Black Hole at the top level: how many blocks the crater takes in all (about 10-20% of a mountain). Grows with the level squared. */
+	public int blackHoleMaxBlocks = 40000;
 	/** Black Hole: how fast the blocks are sucked in (1 = slow, 2 = fast). */
 	public double blackHoleSuctionSpeed = 2.0;
 	/** Black Hole: how deep the crater goes at the top level, in blocks (it grows with the level from 3). */
@@ -495,6 +497,15 @@ public final class EsSettings {
 							// 1.20.3: Warp up to 10 blocks
 							read.warpMaxBlocks = new EsSettings().warpMaxBlocks;
 							read.balanceVersion = 9;
+						}
+						if (read.balanceVersion < 10) {
+							// 1.20.6: a bigger Black Hole that carves a crater of tens of thousands of blocks, efficiently
+							EsSettings fresh = new EsSettings();
+							read.blackHoleSize = fresh.blackHoleSize;
+							read.blackHoleTopBonus = fresh.blackHoleTopBonus;
+							read.blackHoleBlocksPerTick = fresh.blackHoleBlocksPerTick;
+							read.blackHoleMaxBlocks = fresh.blackHoleMaxBlocks;
+							read.balanceVersion = 10;
 						}
 						instance = read;
 					}

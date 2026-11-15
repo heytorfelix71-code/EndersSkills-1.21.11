@@ -659,8 +659,8 @@
   "enderskills.config.black_hole_pull_range.desc": "Até onde o Buraco Negro puxa e dá dano, como múltiplo do tamanho desenhado (1 = só dentro dele).",
   "enderskills.config.black_hole_cooldown_after": "Recarga começa quando ele acaba",
   "enderskills.config.black_hole_cooldown_after.desc": "A recarga do Buraco Negro só começa quando ele some (em vez de quando você o lança).",
-  "enderskills.config.black_hole_blocks": "Blocos puxados por tick",
-  "enderskills.config.black_hole_blocks.desc": "Com \"destruir o ambiente\" ligado, o Buraco Negro arranca tantos blocos por tick do chão e os engole: uma cratera.",
+  "enderskills.config.black_hole_blocks": "Máximo de blocos por tick",
+  "enderskills.config.black_hole_blocks.desc": "O máximo de blocos que o Buraco Negro remove em um tick; a cratera é espalhada ao longo da vida dele, então isto é só um limite.",
   "enderskills.config.damage_passive": "Habilidades dão dano em mobs pacíficos e neutros",
   "enderskills.config.damage_passive.desc": "Desligado (como o original): as habilidades só dão dano em mobs hostis, ou pacíficos/neutros que já estejam agressivos. Ligado: dão dano em todo mob que não seja seu aliado.",
   "enderskills.shadows.exhausted": "As sombras sumiram: sua energia acabou",
@@ -752,5 +752,7 @@
   "enderskills.config.dash_step.desc": "Quanto a Investida sobe sozinha (1 = um bloco a mais). Ela sobe blocos enquanto você investe.",
   "enderskills.config.unstable_pin": "Portal Instável fica aberto a partir do nível",
   "enderskills.config.unstable_pin.desc": "A partir deste nível, o Portal Instável fica aberto até você voltar pelo portal do outro lado (0 = nunca). Aí o de lá se fecha.",
-  "enderskills.unstable.return_open": "O portal de volta está aberto ao seu lado: fica até você voltar por ele"
+  "enderskills.unstable.return_open": "O portal de volta está aberto ao seu lado: fica até você voltar por ele",
+  "enderskills.config.black_hole_max_blocks": "Tamanho da cratera no nível máximo (blocos)",
+  "enderskills.config.black_hole_max_blocks.desc": "Quantos blocos a cratera do Buraco Negro leva no total no último nível (cerca de 10-20% de uma montanha com 40000). Cresce com o quadrado do nível. Valores maiores podem dar lag."
 }

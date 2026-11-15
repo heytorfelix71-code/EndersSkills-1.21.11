@@ -211,39 +211,7 @@ public final class OffenseAbilities {
 			}
 		}
 		if (cfg.destroyEnvironment) {
-			// rips blocks out of the ground inside the pull range (up to the configured radius), more of them the bigger it is
-			double rb = Math.min(Math.max(2.0, cfg.blackHoleMaxBlockRadius), Math.max(2.0, reach));
-			int per = Math.min(60, Math.max(0, cfg.blackHoleBlocksPerTick) * Math.max(1, (int) (rb / 8.0)));
-			// the crater gets deeper with the level of the ability (3 blocks at the start, the configured depth at the top)
-			int cap = Math.max(1, Math.min(50, dev.enderskills.dsl.SkillConfigs.maxLevel("black_hole")));
-			double share = Math.min(1.0, Math.max(0, Progression.data(p).level("black_hole")) / (double) cap);
-			int depth = 3 + (int) Math.round(Math.max(0, cfg.blackHoleCraterDepth - 3) * share);
-			for (int i = 0, tries = 0; i < per && tries < per * 12 && bag.size() < 600; tries++) {
-				double ang = level.getRandom().nextDouble() * Math.PI * 2;
-				double rad = Math.sqrt(level.getRandom().nextDouble()) * rb;
-				int bx = (int) Math.floor(at.x + Math.cos(ang) * rad);
-				int bz = (int) Math.floor(at.z + Math.sin(ang) * rad);
-				if (!level.hasChunk(bx >> 4, bz >> 4)) {
-					continue; // never loads chunks just to tear them
-				}
-				int by = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, bx, bz) - 1 - level.getRandom().nextInt(depth);
-				net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(bx, by, bz);
-				if (at.distanceToSqr(bx + 0.5, by + 0.5, bz + 0.5) > rb * rb) {
-					continue;
-				}
-				net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
-				if (state.isAir() || state.getDestroySpeed(level, pos) < 0 || state.getBlock().getExplosionResistance() > 600.0F
-						|| !state.getFluidState().isEmpty() || state.hasBlockEntity()
-						|| state.getBlock() instanceof dev.enderskills.block.AltarBlock) {
-					continue;
-				}
-				net.minecraft.world.entity.item.FallingBlockEntity fb = net.minecraft.world.entity.item.FallingBlockEntity.fall(level, pos, state);
-				fb.disableDrop();
-				fb.setNoGravity(true);
-				fb.noPhysics = true;
-				bag.add(fb);
-				i++;
-			}
+			carve(p, level, at, reach, cfg, age, bag, last);
 		}
 		for (java.util.Iterator<net.minecraft.world.entity.item.FallingBlockEntity> it = bag.iterator(); it.hasNext();) {
 			net.minecraft.world.entity.item.FallingBlockEntity fb = it.next();
@@ -256,6 +224,114 @@ public final class OffenseAbilities {
 			}
 			fb.setDeltaMovement(d.scale(1.0 / dist).scale(Math.min(1.6, (0.3 + dist * 0.03) * Math.max(0.1, cfg.blackHoleSuctionSpeed))));
 			fb.hurtMarked = true;
+		}
+	}
+
+	/** The crater of a Black Hole: its columns, worked out once, from the middle outwards. */
+	private static final class Crater {
+		int[] x;
+		int[] z;
+		int[] top;
+		int[] depth;
+		int n;
+		int cursor;
+		int removed;
+		int budget;
+	}
+
+	private static final java.util.Map<int[], Crater> CRATERS = new java.util.WeakHashMap<>();
+
+	/**
+	 * Carves the crater without a big cost: the columns are listed once (nearest to the middle first), each tick takes a few
+	 * hundred blocks off the top of the next columns with cheap block changes (no neighbor updates), and only a handful of
+	 * them are shown flying into the hole as falling blocks. Size and depth grow with the level of the ability.
+	 */
+	private static void carve(ServerPlayer p, ServerLevel level, Vec3 at, double reach, dev.enderskills.data.EsSettings cfg, int[] age,
+			List<net.minecraft.world.entity.item.FallingBlockEntity> bag, boolean last) {
+		Crater c = CRATERS.get(age);
+		if (last) {
+			CRATERS.remove(age);
+			return;
+		}
+		if (c == null) {
+			c = new Crater();
+			CRATERS.put(age, c);
+			int cap = Math.max(1, Math.min(50, dev.enderskills.dsl.SkillConfigs.maxLevel("black_hole")));
+			double share = Math.min(1.0, Math.max(0, Progression.data(p).level("black_hole")) / (double) cap);
+			int depthMax = 3 + (int) Math.round(Math.max(0, cfg.blackHoleCraterDepth - 3) * share);
+			c.budget = (int) (Math.max(0, cfg.blackHoleMaxBlocks) * share * share) + 150;
+			double rb = Math.min(Math.max(2.0, cfg.blackHoleMaxBlockRadius), Math.max(2.0, reach));
+			// a bowl: depth D at the middle, nothing at the edge, so its volume is about pi * rc^2 * D / 2
+			double rc = Math.max(2.0, Math.min(rb, Math.sqrt(c.budget / (Math.PI * depthMax / 2.0))));
+			int ir = (int) Math.ceil(rc);
+			int cap2 = (2 * ir + 1) * (2 * ir + 1);
+			int[] xs = new int[cap2];
+			int[] zs = new int[cap2];
+			int[] tops = new int[cap2];
+			int[] deps = new int[cap2];
+			long[] order = new long[cap2];
+			int n = 0;
+			for (int dx = -ir; dx <= ir; dx++) {
+				for (int dz = -ir; dz <= ir; dz++) {
+					double d = Math.sqrt(dx * dx + dz * dz);
+					int bx = (int) Math.floor(at.x) + dx;
+					int bz = (int) Math.floor(at.z) + dz;
+					if (d > rc || !level.hasChunk(bx >> 4, bz >> 4)) {
+						continue; // never loads chunks just to tear them
+					}
+					xs[n] = bx;
+					zs[n] = bz;
+					tops[n] = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, bx, bz) - 1;
+					double edge = d / rc;
+					deps[n] = Math.max(1, (int) Math.round(depthMax * (1.0 - edge * edge)));
+					order[n] = ((long) (int) ((d + level.getRandom().nextDouble() * 3.0) * 64) << 32) | n;
+					n++;
+				}
+			}
+			java.util.Arrays.sort(order, 0, n);
+			c.x = new int[n];
+			c.z = new int[n];
+			c.top = new int[n];
+			c.depth = new int[n];
+			for (int i = 0; i < n; i++) {
+				int k = (int) (order[i] & 0xFFFFFFFFL);
+				c.x[i] = xs[k];
+				c.z[i] = zs[k];
+				c.top[i] = tops[k];
+				c.depth[i] = deps[k];
+			}
+			c.n = n;
+		}
+		// spread what is left over about 80% of the life of the hole, never more than the per-tick limit
+		double ticksLeft = Math.max(1.0, age[1] * 0.8 - age[0]);
+		int perTick = (int) Math.min(Math.max(1, cfg.blackHoleBlocksPerTick), Math.max(20, Math.ceil((c.budget - c.removed) / ticksLeft)));
+		int done = 0;
+		int shown = 0;
+		net.minecraft.core.BlockPos.MutableBlockPos pos = new net.minecraft.core.BlockPos.MutableBlockPos();
+		while (c.cursor < c.n && done < perTick && c.removed < c.budget) {
+			int i = c.cursor++;
+			for (int y = c.top[i]; y > c.top[i] - c.depth[i] && y >= level.getMinY(); y--) {
+				pos.set(c.x[i], y, c.z[i]);
+				net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
+				if (state.isAir() || state.getDestroySpeed(level, pos) < 0 || state.getBlock().getExplosionResistance() > 600.0F
+						|| !state.getFluidState().isEmpty() || state.hasBlockEntity()
+						|| state.getBlock() instanceof dev.enderskills.block.AltarBlock) {
+					continue;
+				}
+				if (shown < 10 && bag.size() < 150 && level.getRandom().nextInt(6) == 0) {
+					net.minecraft.world.entity.item.FallingBlockEntity fb = net.minecraft.world.entity.item.FallingBlockEntity.fall(level, pos.immutable(), state);
+					fb.disableDrop();
+					fb.setNoGravity(true);
+					fb.noPhysics = true;
+					bag.add(fb);
+					shown++;
+				} else {
+					level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),
+							net.minecraft.world.level.block.Block.UPDATE_CLIENTS | net.minecraft.world.level.block.Block.UPDATE_KNOWN_SHAPE);
+				}
+				done++;
+				c.removed++;
+			}
 		}
 	}
 
@@ -437,7 +513,7 @@ public final class OffenseAbilities {
 				});
 				// every tick: pulls everything around (mobs, items, xp, arrows) and, with "destroy the environment", rips blocks out of the ground
 				double damage = v(p, skill, "DAMAGE");
-				int[] age = {0};
+				int[] age = {0, total};
 				List<net.minecraft.world.entity.item.FallingBlockEntity> bag = new ArrayList<>();
 				channel(p, total, 1, () -> blackHoleTick(p, level, at, reach, r, damage, age, bag, age[0] >= total - 2));
 				sound(level, at, SoundEvents.END_PORTAL_SPAWN, 0.6F, 0.5F);

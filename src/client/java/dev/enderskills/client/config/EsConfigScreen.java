@@ -401,7 +401,8 @@ public final class EsConfigScreen {
 				g.option(slider("black_hole_duration", def.blackHoleDuration, 0.5, 8, () -> c.blackHoleDuration, v -> c.blackHoleDuration = v));
 				g.option(slider("black_hole_pull_range", def.blackHolePullRange, 1, 4, () -> c.blackHolePullRange, v -> c.blackHolePullRange = v));
 				g.option(bool("black_hole_cooldown_after", def.blackHoleCooldownAfter, () -> c.blackHoleCooldownAfter, v -> c.blackHoleCooldownAfter = v));
-				g.option(integer("black_hole_blocks", def.blackHoleBlocksPerTick, 0, 30, () -> c.blackHoleBlocksPerTick, v -> c.blackHoleBlocksPerTick = v));
+				g.option(integer("black_hole_blocks", def.blackHoleBlocksPerTick, 0, 2000, () -> c.blackHoleBlocksPerTick, v -> c.blackHoleBlocksPerTick = v));
+				g.option(integer("black_hole_max_blocks", def.blackHoleMaxBlocks, 0, 1_000_000, () -> c.blackHoleMaxBlocks, v -> c.blackHoleMaxBlocks = v));
 				g.option(num("black_hole_top_bonus", def.blackHoleTopBonus, 0, 1000, () -> c.blackHoleTopBonus, v -> c.blackHoleTopBonus = v));
 				g.option(num("black_hole_block_radius", def.blackHoleMaxBlockRadius, 2, 1000, () -> c.blackHoleMaxBlockRadius, v -> c.blackHoleMaxBlockRadius = v));
 				g.option(num("black_hole_suction", def.blackHoleSuctionSpeed, 0.1, 10, () -> c.blackHoleSuctionSpeed, v -> c.blackHoleSuctionSpeed = v));
