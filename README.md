@@ -18,8 +18,8 @@ Textures, skill values (`.cfg`) and texts come from the original mod under the M
 |---|---|---|
 | 1 | Altar, tree rules and costs, Ender Level and tokens, XP storage, resets, items/blocks/ore, the 18 class attributes, config files | done (0.1.0) |
 | 2 | Ability system (keys Z X C B N M, endurance, cooldowns, HUD), the 12 Mobility abilities, Better Hurt Timer (per-damage-type timers) | done (0.2.0) |
-| 3 | Defense abilities | next |
-| 4 | Offense abilities | |
+| 3 | The 24 Defense abilities (Light, Earth, Electric, Fire) | done (0.3.0) |
+| 4 | Offense abilities | next |
 | 5 | Status effects, potions, sounds, visual effects | |
 
 Commands (operators): `/enderskills level <n> [player]`, `/enderskills reset [player]`, `/enderskills reload`.

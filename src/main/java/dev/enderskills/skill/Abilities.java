@@ -10,7 +10,11 @@ import dev.enderskills.data.SkillData;
 public final class Abilities {
 	private static final Set<String> IMPLEMENTED = Set.of(
 			"dash", "extra_jump", "fog", "smash", "hasten", "speed_boost",
-			"warp", "invisibility", "hover", "unstable_portal", "portal", "teleport");
+			"warp", "invisibility", "hover", "unstable_portal", "portal", "teleport",
+			"charm", "heal_aura", "power_boost", "heal_other", "heal_self", "nearby_invincibility",
+			"taunt", "wall", "dome", "thorny", "shockwave", "animated_stone_golem",
+			"shocking_aura", "electric_pulse", "magnetic_pull", "power_drain", "energize", "voltaic_sentinel",
+			"flares", "blazing_aura", "ring_of_fire", "overheat", "warm_heart", "home_star");
 	/** Abilities with their own trigger (double tap, jump, sneak) instead of an ability key. */
 	private static final Set<String> SPECIAL = Set.of("dash", "warp", "extra_jump", "hover", "smash");
 

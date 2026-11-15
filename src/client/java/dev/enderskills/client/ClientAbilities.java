@@ -29,9 +29,10 @@ import dev.enderskills.skill.Abilities;
 /** Client side of the abilities: keys, the movement abilities (felt instantly) and the HUD. */
 public final class ClientAbilities {
 	private static final KeyMapping.Category CATEGORY = KeyMapping.Category.register(EnderSkills.id("abilities"));
-	private static final KeyMapping[] SLOT_KEYS = new KeyMapping[6];
+	private static final KeyMapping[] SLOT_KEYS = new KeyMapping[9];
 	private static final int[] DEFAULT_KEYS = {InputConstants.KEY_Z, InputConstants.KEY_X, InputConstants.KEY_C,
-			InputConstants.KEY_B, InputConstants.KEY_N, InputConstants.KEY_M};
+			InputConstants.KEY_B, InputConstants.KEY_N, InputConstants.KEY_M, InputConstants.UNKNOWN.getValue(),
+			InputConstants.UNKNOWN.getValue(), InputConstants.UNKNOWN.getValue()};
 	private static KeyMapping dashKey;
 
 	private static float endurance;
@@ -254,7 +255,8 @@ public final class ClientAbilities {
 		g.fill(x, y, x + 18, y + 18, active > 0 ? 0xC0205030 : 0xA0000000);
 		g.blit(RenderPipelines.GUI_TEXTURED, EnderSkills.id("textures/skill/" + skill + ".png"), x + 1, y + 1, 0.0F, 0.0F,
 				16, 16, 32, 32, 32, 32, cooldown > 0 ? 0xFF606060 : 0xFFFFFFFF);
-		String text = cooldown > 0 ? (cooldown + 19) / 20 + "s" : active > 0 ? "▶ " + (active + 19) / 20 + "s" : key;
+		String text = cooldown > 0 ? (cooldown + 19) / 20 + "s"
+				: active > 1_000_000 ? "ON  " + key : active > 0 ? "▶ " + (active + 19) / 20 + "s" : key;
 		g.drawString(font, text, x + 22, y + 5, cooldown > 0 ? 0xFFFF8080 : active > 0 ? 0xFF80FF80 : 0xFFFFFFFF, true);
 		return y + 20;
 	}

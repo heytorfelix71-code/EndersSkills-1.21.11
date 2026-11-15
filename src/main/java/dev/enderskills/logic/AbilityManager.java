@@ -79,15 +79,50 @@ public final class AbilityManager {
 		return s.activeUntil.getOrDefault(skill, 0) > now;
 	}
 
-	private static double value(ServerPlayer player, String skill, String property) {
+	public static double value(ServerPlayer player, String skill, String property) {
 		return SkillConfigs.value(skill, property, Math.max(0, Progression.data(player).level(skill)));
+	}
+
+	/** Toggle abilities: on until used again or out of endurance (their cost is drained every second). */
+	private static final java.util.Set<String> TOGGLES = java.util.Set.of("shocking_aura", "blazing_aura", "flares");
+	private static MinecraftServer server;
+
+	public static ServerPlayer player(UUID id) {
+		return server == null ? null : server.getPlayerList().getPlayer(id);
+	}
+
+	/** Strength multiplier of abilities: Ability Power attribute + Power Boost. */
+	public static double power(ServerPlayer player) {
+		return 1.0 + AttributeEffects.modifier(player, "ability_power") + DefenseAbilities.boost(player);
+	}
+
+	public static boolean isActive(ServerPlayer player, String skill) {
+		return active(state(player), skill);
+	}
+
+	public static void setActive(ServerPlayer player, String skill, int ticks) {
+		State s = state(player);
+		s.activeUntil.put(skill, now + ticks);
+		s.dirty = true;
+	}
+
+	public static double endurance(ServerPlayer player) {
+		return Math.max(0, state(player).endurance);
+	}
+
+	public static void addEndurance(ServerPlayer player, double amount) {
+		State s = state(player);
+		s.endurance = Math.max(0, Math.min(maxEndurance(player), s.endurance + amount));
+		s.dirty = true;
 	}
 
 	// ------------------------------------------------------------------ tick
 
-	public static void tick(MinecraftServer server) {
-		now = server.getTickCount();
+	public static void tick(MinecraftServer srv) {
+		server = srv;
+		now = srv.getTickCount();
 		Zones.tick(now);
+		DefenseAbilities.tick(now);
 		if (now % 5 == 0) {
 			for (Iterator<Map.Entry<Mob, Integer>> it = FOGGED.entrySet().iterator(); it.hasNext();) {
 				Map.Entry<Mob, Integer> e = it.next();
@@ -98,7 +133,7 @@ public final class AbilityManager {
 				}
 			}
 		}
-		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+		for (ServerPlayer player : srv.getPlayerList().getPlayers()) {
 			State s = state(player);
 			double max = maxEndurance(player);
 			if (s.endurance < 0) {
@@ -121,6 +156,20 @@ public final class AbilityManager {
 					it.remove();
 					end(player, e.getKey());
 					s.dirty = true;
+				}
+			}
+			for (String toggle : TOGGLES) {
+				if (active(s, toggle)) {
+					if (now % 20 == 0) {
+						s.endurance -= value(player, toggle, "ENDURANCE");
+						s.lastUse = now;
+						if (s.endurance <= 0) {
+							s.endurance = 0;
+							switchOff(player, s, toggle);
+							continue;
+						}
+					}
+					DefenseAbilities.aura(player, toggle);
 				}
 			}
 			if (active(s, "hover")) {
@@ -161,6 +210,12 @@ public final class AbilityManager {
 		}
 	}
 
+	private static void switchOff(ServerPlayer player, State s, String toggle) {
+		s.activeUntil.remove(toggle);
+		s.cooldownUntil.put(toggle, now + (int) value(player, toggle, "COOLDOWN"));
+		s.dirty = true;
+	}
+
 	/** A timed ability ran out. */
 	private static void end(ServerPlayer player, String skill) {
 		if (skill.equals("speed_boost")) {
@@ -179,6 +234,10 @@ public final class AbilityManager {
 		ServerLevel level = (ServerLevel) player.level();
 		double cost = value(player, skill, "ENDURANCE");
 		boolean secondPortal = skill.equals("portal") && s.portalEntrance != null;
+		if (TOGGLES.contains(skill) && active(s, skill)) {
+			switchOff(player, s, skill);
+			return;
+		}
 		if (s.cooldownUntil.getOrDefault(skill, 0) > now) {
 			return;
 		}
@@ -274,7 +333,16 @@ public final class AbilityManager {
 				cost = 0;
 				level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.PORTAL_TRIGGER, SoundSource.PLAYERS, 0.4F, 1.6F);
 			}
-			default -> done = false;
+			default -> {
+				if (TOGGLES.contains(skill)) {
+					s.activeUntil.put(skill, Integer.MAX_VALUE);
+					s.endurance -= cost;
+					s.lastUse = now;
+					s.dirty = true;
+					return; // the cooldown starts when switched off
+				}
+				done = DefenseAbilities.use(player, skill);
+			}
 		}
 		if (!done) {
 			return;
@@ -282,6 +350,9 @@ public final class AbilityManager {
 		s.endurance -= cost;
 		s.lastUse = now;
 		double cooldown = value(player, skill, "COOLDOWN");
+		if (skill.equals("heal_other") && cooldown < 20) {
+			cooldown = value(player, "heal_self", "COOLDOWN"); // the original config has percentages here
+		}
 		if (active(s, "hasten") && !skill.equals("hasten")) {
 			cooldown *= 1.0 - Math.min(0.95, value(player, "hasten", "REDUCTION"));
 		}
@@ -297,7 +368,7 @@ public final class AbilityManager {
 	}
 
 	/** Point the player aims at (a block, or the end of the range). */
-	private static Vec3 aim(ServerLevel level, ServerPlayer player, double range) {
+	public static Vec3 aim(ServerLevel level, ServerPlayer player, double range) {
 		Vec3 eye = player.getEyePosition();
 		Vec3 end = eye.add(player.getViewVector(1.0F).scale(range));
 		BlockHitResult hit = level.clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
@@ -334,7 +405,7 @@ public final class AbilityManager {
 	}
 
 	/** The living entity the player looks at. */
-	private static LivingEntity lookTarget(ServerPlayer player, double range) {
+	public static LivingEntity lookTarget(ServerPlayer player, double range) {
 		Vec3 eye = player.getEyePosition();
 		Vec3 end = eye.add(player.getViewVector(1.0F).scale(range));
 		BlockHitResult wall = player.level().clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));

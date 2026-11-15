@@ -44,6 +44,11 @@ public final class ModContent {
 			p -> new DropExperienceBlock(UniformInt.of(2, 5), p), BlockBehaviour.Properties.of()
 					.mapColor(MapColor.STONE).strength(3.0F, 3.0F).requiresCorrectToolForDrops());
 
+	/** Temporary stone of Wall and Dome (no item). */
+	public static final Block EARTH = Registry.register(BuiltInRegistries.BLOCK, EnderSkills.id("earth"),
+			new dev.enderskills.block.EarthBlock(BlockBehaviour.Properties.of().mapColor(MapColor.STONE).strength(50.0F, 1200.0F)
+					.noLootTable().setId(ResourceKey.create(Registries.BLOCK, EnderSkills.id("earth")))));
+
 	public static final Item TOKEN = item("token", TokenItem::new, new Item.Properties().rarity(Rarity.UNCOMMON));
 	public static final Item ENDER_DUST = item("ender_dust", Item::new, new Item.Properties());
 	public static final Item CRYSTAL_MATRIX = item("crystal_matrix", Item::new, new Item.Properties().rarity(Rarity.RARE).stacksTo(16));
