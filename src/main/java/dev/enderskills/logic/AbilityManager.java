@@ -630,12 +630,11 @@ public final class AbilityManager {
 				s.smashStarted = now;
 			}
 			case "warp" -> {
-				Vec3 dir = new Vec3(dx, 0, dz);
-				if (dir.lengthSqr() < 1.0E-4) {
-					dir = new Vec3(look.x, 0, look.z);
+				// Distortion: a short teleport through walls to where you look
+				done = warpThrough(level, player, warpDistance(player));
+				if (!done) {
+					player.displayClientMessage(net.minecraft.network.chat.Component.translatable("enderskills.warp.blocked"), true);
 				}
-				dir = dir.normalize();
-				done = teleport(level, player, player.position().add(0, 0.5, 0), dir, value(player, skill, "RANGE"));
 			}
 			case "teleport" -> {
 				double range = scaled(player, skill, EsSettings.get().teleportRangeStart, EsSettings.get().teleportRangeMax);
@@ -954,6 +953,31 @@ public final class AbilityManager {
 			if (s != null && active(s, "invisibility") && p.getBoundingBox().inflate(1.5, 1.0, 1.5).contains(x, y, z)) {
 				return true;
 			}
+		}
+		return false;
+	}
+
+	private static double warpDistance(ServerPlayer p) {
+		EsSettings c = EsSettings.get();
+		int cap = Math.max(1, Math.min(50, SkillConfigs.maxLevel("warp")));
+		double f = Math.min(1.0, Math.max(0, Progression.data(p).level("warp")) / (double) cap);
+		return Math.max(1.0, c.warpMinBlocks + (c.warpMaxBlocks - c.warpMinBlocks) * f);
+	}
+
+	/** The farthest free spot along where you look, within the distance; walls in between do not matter. */
+	private static boolean warpThrough(ServerLevel level, ServerPlayer p, double dist) {
+		Vec3 look = p.getViewVector(1.0F).normalize();
+		Vec3 eye = p.getEyePosition();
+		double eyeHeight = p.getEyeHeight();
+		for (double d = dist; d >= 0.75; d -= 0.25) {
+			Vec3 feet = eye.add(look.scale(d)).subtract(0, eyeHeight, 0);
+			net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(feet);
+			if (feet.y < level.getMinY() || !level.getWorldBorder().isWithinBounds(pos)
+					|| !level.noCollision(p, p.getBoundingBox().move(feet.subtract(p.position())))
+					|| level.getFluidState(pos).is(net.minecraft.tags.FluidTags.LAVA)) {
+				continue;
+			}
+			return moveTo(level, p, feet);
 		}
 		return false;
 	}

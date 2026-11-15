@@ -118,7 +118,10 @@ public final class EsConfigScreen {
 						.option(integer("swim_air_level", def.swimInfiniteAirLevel, 0, 1000, () -> c.swimInfiniteAirLevel, v -> c.swimInfiniteAirLevel = v))
 						.option(num("passive_attack_power", def.attackSpeedPower, 0, 100, () -> c.attackSpeedPower, v -> c.attackSpeedPower = v))
 						.option(num("crit_multiplier", def.critMultiplier, 1, 100, () -> c.critMultiplier, v -> c.critMultiplier = v))
+						.option(num("passive_damage_power", def.damagePassivePower, 0, 1000, () -> c.damagePassivePower, v -> c.damagePassivePower = v))
+						.option(num("crit_chance_power", def.critChancePower, 0, 100, () -> c.critChancePower, v -> c.critChancePower = v))
 						.option(bool("passive_report", def.passiveReport, () -> c.passiveReport, v -> c.passiveReport = v))
+						.option(num("fall_safe_bonus", def.fallSafeBonus, 0, 1000, () -> c.fallSafeBonus, v -> c.fallSafeBonus = v))
 						.option(integer("default_level", def.defaultEnderLevel, 0, 1000, () -> c.defaultEnderLevel, v -> c.defaultEnderLevel = v))
 						.option(bool("token_drops", def.enderTokenDrops, () -> c.enderTokenDrops, v -> c.enderTokenDrops = v))
 						.option(num("token_rate", def.enderTokenDropRate, 0, 1, () -> c.enderTokenDropRate, v -> c.enderTokenDropRate = v))
@@ -332,6 +335,15 @@ public final class EsConfigScreen {
 	private static void extras(OptionGroup.Builder g, EsSettings c, String id) {
 		EsSettings def = new EsSettings();
 		switch (id) {
+			case "dash" -> {
+				g.option(num("dash_min", def.dashMinBlocks, 1, 1000, () -> c.dashMinBlocks, v -> c.dashMinBlocks = v));
+				g.option(num("dash_max", def.dashMaxBlocks, 1, 1000, () -> c.dashMaxBlocks, v -> c.dashMaxBlocks = v));
+				g.option(bool("dash_double_tap", def.dashDoubleTap, () -> c.dashDoubleTap, v -> c.dashDoubleTap = v));
+			}
+			case "warp" -> {
+				g.option(num("warp_min", def.warpMinBlocks, 1, 1000, () -> c.warpMinBlocks, v -> c.warpMinBlocks = v));
+				g.option(num("warp_max", def.warpMaxBlocks, 1, 1000, () -> c.warpMaxBlocks, v -> c.warpMaxBlocks = v));
+			}
 			case "unstable_portal" -> {
 				g.option(bool("unstable_far", def.unstableFar, () -> c.unstableFar, v -> c.unstableFar = v));
 				g.option(num("unstable_min", def.unstableMinDistance, 0, 30_000_000, () -> c.unstableMinDistance, v -> c.unstableMinDistance = v));

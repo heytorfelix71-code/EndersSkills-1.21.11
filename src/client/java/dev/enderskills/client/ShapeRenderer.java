@@ -138,6 +138,7 @@ final class ShapeRenderer {
 		PoseStack pose = new PoseStack();
 		if (cfg.vfxShapes && !SHAPES.isEmpty()) {
 			Matrix4f m = pose.last().pose();
+			buffers.getBuffer(RenderTypes.debugQuads()); // black shapes first
 			VertexConsumer glow = buffers.getBuffer(RenderTypes.lightning());
 			for (Shape s : SHAPES) {
 				double age = now - s.start();
@@ -203,13 +204,10 @@ final class ShapeRenderer {
 				sphere(glow, m, x, y, z, r * 0.55F, argb(0xFFFFFF, 0.6F * fade));
 			}
 			case Shapes.BLACK_HOLE -> {
-				float r = s.r() * Math.min(1F, (float) (now - s.start()) / 10F);
-				VertexConsumer dark = buffers.getBuffer(RenderTypes.debugQuads());
-				sphere(dark, m, x, y, z, r, argb(0x040008, 0.97F * Math.max(0.2F, fade)));
-				float spin = (float) (now * 0.25);
-				disc(glow, m, x, y, z, r * 1.15F, r * 2.4F, spin, argb(c, 0.6F * fade));
-				disc(glow, m, x, y, z, r * 1.05F, r * 1.6F, -spin * 1.7F, argb(0xFF7AF0, 0.5F * fade));
-				sphere(glow, m, x, y, z, r * 1.25F, argb(c, 0.18F * fade));
+				if (!dev.enderskills.client.fx.OriginalFx.active()) { // with the original style the effect draws it
+					dev.enderskills.client.fx.BlackHoleFx.draw(glow, buffers.getBuffer(RenderTypes.debugQuads()), m, x, y, z,
+							Math.max(s.h(), s.r() / 0.3), now, Math.max(0.2F, fade), Math.min(1F, (float) (now - s.start()) / 10F));
+				}
 			}
 			case Shapes.CLOUD -> {
 				RandomSource rnd = RandomSource.create((long) (s.pos().x * 31 + s.pos().z * 17));

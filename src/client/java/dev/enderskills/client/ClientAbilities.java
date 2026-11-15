@@ -36,6 +36,7 @@ public final class ClientAbilities {
 			InputConstants.KEY_B, InputConstants.KEY_N, InputConstants.KEY_M, InputConstants.UNKNOWN.getValue(),
 			InputConstants.UNKNOWN.getValue(), InputConstants.UNKNOWN.getValue()};
 	private static KeyMapping dashKey;
+	private static KeyMapping warpKey;
 	private static KeyMapping portalMenuKey;
 	private static KeyMapping shadowMenuKey;
 	private static KeyMapping prevGroup;
@@ -91,6 +92,8 @@ public final class ClientAbilities {
 				InputConstants.KEY_RIGHT, CATEGORY));
 		dashKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.enderskills.dash", InputConstants.Type.KEYSYM,
 				InputConstants.KEY_LALT, CATEGORY));
+		warpKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.enderskills.warp", InputConstants.Type.KEYSYM,
+				InputConstants.KEY_RALT, CATEGORY));
 		// the menus have a key of their own too (no Shift needed), unbound until you pick one
 		portalMenuKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.enderskills.portal_menu", InputConstants.Type.KEYSYM,
 				InputConstants.UNKNOWN.getValue(), CATEGORY));
@@ -207,6 +210,40 @@ public final class ClientAbilities {
 		return i == 0 ? Long.toString(Math.round(v)) : String.format(java.util.Locale.ROOT, "%.1f%s", v, suffix[i]);
 	}
 
+	/** Fires on a double tap of its key (or on every press when double tap is off). */
+	private static final class Tap {
+		boolean wasDown;
+		int timer;
+
+		boolean fired(boolean down, boolean doubleTap) {
+			if (timer > 0) {
+				timer--;
+			}
+			boolean fire = false;
+			if (down && !wasDown) {
+				if (!doubleTap || timer > 0) {
+					timer = 0;
+					fire = true;
+				} else {
+					timer = 7;
+				}
+			}
+			wasDown = down;
+			return fire;
+		}
+	}
+
+	private static final Tap DASH_TAP = new Tap();
+	private static final Tap WARP_TAP = new Tap();
+
+	/** How far the dash carries you: from the first to the last level of the ability. */
+	private static double dashDistance(SkillData data) {
+		dev.enderskills.data.EsSettings c = dev.enderskills.data.EsSettings.get();
+		int cap = Math.max(1, Math.min(50, SkillConfigs.maxLevel("dash")));
+		double f = Math.min(1.0, Math.max(0, data.level("dash")) / (double) cap);
+		return Math.max(1.0, c.dashMinBlocks + (c.dashMaxBlocks - c.dashMinBlocks) * f);
+	}
+
 	static void tick(Minecraft client) {
 		LocalPlayer player = client.player;
 		if (player == null || client.isPaused()) {
@@ -285,29 +322,20 @@ public final class ClientAbilities {
 		}
 
 		// Dash / Warp: double tap the key, with W/A/S/D for the direction
-		boolean dashDown = free && dashKey.isDown();
-		if (dashTapTimer > 0) {
-			dashTapTimer--;
+		boolean doubleTap = dev.enderskills.data.EsSettings.get().dashDoubleTap;
+		if (DASH_TAP.fired(free && dashKey.isDown(), doubleTap) && ready(data, "dash")) {
+			// Dash (left Alt): a fast run in the direction you are moving, to get out of danger
+			Vec3 dir = moveDirection(client, player);
+			dashTicks = 5;
+			dashVelocity = dir.scale(dashDistance(data) / 5.0);
+			COOLDOWNS.put("dash", (int) value(data, "dash", "COOLDOWN"));
+			send("dash", dir.x, dir.z);
 		}
-		if (dashDown && !dashWasDown) {
-			if (dashTapTimer > 0) {
-				dashTapTimer = 0;
-				Vec3 dir = moveDirection(client, player);
-				if (ready(data, "dash")) {
-					double range = value(data, "dash", "RANGE");
-					dashTicks = 5;
-					dashVelocity = dir.scale(range / 5.0);
-					COOLDOWNS.put("dash", (int) value(data, "dash", "COOLDOWN"));
-					send("dash", dir.x, dir.z);
-				} else if (ready(data, "warp")) {
-					COOLDOWNS.put("warp", 5);
-					send("warp", dir.x, dir.z);
-				}
-			} else {
-				dashTapTimer = 7;
-			}
+		if (WARP_TAP.fired(free && warpKey.isDown(), doubleTap) && ready(data, "warp")) {
+			// Warp (right Alt): a short teleport through walls to where you look (the server does it)
+			COOLDOWNS.put("warp", 5);
+			send("warp", 0, 0);
 		}
-		dashWasDown = dashDown;
 		if (dashTicks > 0) {
 			dashTicks--;
 			Vec3 v = player.getDeltaMovement();

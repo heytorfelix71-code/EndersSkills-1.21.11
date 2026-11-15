@@ -44,7 +44,15 @@ public final class AttributeEffects {
 				modifier(player, "swim_speed") * Math.max(0.0, dev.enderskills.data.EsSettings.get().swimEfficiencyScale), AttributeModifier.Operation.ADD_VALUE);
 		// more air under water: the vanilla oxygen bonus (Respiration), growing with the level
 		set(player, Attributes.OXYGEN_BONUS, "swim_breath", swimBreath(player), AttributeModifier.Operation.ADD_VALUE);
-		set(player, Attributes.ATTACK_DAMAGE, "damage", modifier(player, "damage"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+		// falls: the game's own attributes (they cannot be overridden by another mod): less damage, and a longer safe fall
+		// that follows how high you can jump
+		double fall = Math.min(1.0, Math.max(0.0, modifier(player, "fall_resistance")));
+		set(player, Attributes.FALL_DAMAGE_MULTIPLIER, "fall_resistance", -fall, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+		set(player, Attributes.SAFE_FALL_DISTANCE, "fall_safe",
+				Math.max(0.0, modifier(player, "jump_height")) + fall * Math.max(0.0, dev.enderskills.data.EsSettings.get().fallSafeBonus),
+				AttributeModifier.Operation.ADD_VALUE);
+		set(player, Attributes.ATTACK_DAMAGE, "damage", modifier(player, "damage") * Math.max(0.0, dev.enderskills.data.EsSettings.get().damagePassivePower),
+				AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 		set(player, Attributes.ATTACK_SPEED, "attack_speed", modifier(player, "attack_speed") * Math.max(0.0, dev.enderskills.data.EsSettings.get().attackSpeedPower),
 				AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 		set(player, Attributes.ATTACK_KNOCKBACK, "knockback", modifier(player, "knockback"), AttributeModifier.Operation.ADD_VALUE);
@@ -100,6 +108,55 @@ public final class AttributeEffects {
 				&& !SkillConfigs.disabled("swim_speed");
 	}
 
+	/** Critical chance of a player: the passive times its power, at most 100%. */
+	public static double critChance(Player player) {
+		return Math.min(1.0, modifier(player, "critical_chance") * Math.max(0.0, dev.enderskills.data.EsSettings.get().critChancePower));
+	}
+
+	private static LivingEntity seenVictim;
+
+	/** True when the damage mixin saw the hit that just finished (so it was already modified). */
+	public static boolean consumeSeen(LivingEntity victim) {
+		boolean seen = seenVictim == victim;
+		if (seen) {
+			seenVictim = null;
+		}
+		return seen;
+	}
+
+	/**
+	 * The second way, for the hits the damage mixin did not modify (another mod can take that code path): the critical hit
+	 * is added after the hit, and the resistances give back part of the damage.
+	 */
+	public static void afterHit(LivingEntity victim, DamageSource source, float taken) {
+		if (taken <= 0 || source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || AbilityManager.skillDamage) {
+			return;
+		}
+		if (source.getEntity() instanceof ServerPlayer attacker && source.getDirectEntity() == attacker && attacker != victim) {
+			double crit = critChance(attacker);
+			if (crit > 0 && attacker.getRandom().nextDouble() < crit) {
+				critFeedback(attacker, victim);
+				AbilityManager.damage(attacker, victim, (float) (taken * (Math.max(1.0, dev.enderskills.data.EsSettings.get().critMultiplier) - 1.0)));
+			}
+		}
+		if (victim instanceof ServerPlayer player && player.isAlive() && !source.is(DamageTypeTags.IS_FALL)) {
+			double factor = 1.0 - clamp(modifier(player, "damage_resistance"));
+			if (source.is(DamageTypeTags.IS_EXPLOSION)) {
+				factor *= 1.0 - clamp(modifier(player, "explosion_resistance"));
+			}
+			if (source.is(DamageTypeTags.IS_FIRE)) {
+				factor *= 1.0 - clamp(modifier(player, "fire_resistance"));
+			}
+			if (source.is(DamageTypeTags.WITCH_RESISTANT_TO)) {
+				factor *= 1.0 - clamp(modifier(player, "magic_resistance"));
+			}
+			float refund = (float) (taken * (1.0 - factor));
+			if (refund > 0) {
+				player.setHealth(Math.min(player.getMaxHealth(), player.getHealth() + refund));
+			}
+		}
+	}
+
 	/** A critical hit you can see, hear and read. */
 	private static void critFeedback(Player attacker, LivingEntity victim) {
 		if (attacker.level() instanceof net.minecraft.server.level.ServerLevel level) {
@@ -151,7 +208,8 @@ public final class AttributeEffects {
 		for (String[] e : plain) {
 			double v = modifier(p, e[0]);
 			if (v > 0) {
-				msg.append(line(e[1], e[0].equals("critical_chance") ? pct(v) + " (x" + dev.enderskills.data.EsSettings.get().critMultiplier + ")" : pct(v)));
+				msg.append(line(e[1], e[0].equals("critical_chance") ? pct(critChance(p)) + " (x" + dev.enderskills.data.EsSettings.get().critMultiplier + ")"
+						: e[0].equals("damage") ? "+" + pct(v * dev.enderskills.data.EsSettings.get().damagePassivePower) : pct(v)));
 			}
 		}
 		EnderSkills.LOGGER.info("Passives of {}: {}", p.getName().getString(), msg.getString().replace('\n', ' '));
@@ -160,6 +218,7 @@ public final class AttributeEffects {
 
 	/** Damage taken by a player (resistances) and dealt by a player in melee (stealth, crits, armor penetration). */
 	public static float modifyDamage(LivingEntity victim, DamageSource source, float amount) {
+		seenVictim = victim; // the mixin runs: the second way below is not needed for this hit
 		if (amount <= 0 || source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
 			return amount;
 		}
@@ -172,7 +231,7 @@ public final class AttributeEffects {
 			if (stealth > 0 && !inSight(victim, attacker)) {
 				amount *= (float) (1.0 + stealth);
 			}
-			double crit = modifier(attacker, "critical_chance");
+			double crit = critChance(attacker);
 			if (crit > 0 && attacker.getRandom().nextDouble() < crit) {
 				amount *= (float) Math.max(1.0, dev.enderskills.data.EsSettings.get().critMultiplier);
 					critFeedback(attacker, victim);
@@ -197,9 +256,7 @@ public final class AttributeEffects {
 			if (source.is(DamageTypeTags.WITCH_RESISTANT_TO)) {
 				amount *= (float) (1.0 - clamp(modifier(player, "magic_resistance")));
 			}
-			if (source.is(DamageTypeTags.IS_FALL)) {
-				amount *= (float) (1.0 - clamp(modifier(player, "fall_resistance")));
-			}
+			// falls are handled by the game's own attributes (see apply)
 		}
 		return amount;
 	}

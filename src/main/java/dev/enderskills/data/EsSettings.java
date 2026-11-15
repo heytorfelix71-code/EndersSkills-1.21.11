@@ -148,20 +148,34 @@ public final class EsSettings {
 	 * The passives of the altar are weak by design (Speed is +10% at its last level, Attack Speed +80%): these multiply what
 	 * the game really applies. 1 = the original numbers.
 	 */
-	public double speedPassivePower = 7.5;
+	public double speedPassivePower = 10.0;
 	/** Extra swimming push of the Swim Speed passive (0.3 = up to 30% faster at the last level). */
 	public double swimSpeedPower = 0.3;
 	/** How much of the water efficiency of the Swim Speed passive is used (1 = swims as fast as you run). */
-	public double swimEfficiencyScale = 0.5;
+	public double swimEfficiencyScale = 0.35;
 	/** Extra air from the Swim Speed passive: at the last level you lose air this many times slower (before the infinite level). */
 	public double swimBreathBonus = 10.0;
 	/** From this Swim Speed level you see clearly under water (0 = never). */
 	public int swimVisionLevel = 20;
 	/** From this Swim Speed level your air never runs out and the bubbles don't even show (0 = never). */
 	public int swimInfiniteAirLevel = 50;
+	/** Fall Resistance also adds this many blocks of safe fall at its last level (on top of the extra jump height). */
+	public double fallSafeBonus = 20.0;
+	/** Dash (left Alt): how far it carries you, from its first to its last level. */
+	public double dashMinBlocks = 5.0;
+	public double dashMaxBlocks = 10.0;
+	/** Warp / Distortion (right Alt): a short teleport through walls to where you look, from its first to its last level. */
+	public double warpMinBlocks = 5.0;
+	public double warpMaxBlocks = 8.0;
+	/** Dash and Warp need two quick taps of their key (off = one press). */
+	public boolean dashDoubleTap = true;
 	public double attackSpeedPower = 2.0;
 	/** Damage multiplier of a critical hit (Critical Chance passive). */
 	public double critMultiplier = 2.0;
+	/** Multiplies the Damage passive (+100% at level 50 is a fist of 2 damage: a chicken needs two hits). */
+	public double damagePassivePower = 4.0;
+	/** Multiplies the Critical Chance passive (40% at its last level becomes 80%). */
+	public double critChancePower = 2.0;
 	/** Tells you in the chat, once after you join, what your passives really do. */
 	public boolean passiveReport = true;
 	/** Black Hole: extra radius at the top level, in blocks (0 to 1000); it grows with the level. */
@@ -441,6 +455,13 @@ public final class EsSettings {
 							read.unstableReach = fresh.unstableReach;
 							read.unstableDimensionChance = fresh.unstableDimensionChance; // 10%
 							read.balanceVersion = 5;
+						}
+						if (read.balanceVersion < 6) {
+							// 1.20.0: the Speed passive doubles you at its last level (it adds up with the Monk), calmer water
+							EsSettings fresh = new EsSettings();
+							read.speedPassivePower = fresh.speedPassivePower;
+							read.swimEfficiencyScale = fresh.swimEfficiencyScale;
+							read.balanceVersion = 6;
 						}
 						instance = read;
 					}

@@ -50,14 +50,25 @@ public class PortalScreen extends Screen {
 		super(Component.translatable("enderskills.portals.title"));
 	}
 
-	/** Opens the menu and asks the server for the list. */
+	/** What the server sent last: the menu opens at once with it and updates when the news arrives. */
+	private static EsNetwork.PortalList cache;
+
+	/** Opens the menu at once (no waiting for the server) and asks for a fresh list in the background. */
 	static void open() {
-		Minecraft.getInstance().setScreen(new PortalScreen());
+		PortalScreen s = new PortalScreen();
+		if (cache != null) {
+			s.pairs = cache.pairs();
+			s.pairDims = cache.pairDims();
+			s.dims = cache.dims();
+			s.waiting = cache.waiting();
+		}
+		Minecraft.getInstance().setScreen(s);
 		send(PortalAction.LIST, 0, 0, 0, 0, 0, "");
 	}
 
-	/** The server's list arrived (after opening and after every change). */
+	/** The server's list arrived (after opening and after every change, even with the menu closed). */
 	public static void receive(EsNetwork.PortalList list) {
+		cache = list;
 		if (Minecraft.getInstance().screen instanceof PortalScreen s) {
 			s.pairs = list.pairs();
 			s.pairDims = list.pairDims();

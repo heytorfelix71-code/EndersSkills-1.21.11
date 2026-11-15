@@ -126,6 +126,11 @@ public final class OriginalFx {
 		return Math.abs(e.getDeltaMovement().y) < 0.2;
 	}
 
+	/** The original-style effects are on (they draw the Black Hole). */
+	public static boolean active() {
+		return enabled();
+	}
+
 	private static boolean enabled() {
 		return EsSettings.get().vfxStyle != EsSettings.VfxStyle.CURRENT;
 	}
@@ -767,6 +772,7 @@ public final class OriginalFx {
 		Vec3 cam = camera.position();
 		Matrix4f m = new Matrix4f();
 		double time = clock + partial;
+		buffers.getBuffer(RenderTypes.debugQuads()); // first: black shapes are replayed before the glowing ones
 
 		for (Fx e : EFFECTS) {
 			draw(mc.level, buffers, m, camera, cam, e, partial, time);
@@ -816,24 +822,8 @@ public final class OriginalFx {
 					return; // only where it lands (the cast event sits on the caster)
 				}
 				Vec3 c = e.pos.add(0, 1, 0).subtract(cam);
-				double core = Math.max(0.8, r * 0.3) * (1 + 0.04 * Math.sin(time * 0.3)) * Math.min(1F, (e.age + partial) / 10F);
-				int tint = FxDraw.argb(color(e.skill, VOID), 0.9F * f);
-				VertexConsumer arms = buffers.getBuffer(FxDraw.universe());
-				for (int arm = 0; arm < 3; arm++) {
-					int pts = 14;
-					Vec3[] p = new Vec3[pts];
-					double[] rad = new double[pts];
-					for (int i = 0; i < pts; i++) {
-						double t = i / (double) (pts - 1);
-						double dist = core * 0.8 + (r * 0.95 - core * 0.8) * (1 - t);
-						double ang = arm * Math.PI * 2 / 3 - time * 0.12 + (1 - t) * 2.6;
-						p[i] = c.add(Math.cos(ang) * dist, Math.sin(ang * 2 + arm) * 0.15 * (1 - t), Math.sin(ang) * dist);
-						rad[i] = 0.025 + core * 0.55 * t * t;
-					}
-					FxDraw.tube(arms, m, p, rad, tint, 10);
-				}
-				// the core: a ball of purple, starry space (like the gas cloud)
-				FxDraw.sphere(buffers.getBuffer(FxDraw.universe()), m, c.x, c.y, c.z, core, FxDraw.argb(color(e.skill, VOID), 0.97F * f), 16);
+				BlackHoleFx.draw(buffers.getBuffer(RenderTypes.lightning()), buffers.getBuffer(RenderTypes.debugQuads()), m, c.x, c.y, c.z,
+						r, time, f, (float) Math.min(1F, (e.age + partial) / 10F));
 			}
 			case "gas_cloud" -> {
 				if (e.phase == CAST) {
