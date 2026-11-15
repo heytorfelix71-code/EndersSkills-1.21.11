@@ -55,6 +55,13 @@ public final class EnderSkills implements ModInitializer {
 			Progression.forget(handler.getPlayer());
 			dev.enderskills.logic.AbilityManager.forget(handler.getPlayer());
 		});
+		// Black Hole blocks that flew in the hole while their chunk got unloaded (you went far away) come back from the save floating
+		// and still; fresh ones are not touched (they get their no-gravity flag after they are added)
+		net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> {
+			if (entity instanceof net.minecraft.world.entity.item.FallingBlockEntity fb && fb.isNoGravity()) {
+				dev.enderskills.logic.OffenseAbilities.strayHoleBlock(fb);
+			}
+		});
 		net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK.register(srv -> dev.enderskills.logic.Vfx.quietly(() -> dev.enderskills.logic.AbilityManager.tick(srv)));
 		net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) ->
 				dev.enderskills.logic.DefenseAbilities.allowDamage(entity, source) && dev.enderskills.logic.HurtTimer.allow(entity, source, amount));

@@ -406,6 +406,12 @@ public final class EsConfigScreen {
 				g.option(num("black_hole_top_bonus", def.blackHoleTopBonus, 0, 1000, () -> c.blackHoleTopBonus, v -> c.blackHoleTopBonus = v));
 				g.option(num("black_hole_block_radius", def.blackHoleMaxBlockRadius, 2, 1000, () -> c.blackHoleMaxBlockRadius, v -> c.blackHoleMaxBlockRadius = v));
 				g.option(num("black_hole_suction", def.blackHoleSuctionSpeed, 0.1, 10, () -> c.blackHoleSuctionSpeed, v -> c.blackHoleSuctionSpeed = v));
+				g.option(Option.<EsSettings.HoleBlocks>createBuilder().name(t("black_hole_leftover")).description(d("black_hole_leftover"))
+						.binding(def.blackHoleLeftover, () -> c.blackHoleLeftover, v -> c.blackHoleLeftover = v)
+						.controller(o -> dev.isxander.yacl3.api.controller.EnumControllerBuilder.create(o).enumClass(EsSettings.HoleBlocks.class)
+								.formatValue(v -> t("black_hole_leftover." + v.name().toLowerCase())))
+						.build());
+				g.option(num("black_hole_leftover_seconds", def.blackHoleLeftoverSeconds, 0, 60, () -> c.blackHoleLeftoverSeconds, v -> c.blackHoleLeftoverSeconds = v));
 				g.option(integer("black_hole_depth", def.blackHoleCraterDepth, 3, 100, () -> c.blackHoleCraterDepth, v -> c.blackHoleCraterDepth = v));
 				g.option(num("black_hole_damage_second", def.blackHoleDamagePerSecond, 0, 100, () -> c.blackHoleDamagePerSecond, v -> c.blackHoleDamagePerSecond = v));
 			}

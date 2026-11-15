@@ -897,8 +897,35 @@ public final class OffenseAbilities {
 
 	// ------------------------------------------------------------------ tick
 
+	/** Black Hole blocks found floating after a long absence: {entity, tick they act}. */
+	private static final List<Object[]> STRAY = new ArrayList<>();
+
+	/** A flying block of a Black Hole loaded from the save (its hole is long gone): it vanishes or falls after a moment. */
+	public static void strayHoleBlock(net.minecraft.world.entity.item.FallingBlockEntity fb) {
+		STRAY.add(new Object[] {fb, now + (int) (20 * Math.max(0.0, dev.enderskills.data.EsSettings.get().blackHoleLeftoverSeconds))});
+	}
+
 	static void tick(int tick) {
 		now = tick;
+		if (!STRAY.isEmpty()) {
+			for (Iterator<Object[]> it = STRAY.iterator(); it.hasNext();) {
+				Object[] s = it.next();
+				net.minecraft.world.entity.item.FallingBlockEntity fb = (net.minecraft.world.entity.item.FallingBlockEntity) s[0];
+				if (!fb.isAlive()) {
+					it.remove();
+				} else if (now >= (Integer) s[1]) {
+					if (dev.enderskills.data.EsSettings.get().blackHoleLeftover == dev.enderskills.data.EsSettings.HoleBlocks.DROP) {
+						fb.setNoGravity(false);
+						fb.noPhysics = false;
+						fb.setDeltaMovement(fb.getDeltaMovement().scale(0.2));
+						fb.hurtMarked = true;
+					} else {
+						fb.discard();
+					}
+					it.remove();
+				}
+			}
+		}
 		BOLTS.addAll(NEW_BOLTS);
 		NEW_BOLTS.clear();
 		for (Iterator<Bolt> it = BOLTS.iterator(); it.hasNext();) {

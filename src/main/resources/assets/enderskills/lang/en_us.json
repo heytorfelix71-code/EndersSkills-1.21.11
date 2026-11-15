@@ -756,5 +756,11 @@
   "enderskills.config.black_hole_max_blocks": "Crater size at the top level (blocks)",
   "enderskills.config.black_hole_max_blocks.desc": "How many blocks the Black Hole crater takes in all at the last level (about 10-20% of a mountain at 40000). It grows with the level squared. Bigger values can lag.",
   "enderskills.portals.unstable": "Unstable portal  %s [%s]  (%s)",
-  "enderskills.portal.no_ground": "Not there: no room, or no ground within 32 blocks"
+  "enderskills.portal.no_ground": "Not there: no room, or no ground within 32 blocks",
+  "enderskills.config.black_hole_leftover": "Floating hole blocks",
+  "enderskills.config.black_hole_leftover.desc": "What happens to Black Hole blocks left floating in the air (after you went far away and came back): they vanish, or fall and drop.",
+  "enderskills.config.black_hole_leftover.vanish": "Vanish",
+  "enderskills.config.black_hole_leftover.drop": "Fall and drop",
+  "enderskills.config.black_hole_leftover_seconds": "Wait before they act (s)",
+  "enderskills.config.black_hole_leftover_seconds.desc": "Seconds those blocks wait, counted from when they load again, before vanishing or falling."
 }

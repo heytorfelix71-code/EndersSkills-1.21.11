@@ -313,6 +313,12 @@ public final class EsSettings {
 	public double blackHoleSuctionSpeed = 2.0;
 	/** Black Hole: how deep the crater goes at the top level, in blocks (it grows with the level from 3). */
 	public int blackHoleCraterDepth = 12;
+	/** What happens to Black Hole blocks left floating (you went far away and came back): they vanish or fall and drop. */
+	public enum HoleBlocks { VANISH, DROP }
+
+	public HoleBlocks blackHoleLeftover = HoleBlocks.VANISH;
+	/** Seconds those floating blocks wait (counted from when they load again) before vanishing / falling. */
+	public double blackHoleLeftoverSeconds = 1.5;
 	/** Size of the Blood Pool (1 = original); the blood follows the ground. */
 	public double bloodPoolSize = 1.4;
 
