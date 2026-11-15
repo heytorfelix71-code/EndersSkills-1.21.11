@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "dev.enderskills.mixin.client",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "enderskills.client.refmap.json",
+  "client": [
+    "LivingEntityRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

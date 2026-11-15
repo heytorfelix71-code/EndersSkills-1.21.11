@@ -87,6 +87,8 @@ public final class EsConfigScreen {
 						.controller(o -> dev.isxander.yacl3.api.controller.EnumControllerBuilder.create(o).enumClass(EsSettings.ScreenBackground.class)
 								.formatValue(v -> t("altar_background." + v.name().toLowerCase())))
 						.build())
+				.option(bool("invis_name", def.invisibilityHidesName, () -> c.invisibilityHidesName, v -> c.invisibilityHidesName = v))
+				.option(bool("invis_dust", def.invisibilityNoSprintDust, () -> c.invisibilityNoSprintDust, v -> c.invisibilityNoSprintDust = v))
 				.option(bool("status_overlay", def.statusOverlay, () -> c.statusOverlay, v -> c.statusOverlay = v))
 				.option(bool("hud_visible", def.hudVisible, () -> c.hudVisible, v -> c.hudVisible = v))
 				.option(integer("hud_x", def.hudX, 0, 4000, () -> c.hudX, v -> c.hudX = v))

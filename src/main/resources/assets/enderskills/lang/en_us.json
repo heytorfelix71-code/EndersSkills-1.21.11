@@ -495,5 +495,9 @@
   "enderskills.config.earth_replace_small": "Move small blocks out of the way",
   "enderskills.config.earth_replace_small.desc": "Slabs, carpets, grass, flowers, snow... in the way are removed and put back when the wall goes away. Off = the wall leaves a gap there.",
   "enderskills.config.earth_fallback": "Fallback block",
-  "enderskills.config.earth_fallback.desc": "Block id used when the ground can't be copied, for example minecraft:stone_bricks."
+  "enderskills.config.earth_fallback.desc": "Block id used when the ground can't be copied, for example minecraft:stone_bricks.",
+  "enderskills.config.invis_name": "Invisibility hides your name",
+  "enderskills.config.invis_name.desc": "While you are invisible (Invisibility ability or potion) no name tag is drawn above you. Name tags drawn by other mods are not affected.",
+  "enderskills.config.invis_dust": "Invisibility: no running dust",
+  "enderskills.config.invis_dust.desc": "While you are invisible, sprinting kicks up no dust particles."
 }

@@ -495,5 +495,9 @@
   "enderskills.config.earth_replace_small": "Tirar blocos pequenos do caminho",
   "enderskills.config.earth_replace_small.desc": "Lajes, tapetes, grama, flores, neve... no caminho são removidos e voltam quando a parede some. Desligado = a parede deixa um buraco ali.",
   "enderskills.config.earth_fallback": "Bloco reserva",
-  "enderskills.config.earth_fallback.desc": "Id do bloco usado quando o chão não pode ser copiado, por exemplo minecraft:stone_bricks."
+  "enderskills.config.earth_fallback.desc": "Id do bloco usado quando o chão não pode ser copiado, por exemplo minecraft:stone_bricks.",
+  "enderskills.config.invis_name": "Invisibilidade esconde o nome",
+  "enderskills.config.invis_name.desc": "Enquanto você está invisível (habilidade Invisibilidade ou poção), o nome não aparece acima de você. Nomes desenhados por outros mods não são afetados.",
+  "enderskills.config.invis_dust": "Invisibilidade: sem poeira ao correr",
+  "enderskills.config.invis_dust.desc": "Enquanto você está invisível, correr não levanta partículas de poeira."
 }

@@ -127,6 +127,10 @@ public final class EsSettings {
 	/** Remove slabs, carpets, grass, flowers... in the way and put them back afterwards. */
 	public boolean earthReplaceSmall = true;
 
+	/** Invisibility: no name tag above your head and no dust while sprinting. */
+	public boolean invisibilityHidesName = true;
+	public boolean invisibilityNoSprintDust = true;
+
 	/** Teleport only when you aim at a block (never into the sky). */
 	public boolean teleportNoSky = true;
 
