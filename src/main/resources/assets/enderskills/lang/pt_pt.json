@@ -301,9 +301,9 @@
   "enderskills.config.group.hurt_timer": "Hurt Timer (invencibilidade depois de um golpe)",
   "enderskills.config.group.hurt_timer.desc": "Hurt Timer",
   "enderskills.config.ability_damage_multiplier": "Poder das habilidades",
-  "enderskills.config.ability_damage_multiplier.desc": "Multiplica o dano e a cura de TODAS as habilidades, em qualquer nível. 2 = duas vezes mais forte que o mod original.",
+  "enderskills.config.ability_damage_multiplier.desc": "Multiplica o dano e a cura de TODAS as habilidades, em qualquer nível. 1 = igual ao mod original.",
   "enderskills.config.max_level_overdrive": "Sobrecarga no nível máximo",
-  "enderskills.config.max_level_overdrive.desc": "Poder extra que cresce com o nível da habilidade. No nível máximo ela fica (1 + este valor) vezes mais forte. 30 = 31x mais forte no topo; 0 = sem poder extra.",
+  "enderskills.config.max_level_overdrive.desc": "Poder extra que cresce com o nível da habilidade. No nível máximo ela fica (1 + este valor) vezes mais forte. 2 = 3x mais forte no topo; 0 = sem poder extra.",
   "enderskills.config.overdrive_curve": "Curva da sobrecarga",
   "enderskills.config.overdrive_curve.desc": "Quando a sobrecarga aparece. 1 = cresce igual a cada nível. 3 = quase nada nos primeiros níveis e enorme perto do topo (equilibrado no começo, absurdo no fim).",
   "enderskills.config.tree_power.desc": "Multiplicador extra só para as habilidades desta árvore, somado ao poder geral. 1 = normal, 2 = dobro, 0,5 = metade.",
@@ -569,5 +569,9 @@
   "enderskills.config.environment_seconds": "Ambiente: segundos",
   "enderskills.config.environment_seconds.desc": "Quanto tempo o fogo negro e o sangue ficam.",
   "block.enderskills.black_fire": "Fogo Negro",
-  "block.enderskills.blood": "Sangue"
+  "block.enderskills.blood": "Sangue",
+  "enderskills.config.player_damage_multiplier": "Dano contra jogadores",
+  "enderskills.config.player_damage_multiplier.desc": "Multiplica o dano das habilidades em outros jogadores, para um PvP justo (0,4 = 40%).",
+  "enderskills.config.boss_damage_multiplier": "Dano contra chefes",
+  "enderskills.config.boss_damage_multiplier.desc": "Multiplica o dano das habilidades em chefes: Wither, Dragão do Ender, Warden (0,6 = 60%)."
 }

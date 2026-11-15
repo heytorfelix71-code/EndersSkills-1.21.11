@@ -85,13 +85,19 @@ public final class EsSettings {
 	public double durationMultiplier = 1.0;
 	public double rangeMultiplier = 1.0;
 
-	// ---- ability power (meant to be pushed to the extreme)
+	// ---- ability power (balanced for playing with others; raise it for a power fantasy)
 	/** Multiplies the damage and healing of every ability, from level 0. */
-	public double abilityDamageMultiplier = 2.0;
+	public double abilityDamageMultiplier = 1.0;
 	/** Extra power at the maximum level: a skill at its top level is (1 + this) times stronger than at level 0. */
-	public double maxLevelOverdrive = 30.0;
+	public double maxLevelOverdrive = 2.0;
 	/** How late the overdrive kicks in (1 = steady, 3 = only near the top level). */
-	public double overdriveCurve = 3.0;
+	public double overdriveCurve = 2.0;
+	/** Ability damage against other players (PvP fairness). */
+	public double playerDamageMultiplier = 0.4;
+	/** Ability damage against bosses (Wither, Ender Dragon, Warden...). */
+	public double bossDamageMultiplier = 0.6;
+	/** Settings file version: older files get the new balance once. */
+	public int balanceVersion = 0; // missing in old files (Gson keeps the field default), so 0 = migrate
 	/** Extra multiplier for each skill tree, keyed "class.element" (defense.light, offense.void ...). */
 	public java.util.Map<String, Double> groupPower = defaultGroups();
 
@@ -279,6 +285,16 @@ public final class EsSettings {
 				try (Reader r = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
 					EsSettings read = GSON.fromJson(r, EsSettings.class);
 					if (read != null) {
+						if (read.balanceVersion < 2) {
+							// 1.11.0: the old power (62x at level 50) one-shot bosses; move to the fair balance once
+							EsSettings fresh = new EsSettings();
+							read.abilityDamageMultiplier = fresh.abilityDamageMultiplier;
+							read.maxLevelOverdrive = fresh.maxLevelOverdrive;
+							read.overdriveCurve = fresh.overdriveCurve;
+							read.playerDamageMultiplier = fresh.playerDamageMultiplier;
+							read.bossDamageMultiplier = fresh.bossDamageMultiplier;
+							read.balanceVersion = 2;
+						}
 						instance = read;
 					}
 				}

@@ -795,6 +795,18 @@ public final class AbilityManager {
 		if (amount <= 0) {
 			return;
 		}
+		EsSettings cfg = EsSettings.get();
+		if (target instanceof net.minecraft.world.entity.player.Player) {
+			amount *= (float) cfg.playerDamageMultiplier;
+		} else if (target.getType().is(net.fabricmc.fabric.api.tag.convention.v2.ConventionalEntityTypeTags.BOSSES)
+				|| target instanceof net.minecraft.world.entity.boss.wither.WitherBoss
+				|| target instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon
+				|| target instanceof net.minecraft.world.entity.monster.warden.Warden) {
+			amount *= (float) cfg.bossDamageMultiplier;
+		}
+		if (amount <= 0) {
+			return;
+		}
 		skillDamage = true;
 		try {
 			target.hurtServer((ServerLevel) player.level(), player.damageSources().indirectMagic(player, player), amount);

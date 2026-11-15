@@ -301,9 +301,9 @@
   "enderskills.config.group.hurt_timer": "Hurt timer (invulnerability after a hit)",
   "enderskills.config.group.hurt_timer.desc": "Hurt timer",
   "enderskills.config.ability_damage_multiplier": "Ability power",
-  "enderskills.config.ability_damage_multiplier.desc": "Multiplies the damage and healing of EVERY ability, at every level. 2 = twice as strong as the original mod.",
+  "enderskills.config.ability_damage_multiplier.desc": "Multiplies the damage and healing of EVERY ability, at any level. 1 = like the original mod.",
   "enderskills.config.max_level_overdrive": "Max level overdrive",
-  "enderskills.config.max_level_overdrive.desc": "Extra power that grows with the skill level. At the top level a skill is (1 + this) times stronger. 30 = 31x stronger at the top level; 0 = no extra power.",
+  "enderskills.config.max_level_overdrive.desc": "Extra power that grows with the skill level. At the max level it is (1 + this) times stronger. 2 = 3x at the top; 0 = no extra power.",
   "enderskills.config.overdrive_curve": "Overdrive curve",
   "enderskills.config.overdrive_curve.desc": "When the overdrive appears. 1 = grows evenly with every level. 3 = almost nothing in the first levels and huge near the top (balanced early, overwhelming at the end).",
   "enderskills.config.tree_power.desc": "Extra multiplier only for the abilities of this tree, on top of the global power. 1 = normal, 2 = double, 0.5 = half.",
@@ -569,5 +569,9 @@
   "enderskills.config.environment_seconds": "Environment: seconds",
   "enderskills.config.environment_seconds.desc": "How long the black fire and the blood stay.",
   "block.enderskills.black_fire": "Black Fire",
-  "block.enderskills.blood": "Blood"
+  "block.enderskills.blood": "Blood",
+  "enderskills.config.player_damage_multiplier": "Damage against players",
+  "enderskills.config.player_damage_multiplier.desc": "Multiplies ability damage on other players, for fair PvP (0.4 = 40%).",
+  "enderskills.config.boss_damage_multiplier": "Damage against bosses",
+  "enderskills.config.boss_damage_multiplier.desc": "Multiplies ability damage on bosses: Wither, Ender Dragon, Warden (0.6 = 60%)."
 }

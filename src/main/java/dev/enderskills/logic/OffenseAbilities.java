@@ -85,7 +85,8 @@ public final class OffenseAbilities {
 	/** Ability damage: a flat part and a part in percent of the target's max health ("Damage+"). */
 	private static void hit(ServerPlayer p, LivingEntity t, double damage, double truePercent) {
 		Fx.hit(t);
-		AbilityManager.damage(p, t, (float) ((damage + truePercent * t.getMaxHealth()) * AbilityManager.power(p)));
+		// the percent-of-max-health part is not multiplied by the power (it would melt bosses)
+		AbilityManager.damage(p, t, (float) (damage * AbilityManager.power(p) + Math.min(0.25, truePercent) * t.getMaxHealth()));
 	}
 
 	private static void bleed(LivingEntity t, double ticks) {
@@ -103,7 +104,7 @@ public final class OffenseAbilities {
 		if (truePercent > 0) {
 			AbilityManager.status(t, dev.enderskills.registry.ModEffects.BLACK_FLAME, null, (int) Math.max(20, ticks), 0);
 		}
-		DefenseAbilities.dot(p, t, (dot + truePercent * t.getMaxHealth()) * AbilityManager.power(p), (int) ticks);
+		DefenseAbilities.dot(p, t, dot * AbilityManager.power(p) + Math.min(0.25, truePercent) * t.getMaxHealth(), (int) ticks);
 	}
 
 	private static void burn(ServerPlayer p, LivingEntity t, String skill) {

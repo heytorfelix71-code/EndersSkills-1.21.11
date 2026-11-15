@@ -42,6 +42,8 @@ public final class EsConfigScreen {
 						.option(num("ability_damage_multiplier", def.abilityDamageMultiplier, 0, 1_000_000, () -> c.abilityDamageMultiplier, v -> c.abilityDamageMultiplier = v))
 						.option(num("max_level_overdrive", def.maxLevelOverdrive, 0, 1_000_000, () -> c.maxLevelOverdrive, v -> c.maxLevelOverdrive = v))
 						.option(num("overdrive_curve", def.overdriveCurve, 0.1, 10, () -> c.overdriveCurve, v -> c.overdriveCurve = v))
+						.option(num("player_damage_multiplier", def.playerDamageMultiplier, 0, 100, () -> c.playerDamageMultiplier, v -> c.playerDamageMultiplier = v))
+						.option(num("boss_damage_multiplier", def.bossDamageMultiplier, 0, 100, () -> c.bossDamageMultiplier, v -> c.bossDamageMultiplier = v))
 						.option(num("cooldown_multiplier", def.cooldownMultiplier, 0, 1000, () -> c.cooldownMultiplier, v -> c.cooldownMultiplier = v))
 						.option(num("endurance_multiplier", def.enduranceCostMultiplier, 0, 1000, () -> c.enduranceCostMultiplier, v -> c.enduranceCostMultiplier = v))
 						.option(num("duration_multiplier", def.durationMultiplier, 0, 1000, () -> c.durationMultiplier, v -> c.durationMultiplier = v))
