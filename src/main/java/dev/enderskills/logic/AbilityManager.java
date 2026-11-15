@@ -568,9 +568,7 @@ public final class AbilityManager {
 				s.activeUntil.put(skill, now + (int) value(player, skill, "DURATION"));
 				effect(level, player, ParticleTypes.CLOUD, SoundEvents.BREEZE_WIND_CHARGE_BURST.value());
 				Shapes.afterimage(player, skill, (int) value(player, skill, "DURATION"));
-				// a real speed bonus (synced to the client, works with other mods); the camera FOV ignores it
-				AttributeEffects.set(player, Attributes.MOVEMENT_SPEED, "speed_boost", value(player, skill, "SPEED"),
-						AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+				// the speed itself is pushed on the client (ClientAbilities.speedBoost), the step assist is an attribute
 				AttributeEffects.set(player, Attributes.STEP_HEIGHT, "speed_boost_step", EsSettings.get().speedBoostStep,
 						AttributeModifier.Operation.ADD_VALUE);
 			}

@@ -583,5 +583,7 @@
   "enderskills.config.skill_sound_style": "Som",
   "enderskills.config.skill_sound_style.desc": "Som desta habilidade: a configuração geral, Original, Minecraft ou ambos. A árvore Elétrica começa com Minecraft.",
   "enderskills.config.open": "Abrir ›",
-  "enderskills.config.category.passives": "Passivas"
+  "enderskills.config.category.passives": "Passivas",
+  "enderskills.config.speed_boost_power": "Força da velocidade",
+  "enderskills.config.speed_boost_power.desc": "Multiplica o bônus do Impulso de Velocidade: 1 = normal (nível 50 é cerca de 2x mais rápido), 0,5 = metade, 2 = o dobro."
 }

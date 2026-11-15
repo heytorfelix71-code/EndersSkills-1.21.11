@@ -386,7 +386,35 @@ final class ShapeRenderer {
 			last = h;
 		}
 		// black, fading from the head down to the feet; each copy moves and looks like the player right now
-		ghosts(ctx, p, spots, 0x000000, 0.62F, 0.1F, 0.0F, cam, partial, 1.0F);
+		real(ctx, p, spots, 0x000000, 0.6F, 0.1F, cam, partial);
+	}
+
+	/**
+	 * Copies drawn by the game's own player renderer (so EMF / Fresh Animations / Smooth Player Animations animate them:
+	 * walking, looking, hitting), recolored with one see-through color.
+	 */
+	private static void real(WorldRenderContext ctx, AbstractClientPlayer player, List<double[]> spots, int rgb, float alphaStart,
+			float alphaStep, Vec3 cam, float partial) {
+		Minecraft mc = Minecraft.getInstance();
+		net.minecraft.client.renderer.entity.EntityRenderDispatcher dispatcher = mc.getEntityRenderDispatcher();
+		net.minecraft.client.renderer.state.CameraRenderState camera = ctx.worldState().cameraRenderState;
+		float alpha = alphaStart;
+		for (double[] s : spots) {
+			if (alpha <= 0.02F) {
+				break;
+			}
+			net.minecraft.client.renderer.entity.state.EntityRenderState state = dispatcher.extractEntity(player, partial);
+			state.nameTag = null;
+			state.shadowPieces.clear();
+			state.shadowRadius = 0F;
+			state.outlineColor = 0;
+			if (state instanceof net.minecraft.client.renderer.entity.state.LivingEntityRenderState living) {
+				living.isInvisibleToPlayer = false;
+			}
+			dispatcher.submit(state, camera, s[0] - cam.x, s[1] - cam.y, s[2] - cam.z, new PoseStack(),
+					new TintCollector(ctx.commandQueue(), argb(rgb, alpha)));
+			alpha -= alphaStep;
+		}
 	}
 
 	/** Shadow clone at the side, rune rings, red look. */
@@ -402,7 +430,7 @@ final class ShapeRenderer {
 			double fx2 = -Math.sin(yaw);
 			double fz2 = Math.cos(yaw);
 			List<double[]> spot = List.of(new double[] {at.x + rx * 1.1 - fx2 * 0.3, at.y, at.z + rz * 1.1 - fz2 * 0.3, p.yBodyRot});
-			ghosts(ctx, p, spot, 0x000000, 0.94F, 0F, 0.55F, cam, partial, 1.0F);
+			real(ctx, p, spot, 0x000000, 0.9F, 0F, cam, partial);
 		}
 		long[] red = fx.get(Shapes.RED);
 		if (red != null && !firstPerson) {
@@ -433,6 +461,6 @@ final class ShapeRenderer {
 			spots.add(new double[] {at.x + RANDOM.nextGaussian() * 0.08, at.y + RANDOM.nextGaussian() * 0.04,
 					at.z + RANDOM.nextGaussian() * 0.08, yaw + (float) RANDOM.nextGaussian() * 4});
 		}
-		ghosts(ctx, p, spots, color, 0.32F, 0.04F, cam, partial);
+		real(ctx, p, spots, color, 0.32F, 0.04F, cam, partial);
 	}
 }

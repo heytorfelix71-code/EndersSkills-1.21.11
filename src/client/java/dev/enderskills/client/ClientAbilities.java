@@ -130,6 +130,33 @@ public final class ClientAbilities {
 
 	// ------------------------------------------------------------------ input
 
+	/**
+	 * Speed Boost: the walk is pushed on the client (movement is the client's), so it always works with any other mod.
+	 * The push keeps the top speed at (1 + SPEED x setting) times the normal one (level 50 = about 2x): fast but controllable.
+	 */
+	private static void speedBoost(LocalPlayer player, SkillData data) {
+		if (!ACTIVE.containsKey("speed_boost") || player.getAbilities().flying || player.isPassenger() || player.isInWater()
+				|| player.isFallFlying()) {
+			return;
+		}
+		net.minecraft.world.phys.Vec2 move = player.input.getMoveVector();
+		if (move.lengthSquared() < 1.0E-4) {
+			return;
+		}
+		double bonus = Math.max(0.0, value(data, "speed_boost", "SPEED") * dev.enderskills.data.EsSettings.get().speedBoostPower);
+		if (bonus <= 0) {
+			return;
+		}
+		double friction = 0.91;
+		if (player.onGround()) {
+			net.minecraft.core.BlockPos below = player.getBlockPosBelowThatAffectsMyMovement();
+			friction *= player.level().getBlockState(below).getBlock().getFriction();
+		}
+		double k = (1.0 - (1.0 - friction) / (1.0 + bonus)) / friction;
+		Vec3 dm = player.getDeltaMovement();
+		player.setDeltaMovement(dm.x * k, dm.y, dm.z * k);
+	}
+
 	static void tick(Minecraft client) {
 		LocalPlayer player = client.player;
 		if (player == null || client.isPaused()) {
@@ -249,6 +276,8 @@ public final class ClientAbilities {
 			}
 		}
 		jumpWasDown = jumpDown;
+		dev.enderskills.client.fx.OriginalFx.localHovering = hovering && ACTIVE.containsKey("hover");
+		speedBoost(player, data);
 		if (hovering && ACTIVE.containsKey("hover")) {
 			Vec3 v = player.getDeltaMovement();
 			if (v.y < 0) {

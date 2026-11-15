@@ -326,7 +326,10 @@ public final class EsConfigScreen {
 				g.option(num("portal_aim_range", def.portalAimRange, 8, 1024, () -> c.portalAimRange, v -> c.portalAimRange = v));
 				g.option(bool("coordinates", def.coordinateTargeting, () -> c.coordinateTargeting, v -> c.coordinateTargeting = v));
 			}
-			case "speed_boost" -> g.option(num("speed_boost_step", def.speedBoostStep, 0, 4, () -> c.speedBoostStep, v -> c.speedBoostStep = v));
+			case "speed_boost" -> {
+				g.option(num("speed_boost_power", def.speedBoostPower, 0, 5, () -> c.speedBoostPower, v -> c.speedBoostPower = v));
+				g.option(num("speed_boost_step", def.speedBoostStep, 0, 4, () -> c.speedBoostStep, v -> c.speedBoostStep = v));
+			}
 			case "fog" -> {
 				g.option(num("fog_radius", def.fogRadius, 1, 64, () -> c.fogRadius, v -> c.fogRadius = v));
 				g.option(integer("fog_toggle_level", def.fogToggleLevel, 0, 1000, () -> c.fogToggleLevel, v -> c.fogToggleLevel = v));

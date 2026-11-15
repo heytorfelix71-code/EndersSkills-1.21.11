@@ -180,6 +180,8 @@ public final class EsSettings {
 	public int fogMaxSeconds = 60;
 	/** Extra step height while Speed Boost is on (1.4 = walks up 2 blocks). */
 	public double speedBoostStep = 1.4;
+	/** Strength of Speed Boost: 1 = the skill's speed (level 50 = about 2x as fast), 0.5 = half the bonus. */
+	public double speedBoostPower = 1.0;
 
 	/** Passive abilities (Shadow, Bleed, Life Steal, Fire Spirit): switched with a key, always on, or always on with a single tree. */
 	public enum PassiveMode { BUTTON, ALWAYS, SINGLE_TREE }

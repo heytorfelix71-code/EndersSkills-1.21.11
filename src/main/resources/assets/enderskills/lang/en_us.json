@@ -583,5 +583,7 @@
   "enderskills.config.skill_sound_style": "Sound",
   "enderskills.config.skill_sound_style.desc": "Sound of this ability: the general setting, Original, Minecraft or both. The Electric tree starts with Minecraft.",
   "enderskills.config.open": "Open ›",
-  "enderskills.config.category.passives": "Passives"
+  "enderskills.config.category.passives": "Passives",
+  "enderskills.config.speed_boost_power": "Speed strength",
+  "enderskills.config.speed_boost_power.desc": "Multiplies the Speed Boost bonus: 1 = normal (level 50 is about twice as fast), 0.5 = half, 2 = double."
 }

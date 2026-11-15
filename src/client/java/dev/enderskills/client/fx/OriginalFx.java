@@ -62,6 +62,7 @@ public final class OriginalFx {
 		int lastSeen;
 		boolean ended;
 		long seed;
+		net.minecraft.world.entity.monster.zombie.Zombie creature;
 		final ArrayDeque<Vec3> trail = new ArrayDeque<>();
 	}
 
@@ -108,6 +109,19 @@ public final class OriginalFx {
 	private static int clock;
 
 	private OriginalFx() {
+	}
+
+	/** Set by the ability keys: the local player is holding jump to hover right now. */
+	public static boolean localHovering;
+
+	private static boolean hovering(Entity e) {
+		if (e == null || e.onGround()) {
+			return false;
+		}
+		if (e == Minecraft.getInstance().player) {
+			return localHovering;
+		}
+		return Math.abs(e.getDeltaMovement().y) < 0.2;
 	}
 
 	private static boolean enabled() {
@@ -578,7 +592,7 @@ public final class OriginalFx {
 				}
 			}
 			case "hover" -> {
-				if (R.nextInt(2) == 0) {
+				if (hovering(caster) && R.nextInt(2) == 0) {
 					vanilla(level, ParticleTypes.PORTAL, c.x + rr(), c.y, c.z + rr(), rr() * 0.5, -0.3, rr() * 0.5);
 				}
 			}
@@ -684,6 +698,9 @@ public final class OriginalFx {
 
 		for (Fx e : EFFECTS) {
 			draw(mc.level, buffers, m, camera, cam, e, partial, time);
+			if (e.skill.equals("grasp") && e.phase == ZONE) {
+				graspCreature(ctx, mc, e, cam, partial);
+			}
 		}
 		for (Fx b : BOLTS.values()) {
 			drawBolt(buffers, m, cam, b, time);
@@ -771,7 +788,10 @@ public final class OriginalFx {
 				// the ball itself is drawn with the bolt
 			}
 			case "hover" -> {
-				// a small platform of end sky under the feet, with a cosmic rim
+				// a small platform of end sky under the feet, with a cosmic rim; only while really hovering
+				if (!hovering(caster)) {
+					return;
+				}
 				Vec3 c = follow.subtract(cam);
 				FxDraw.disc(buffers.getBuffer(FxDraw.universeDark()), m, c.x, c.y - 0.02, c.z, 0.85, FxDraw.argb(0xFFFFFF, f), 24, time * 0.02);
 				FxDraw.disc(buffers.getBuffer(FxDraw.universe()), m, c.x, c.y - 0.04, c.z, 1.05, FxDraw.argb(color(e.skill, VOID), 0.6F * f), 24, -time * 0.03);
@@ -909,6 +929,58 @@ public final class OriginalFx {
 			default -> {
 			}
 		}
+	}
+
+	private static final net.minecraft.resources.Identifier COSMOS = net.minecraft.resources.Identifier.withDefaultNamespace("textures/entity/end_portal.png");
+
+	/**
+	 * Grasp: a purple creature of the cosmos (shaped like a zombie, arms forward) rises out of the ground in the middle of the
+	 * area, holding the mobs around it; drawn by the game's zombie renderer with a starry texture.
+	 */
+	private static void graspCreature(WorldRenderContext ctx, Minecraft mc, Fx e, Vec3 cam, float partial) {
+		if (mc.level == null) {
+			return;
+		}
+		if (e.creature == null) {
+			e.creature = new net.minecraft.world.entity.monster.zombie.Zombie(net.minecraft.world.entity.EntityType.ZOMBIE, mc.level);
+			e.creature.setAggressive(true);
+			e.creature.setNoAi(true);
+		}
+		net.minecraft.world.entity.monster.zombie.Zombie z = e.creature;
+		float age = e.age + partial;
+		// faces the nearest enemy in the area, swaying a little
+		Entity look = null;
+		double best = Double.MAX_VALUE;
+		for (Entity other : mc.level.getEntities((Entity) null, new net.minecraft.world.phys.AABB(e.pos, e.pos).inflate(e.radius + 1),
+				x -> x instanceof net.minecraft.world.entity.LivingEntity && x != mc.player)) {
+			double d = other.distanceToSqr(e.pos);
+			if (d < best) {
+				best = d;
+				look = other;
+			}
+		}
+		float yaw = look == null ? (float) (age * 2) : (float) Math.toDegrees(Math.atan2(-(look.getX() - e.pos.x), look.getZ() - e.pos.z));
+		z.setPos(e.pos.x, e.pos.y, e.pos.z);
+		z.setYRot(yaw);
+		z.yRotO = yaw;
+		z.setYHeadRot(yaw);
+		z.yHeadRotO = yaw;
+		z.yBodyRot = yaw;
+		z.yBodyRotO = yaw;
+		z.tickCount = (int) age;
+		net.minecraft.client.renderer.entity.EntityRenderDispatcher dispatcher = mc.getEntityRenderDispatcher();
+		net.minecraft.client.renderer.entity.state.EntityRenderState state = dispatcher.extractEntity(z, partial);
+		state.nameTag = null;
+		state.shadowPieces.clear();
+		float rise = Math.min(1F, age / 12F);
+		float sink = e.life >= Integer.MAX_VALUE / 2 ? 1F : Math.min(1F, (e.life - age) / 12F);
+		float scale = 1.25F;
+		com.mojang.blaze3d.vertex.PoseStack pose = new com.mojang.blaze3d.vertex.PoseStack();
+		pose.translate(e.pos.x - cam.x, e.pos.y - cam.y - 2.4 * (1 - Math.min(rise, sink)), e.pos.z - cam.z);
+		pose.scale(scale, scale, scale);
+		int tint = FxDraw.argb(color(e.skill, 0xB070FF), 0.92F);
+		dispatcher.submit(state, ctx.worldState().cameraRenderState, 0, 0, 0, pose,
+				new dev.enderskills.client.TintCollector(ctx.commandQueue(), tint, COSMOS));
 	}
 
 	/** Jagged glowing ribbon: a white core and a colored glow, facing the camera. */
