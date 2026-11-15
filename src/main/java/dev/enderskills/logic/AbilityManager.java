@@ -445,6 +445,14 @@ public final class AbilityManager {
 				return;
 			}
 		}
+		if (finite && (action == dev.enderskills.network.EsNetwork.PortalAction.MOVE || action == dev.enderskills.network.EsNetwork.PortalAction.WAIT_AT)) {
+			Vec3 snapped = portalSpot(destLevel, target);
+			if (snapped == null) {
+				player.displayClientMessage(net.minecraft.network.chat.Component.translatable("enderskills.portal.no_ground"), true);
+				return;
+			}
+			target = snapped;
+		}
 		switch (action) {
 			case dev.enderskills.network.EsNetwork.PortalAction.CLOSE -> {
 				if (id <= -2) {
@@ -481,7 +489,11 @@ public final class AbilityManager {
 					return;
 				}
 				double range = scaled(player, "portal", EsSettings.get().portalRangeStart, EsSettings.get().portalRangeMax);
-				Vec3 entrance = player.position().add(player.getViewVector(1.0F).multiply(2, 0, 2));
+				Vec3 entrance = portalSpot(level, player.position().add(player.getViewVector(1.0F).multiply(2, 0, 2)));
+				if (entrance == null) {
+					player.displayClientMessage(net.minecraft.network.chat.Component.translatable("enderskills.portal.no_ground"), true);
+					return;
+				}
 				if (destLevel == level && entrance.distanceTo(target) > range) {
 					tooFar(player, range); // between dimensions there is no distance limit
 					return;
@@ -493,6 +505,39 @@ public final class AbilityManager {
 			}
 			default -> Portals.sync(player);
 		}
+	}
+
+	/**
+	 * Where a portal may stand: never inside blocks (it is lifted out of them) and always on the ground (a spot in the air is
+	 * brought down, up to 32 blocks). Null when there is no room or no ground. Unloaded places are left as they are.
+	 */
+	static Vec3 portalSpot(ServerLevel level, Vec3 spot) {
+		if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(spot))) {
+			return spot;
+		}
+		net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(spot.x - 0.3, 0, spot.z - 0.3, spot.x + 0.3, 2.0, spot.z + 0.3);
+		double y = spot.y;
+		boolean free = false;
+		for (int up = 0; up <= 12 && !free; up++) {
+			if (level.noCollision(box.move(0, y, 0))) {
+				free = true;
+			} else {
+				y += 1.0;
+			}
+		}
+		if (!free) {
+			return null;
+		}
+		for (int i = 0; i < 64; i++) {
+			if (!level.noCollision(box.move(0, y - 0.25, 0))) {
+				return new Vec3(spot.x, y, spot.z);
+			}
+			y -= 0.5;
+			if (y < level.getMinY()) {
+				return null;
+			}
+		}
+		return null;
 	}
 
 	public static void use(ServerPlayer player, String skill, float dx, float dz) {
@@ -717,7 +762,11 @@ public final class AbilityManager {
 				level.playSound(null, player.blockPosition(), SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 0.6F);
 			}
 			case "unstable_portal" -> {
-				Vec3 spot = aim(level, player, value(player, skill, "RANGE"));
+				Vec3 spot = portalSpot(level, aim(level, player, value(player, skill, "RANGE")));
+				if (spot == null) {
+					player.displayClientMessage(net.minecraft.network.chat.Component.translatable("enderskills.portal.no_ground"), true);
+					return false;
+				}
 				int pin = EsSettings.get().unstablePinLevel;
 				boolean pinned = pin > 0 && Progression.data(player).level(skill) >= Math.min(pin, SkillConfigs.maxLevel(skill));
 				Zones.add(new Zones.Zone(level, spot, value(player, skill, "SIZE") / 2.0,
@@ -728,7 +777,11 @@ public final class AbilityManager {
 			case "portal" -> {
 				// 1st use: a portal waiting for its partner; 2nd use: the partner, linked to it (a pair). 3rd and 4th: another pair...
 				EsSettings cfg = EsSettings.get();
-				Vec3 spot = aim(level, player, cfg.portalAimRange);
+				Vec3 spot = portalSpot(level, aim(level, player, cfg.portalAimRange));
+				if (spot == null) {
+					player.displayClientMessage(net.minecraft.network.chat.Component.translatable("enderskills.portal.no_ground"), true);
+					return false;
+				}
 				if (!secondPortal) {
 					s.endurance -= cost;
 					s.lastUse = now;

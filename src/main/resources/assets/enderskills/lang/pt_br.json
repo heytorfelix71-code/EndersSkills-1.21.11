@@ -755,5 +755,6 @@
   "enderskills.unstable.return_open": "O portal de volta está aberto ao seu lado: fica até você voltar por ele",
   "enderskills.config.black_hole_max_blocks": "Tamanho da cratera no nível máximo (blocos)",
   "enderskills.config.black_hole_max_blocks.desc": "Quantos blocos a cratera do Buraco Negro leva no total no último nível (cerca de 10-20% de uma montanha com 40000). Cresce com o quadrado do nível. Valores maiores podem dar lag.",
-  "enderskills.portals.unstable": "Portal instável  %s [%s]  (%s)"
+  "enderskills.portals.unstable": "Portal instável  %s [%s]  (%s)",
+  "enderskills.portal.no_ground": "Ali não dá: sem espaço, ou sem chão em até 32 blocos"
 }

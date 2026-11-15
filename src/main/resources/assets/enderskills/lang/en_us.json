@@ -755,5 +755,6 @@
   "enderskills.unstable.return_open": "The way back is open beside you: it stays until you go back through it",
   "enderskills.config.black_hole_max_blocks": "Crater size at the top level (blocks)",
   "enderskills.config.black_hole_max_blocks.desc": "How many blocks the Black Hole crater takes in all at the last level (about 10-20% of a mountain at 40000). It grows with the level squared. Bigger values can lag.",
-  "enderskills.portals.unstable": "Unstable portal  %s [%s]  (%s)"
+  "enderskills.portals.unstable": "Unstable portal  %s [%s]  (%s)",
+  "enderskills.portal.no_ground": "Not there: no room, or no ground within 32 blocks"
 }
