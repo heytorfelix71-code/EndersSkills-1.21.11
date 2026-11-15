@@ -99,7 +99,19 @@ public final class EsSettings {
 	public double teleportRangeStart = 100.0;
 	public double teleportRangeMax = 2000.0;
 
+	/** Portals never close by themselves (otherwise they close after a while until the top level). */
+	public boolean portalAlwaysOpen = false;
+	/** Seconds before portals close by themselves at level 0 and just below the top level. */
+	public int portalAutoCloseStart = 30;
+	public int portalAutoCloseEnd = 60;
+	/** Sneak + ability key on Portal or Teleport asks for coordinates. */
+	public boolean coordinateTargeting = true;
+	/** Teleport always lands on the ground (never in the air). */
+	public boolean teleportGroundOnly = true;
+
 	// ---- HUD (colors are RGB)
+	/** Colored frame on the screen while you have an Ender Skills status effect. */
+	public boolean statusOverlay = true;
 	public boolean hudVisible = true;
 	public int hudX = 5;
 	public int hudY = 5;

@@ -75,39 +75,8 @@ public final class EnderSkills implements ModInitializer {
 		BiomeModifications.addFeature(BiomeSelectors.foundInOverworld(), GenerationStep.Decoration.UNDERGROUND_ORES,
 				ResourceKey.create(Registries.PLACED_FEATURE, id("ender_ore")));
 
-		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> dispatcher.register(
-				Commands.literal("enderskills")
-						.requires(src -> src.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER))
-						.then(Commands.literal("level")
-								.then(Commands.argument("level", IntegerArgumentType.integer(0, 1000))
-										.executes(c -> setLevel(c, c.getSource().getPlayerOrException()))
-										.then(Commands.argument("player", EntityArgument.player())
-												.executes(c -> setLevel(c, EntityArgument.getPlayer(c, "player"))))))
-						.then(Commands.literal("reset")
-								.executes(c -> reset(c, c.getSource().getPlayerOrException()))
-								.then(Commands.argument("player", EntityArgument.player())
-										.executes(c -> reset(c, EntityArgument.getPlayer(c, "player")))))
-						.then(Commands.literal("reload").executes(c -> {
-							EsSettings.load();
-							SkillConfigs.load();
-							c.getSource().sendSuccess(() -> Component.translatable("enderskills.command.reloaded"), true);
-							return 1;
-						}))));
+		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
+				dev.enderskills.command.EsCommands.register(dispatcher));
 		LOGGER.info("Ender Skills loaded");
-	}
-
-	private static int setLevel(CommandContext<CommandSourceStack> c, ServerPlayer player) {
-		int level = IntegerArgumentType.getInteger(c, "level");
-		Progression.set(player, Progression.data(player).withLevel(level, 0.0));
-		c.getSource().sendSuccess(() -> Component.translatable("enderskills.command.level", player.getDisplayName(), level), true);
-		return 1;
-	}
-
-	private static int reset(CommandContext<CommandSourceStack> c, ServerPlayer player) throws CommandSyntaxException {
-		SkillData data = Progression.data(player);
-		Progression.set(player, new SkillData(java.util.Map.of(), java.util.List.of(), data.enderLevel(), data.progress(),
-				data.storedXp() + data.xpSpent(), 0, 0));
-		c.getSource().sendSuccess(() -> Component.translatable("enderskills.command.reset", player.getDisplayName()), true);
-		return 1;
 	}
 }

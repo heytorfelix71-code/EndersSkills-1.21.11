@@ -281,6 +281,12 @@ public final class AbilityManager {
 
 	/** A timed ability ran out. */
 	private static void end(ServerPlayer player, String skill) {
+		if (skill.equals("portal")) {
+			State s = state(player);
+			s.portalZones.forEach(Zones::remove);
+			s.portalZones = java.util.List.of();
+			player.level().playSound(null, player.blockPosition(), SoundEvents.PORTAL_TRAVEL, SoundSource.PLAYERS, 0.3F, 1.8F);
+		}
 		if (skill.equals("speed_boost")) {
 			AttributeEffects.set(player, Attributes.MOVEMENT_SPEED, "speed_boost", 0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 		}
@@ -288,7 +294,85 @@ public final class AbilityManager {
 
 	// ------------------------------------------------------------------ using abilities
 
+	/** Portal / Teleport aimed at typed coordinates (sneak + ability key). */
+	public static void useAt(ServerPlayer player, String skill, Vec3 target) {
+		if (!EsSettings.get().coordinateTargeting || !(skill.equals("portal") || skill.equals("teleport"))
+				|| !Double.isFinite(target.x) || !Double.isFinite(target.y) || !Double.isFinite(target.z)) {
+			return;
+		}
+		use(player, skill, 0, 0, target);
+	}
+
 	public static void use(ServerPlayer player, String skill, float dx, float dz) {
+		use(player, skill, dx, dz, null);
+	}
+
+	/** Endurance full and every cooldown over (command). */
+	public static void refill(ServerPlayer player) {
+		State s = state(player);
+		s.endurance = maxEndurance(player);
+		s.cooldownUntil.clear();
+		s.dirty = true;
+	}
+
+	private static void tooFar(ServerPlayer player, double range) {
+		player.displayClientMessage(net.minecraft.network.chat.Component.translatable("enderskills.portal.too_far", (long) range), true);
+	}
+
+	/** Free spot for the player at (or above) a point; with "ground only" it is moved down onto the ground. */
+	private static Vec3 safeSpot(ServerLevel level, ServerPlayer player, Vec3 point, boolean ground) {
+		Vec3 base = player.position();
+		Vec3 spot = null;
+		for (double up = 0; up <= 64; up += 1.0) {
+			Vec3 at = point.add(0, up, 0);
+			if (level.noCollision(player, player.getBoundingBox().move(at.subtract(base)))) {
+				spot = at;
+				break;
+			}
+		}
+		if (spot == null || !ground) {
+			return spot;
+		}
+		for (int i = 0; i < 400; i++) {
+			AABB box = player.getBoundingBox().move(spot.subtract(base));
+			if (!level.noCollision(player, box.move(0, -0.2, 0)) || level.containsAnyLiquid(box.move(0, -0.2, 0))) {
+				return spot;
+			}
+			spot = spot.add(0, -0.5, 0);
+			if (spot.y < level.getMinY()) {
+				return null;
+			}
+		}
+		return null;
+	}
+
+	private static boolean moveTo(ServerLevel level, ServerPlayer player, Vec3 spot) {
+		Vec3 base = player.position();
+		level.sendParticles(ParticleTypes.PORTAL, base.x, base.y + 1, base.z, 30, 0.3, 0.6, 0.3, 0.3);
+		level.playSound(null, player.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.8F, 1.0F);
+		if (player.isPassenger()) {
+			player.stopRiding();
+		}
+		player.teleportTo(spot.x, spot.y, spot.z);
+		player.resetFallDistance();
+		level.sendParticles(ParticleTypes.PORTAL, spot.x, spot.y + 1, spot.z, 30, 0.3, 0.6, 0.3, 0.3);
+		level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.8F, 1.0F);
+		return true;
+	}
+
+	/** How long portals stay open: grows from the start to the end value; never closes at the top level or with "always open". */
+	private static int portalLife(ServerPlayer player) {
+		EsSettings cfg = EsSettings.get();
+		int cap = Math.max(1, Math.min(50, SkillConfigs.maxLevel("portal")));
+		int level = Math.max(0, Progression.data(player).level("portal"));
+		if (cfg.portalAlwaysOpen || level >= cap) {
+			return Integer.MAX_VALUE;
+		}
+		double f = level / (double) cap;
+		return now + (int) (20 * (cfg.portalAutoCloseStart + (cfg.portalAutoCloseEnd - cfg.portalAutoCloseStart) * f));
+	}
+
+	public static void use(ServerPlayer player, String skill, float dx, float dz, Vec3 aimAt) {
 		SkillData data = Progression.data(player);
 		if (!data.owns(skill) || !Abilities.implemented(skill) || !player.isAlive() || player.isSpectator()) {
 			return;
@@ -345,8 +429,19 @@ public final class AbilityManager {
 				dir = dir.normalize();
 				done = teleport(level, player, player.position().add(0, 0.5, 0), dir, value(player, skill, "RANGE"));
 			}
-			case "teleport" -> done = teleport(level, player, eye, look,
-					scaled(player, skill, EsSettings.get().teleportRangeStart, EsSettings.get().teleportRangeMax));
+			case "teleport" -> {
+				double range = scaled(player, skill, EsSettings.get().teleportRangeStart, EsSettings.get().teleportRangeMax);
+				if (aimAt != null) {
+					if (aimAt.distanceTo(player.position()) > range) {
+						tooFar(player, range);
+						return;
+					}
+					Vec3 spot = safeSpot(level, player, aimAt, EsSettings.get().teleportGroundOnly);
+					done = spot != null && moveTo(level, player, spot);
+				} else {
+					done = teleport(level, player, eye, look, range);
+				}
+			}
 			case "speed_boost" -> {
 				s.activeUntil.put(skill, now + (int) value(player, skill, "DURATION"));
 				effect(level, player, ParticleTypes.CLOUD, SoundEvents.BREEZE_WIND_CHARGE_BURST.value());
@@ -383,8 +478,15 @@ public final class AbilityManager {
 			}
 			case "portal" -> {
 				EsSettings cfg = EsSettings.get();
-				Vec3 spot = aim(level, player, cfg.portalAimRange);
-				if (!secondPortal || s.portalLevel != level) {
+				Vec3 spot = aimAt != null ? aimAt : aim(level, player, cfg.portalAimRange);
+				if (aimAt != null) {
+					// typed coordinates: entrance in front of you, exit at the coordinates
+					s.portalEntrance = player.position().add(player.getViewVector(1.0F).multiply(2, 0, 2));
+					s.portalLevel = level;
+					s.endurance -= cost;
+					cost = 0;
+				}
+				if (aimAt == null && (!secondPortal || s.portalLevel != level)) {
 					s.portalEntrance = spot;
 					s.portalLevel = level;
 					s.endurance -= cost;
@@ -396,15 +498,16 @@ public final class AbilityManager {
 				}
 				double range = scaled(player, skill, cfg.portalRangeStart, cfg.portalRangeMax);
 				if (s.portalEntrance.distanceTo(spot) > range) {
-					player.displayClientMessage(net.minecraft.network.chat.Component.translatable("enderskills.portal.too_far", (long) range), true);
+					tooFar(player, range);
 					return;
 				}
-				Zones.Zone a = new Zones.Zone(level, s.portalEntrance, 1.0, Integer.MAX_VALUE, spot, 0);
-				Zones.Zone b = new Zones.Zone(level, spot, 1.0, Integer.MAX_VALUE, s.portalEntrance, 0);
+				int life = portalLife(player);
+				Zones.Zone a = new Zones.Zone(level, s.portalEntrance, 1.0, life, spot, 0);
+				Zones.Zone b = new Zones.Zone(level, spot, 1.0, life, s.portalEntrance, 0);
 				Zones.add(a);
 				Zones.add(b);
 				s.portalZones = java.util.List.of(a, b);
-				s.activeUntil.put(skill, Integer.MAX_VALUE);
+				s.activeUntil.put(skill, life);
 				s.portalEntrance = null;
 				cost = 0;
 				level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.PORTAL_TRIGGER, SoundSource.PLAYERS, 0.4F, 1.6F);
@@ -472,6 +575,13 @@ public final class AbilityManager {
 			for (double up = 0; up <= 1.5; up += 0.5) {
 				Vec3 spot = feet.add(0, up, 0);
 				AABB box = player.getBoundingBox().move(spot.subtract(base));
+				if (level.noCollision(player, box) && EsSettings.get().teleportGroundOnly) {
+					Vec3 ground = safeSpot(level, player, spot, true);
+					if (ground == null) {
+						continue;
+					}
+					return moveTo(level, player, ground);
+				}
 				if (level.noCollision(player, box)) {
 					level.sendParticles(ParticleTypes.PORTAL, base.x, base.y + 1, base.z, 30, 0.3, 0.6, 0.3, 0.3);
 					level.playSound(null, player.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.8F, 1.0F);

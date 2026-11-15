@@ -29,3 +29,10 @@ Commands (operators): `/enderskills level <n> [player]`, `/enderskills reset [pl
 - Portal works like a portal gun: the two portals stay until you use the ability again; the distance between them grows from 100 blocks to the whole world.
 - Power scales with the skill level: balanced early, overwhelming at the top level.
 - Speed and Speed Boost no longer stretch the camera FOV; no more blindness/darkness/poison on the screen.
+
+## 1.2.0
+- Portals close by themselves after 30 s (level 0) to 60 s (just below the top level); at the top level, or with "Portals never close by themselves", they stay until you use the ability again.
+- Sneak + ability key on Portal or Teleport: type X Y Z (`~` = your position).
+- Teleport never lands in the air (option).
+- Animated status effects (particles on the entity and a colored pulsing frame on your screen).
+- Commands: `/enderskills ability|attribute add <players> <skill|all> [level <n|max>]`, `... level <players> <skill|all> <n|max>`, `... remove <players> <skill|all>`, `/enderskills enderlevel|reset|refill|list|reload`.

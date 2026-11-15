@@ -67,6 +67,22 @@ public final class EsNetwork {
 		}
 	}
 
+	/** Client → server: use Portal or Teleport towards typed coordinates. */
+	public record UseAbilityAt(String skill, double x, double y, double z) implements CustomPacketPayload {
+		public static final Type<UseAbilityAt> TYPE = new Type<>(EnderSkills.id("use_ability_at"));
+		public static final StreamCodec<RegistryFriendlyByteBuf, UseAbilityAt> CODEC = StreamCodec.composite(
+				ByteBufCodecs.STRING_UTF8, UseAbilityAt::skill,
+				ByteBufCodecs.DOUBLE, UseAbilityAt::x,
+				ByteBufCodecs.DOUBLE, UseAbilityAt::y,
+				ByteBufCodecs.DOUBLE, UseAbilityAt::z,
+				UseAbilityAt::new);
+
+		@Override
+		public Type<? extends CustomPacketPayload> type() {
+			return TYPE;
+		}
+	}
+
 	/** Server → client: endurance, and remaining ticks of cooldowns and active abilities. */
 	public record AbilitySync(float endurance, float maxEndurance, java.util.Map<String, Integer> cooldowns,
 			java.util.Map<String, Integer> active) implements CustomPacketPayload {
@@ -91,6 +107,10 @@ public final class EsNetwork {
 		PayloadTypeRegistry.playS2C().register(AbilitySync.TYPE, AbilitySync.CODEC);
 		PayloadTypeRegistry.playC2S().register(AltarAction.TYPE, AltarAction.CODEC);
 		PayloadTypeRegistry.playC2S().register(UseAbility.TYPE, UseAbility.CODEC);
+		PayloadTypeRegistry.playC2S().register(UseAbilityAt.TYPE, UseAbilityAt.CODEC);
+		ServerPlayNetworking.registerGlobalReceiver(UseAbilityAt.TYPE, (payload, context) ->
+				dev.enderskills.logic.AbilityManager.useAt(context.player(), payload.skill(),
+						new net.minecraft.world.phys.Vec3(payload.x(), payload.y(), payload.z())));
 		ServerPlayNetworking.registerGlobalReceiver(UseAbility.TYPE, (payload, context) ->
 				dev.enderskills.logic.AbilityManager.use(context.player(), payload.skill(), payload.dx(), payload.dz()));
 		ServerPlayNetworking.registerGlobalReceiver(AltarAction.TYPE, (payload, context) ->

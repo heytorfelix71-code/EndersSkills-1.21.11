@@ -59,6 +59,11 @@ public final class EsConfigScreen {
 		}
 
 		ConfigCategory portal = ConfigCategory.createBuilder().name(t("category.portal"))
+				.option(bool("portal_always_open", def.portalAlwaysOpen, () -> c.portalAlwaysOpen, v -> c.portalAlwaysOpen = v))
+				.option(integer("portal_close_start", def.portalAutoCloseStart, 1, 100000, () -> c.portalAutoCloseStart, v -> c.portalAutoCloseStart = v))
+				.option(integer("portal_close_end", def.portalAutoCloseEnd, 1, 100000, () -> c.portalAutoCloseEnd, v -> c.portalAutoCloseEnd = v))
+				.option(bool("coordinates", def.coordinateTargeting, () -> c.coordinateTargeting, v -> c.coordinateTargeting = v))
+				.option(bool("teleport_ground", def.teleportGroundOnly, () -> c.teleportGroundOnly, v -> c.teleportGroundOnly = v))
 				.option(num("portal_range_start", def.portalRangeStart, 1, 30_000_000, () -> c.portalRangeStart, v -> c.portalRangeStart = v))
 				.option(num("portal_range_max", def.portalRangeMax, 1, 30_000_000, () -> c.portalRangeMax, v -> c.portalRangeMax = v))
 				.option(num("portal_aim_range", def.portalAimRange, 8, 1024, () -> c.portalAimRange, v -> c.portalAimRange = v))
@@ -67,6 +72,7 @@ public final class EsConfigScreen {
 				.build();
 
 		ConfigCategory hud = ConfigCategory.createBuilder().name(t("category.hud"))
+				.option(bool("status_overlay", def.statusOverlay, () -> c.statusOverlay, v -> c.statusOverlay = v))
 				.option(bool("hud_visible", def.hudVisible, () -> c.hudVisible, v -> c.hudVisible = v))
 				.option(integer("hud_x", def.hudX, 0, 4000, () -> c.hudX, v -> c.hudX = v))
 				.option(integer("hud_y", def.hudY, 0, 4000, () -> c.hudY, v -> c.hudY = v))

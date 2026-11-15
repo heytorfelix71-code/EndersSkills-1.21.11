@@ -120,7 +120,13 @@ public final class ClientAbilities {
 		for (int i = 0; i < SLOT_KEYS.length; i++) {
 			while (SLOT_KEYS[i].consumeClick()) {
 				if (free && i < slots.size()) {
-					send(slots.get(i), 0, 0);
+					String skill = slots.get(i);
+					if (client.options.keyShift.isDown() && dev.enderskills.data.EsSettings.get().coordinateTargeting
+							&& (skill.equals("portal") || skill.equals("teleport"))) {
+						client.setScreen(new CoordScreen(skill));
+					} else {
+						send(skill, 0, 0);
+					}
 				}
 			}
 		}
@@ -219,6 +225,40 @@ public final class ClientAbilities {
 	}
 
 	// ------------------------------------------------------------------ HUD
+
+	private static final net.minecraft.resources.Identifier FRAME =
+			net.minecraft.resources.Identifier.withDefaultNamespace("textures/misc/powder_snow_outline.png");
+
+	/** Colored, pulsing frame (like freezing) while the player has an Ender Skills status effect. */
+	static void overlay(GuiGraphics g, DeltaTracker delta) {
+		Minecraft client = Minecraft.getInstance();
+		LocalPlayer player = client.player;
+		if (player == null || client.options.hideGui || !dev.enderskills.data.EsSettings.get().statusOverlay) {
+			return;
+		}
+		int color = 0;
+		var effects = new java.util.LinkedHashMap<net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>, Integer>();
+		effects.put(dev.enderskills.registry.ModEffects.STUNNED, 0xFFE070);
+		effects.put(dev.enderskills.registry.ModEffects.ELECTRIFIED, 0x7FD4FF);
+		effects.put(dev.enderskills.registry.ModEffects.ROOTED, 0x5A8C3A);
+		effects.put(dev.enderskills.registry.ModEffects.BLEEDING, 0xB00000);
+		effects.put(dev.enderskills.registry.ModEffects.BLACK_FLAME, 0x6030C0);
+		effects.put(dev.enderskills.registry.ModEffects.GASSED, 0x6B8E23);
+		for (var e : effects.entrySet()) {
+			if (player.hasEffect(e.getKey())) {
+				color = e.getValue();
+				break;
+			}
+		}
+		if (color == 0) {
+			return;
+		}
+		float pulse = 0.45F + 0.25F * (float) Math.sin((player.tickCount + delta.getGameTimeDeltaPartialTick(true)) * 0.25);
+		int alpha = (int) (255 * pulse) << 24;
+		int w = g.guiWidth();
+		int h = g.guiHeight();
+		g.blit(RenderPipelines.GUI_TEXTURED, FRAME, 0, 0, 0.0F, 0.0F, w, h, w, h, alpha | color);
+	}
 
 	static void render(GuiGraphics g, DeltaTracker delta) {
 		Minecraft client = Minecraft.getInstance();

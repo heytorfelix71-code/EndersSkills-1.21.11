@@ -32,25 +32,70 @@ import dev.enderskills.EnderSkills;
 
 /** Status effects, potions and the original sounds. */
 public final class ModEffects {
+	/** Where the particles of a status effect are drawn. */
+	public enum Look { NONE, HEAD_RING, BODY_SPARKS, FEET_RING, DRIP, FLAMES, CLOUD }
+
 	public static class EsEffect extends MobEffect {
+		private final Look look;
+		private final net.minecraft.core.particles.ParticleOptions particle;
+
 		public EsEffect(MobEffectCategory category, int color) {
+			this(category, color, Look.NONE, null);
+		}
+
+		public EsEffect(MobEffectCategory category, int color, Look look, net.minecraft.core.particles.ParticleOptions particle) {
 			super(category, color);
+			this.look = look;
+			this.particle = particle;
+		}
+
+		@Override
+		public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
+			return look != Look.NONE && duration % 3 == 0;
+		}
+
+		@Override
+		public boolean applyEffectTick(ServerLevel level, net.minecraft.world.entity.LivingEntity e, int amplifier) {
+			double t = e.tickCount * 0.35;
+			double w = e.getBbWidth() * 0.7 + 0.2;
+			double h = e.getBbHeight();
+			switch (look) {
+				case HEAD_RING -> {
+					for (int i = 0; i < 3; i++) {
+						double a = t + i * Math.PI * 2 / 3;
+						level.sendParticles(particle, e.getX() + Math.cos(a) * w, e.getY() + h + 0.25, e.getZ() + Math.sin(a) * w, 1, 0, 0, 0, 0);
+					}
+				}
+				case BODY_SPARKS -> level.sendParticles(particle, e.getX(), e.getY() + h / 2, e.getZ(), 4, w / 2, h / 3, w / 2, 0.05);
+				case FEET_RING -> {
+					for (int i = 0; i < 6; i++) {
+						double a = t * 0.3 + i * Math.PI / 3;
+						level.sendParticles(particle, e.getX() + Math.cos(a) * w, e.getY() + 0.1 + (i % 2) * 0.3, e.getZ() + Math.sin(a) * w, 1, 0, 0.05, 0, 0);
+					}
+				}
+				case DRIP -> level.sendParticles(particle, e.getX(), e.getY() + h * 0.6, e.getZ(), 2, w / 3, h / 4, w / 3, 0);
+				case FLAMES -> level.sendParticles(particle, e.getX(), e.getY() + h / 3, e.getZ(), 3, w / 3, h / 3, w / 3, 0.01);
+				case CLOUD -> level.sendParticles(particle, e.getX(), e.getY() + h * 0.8, e.getZ(), 3, w / 2, 0.2, w / 2, 0.01);
+				default -> {
+				}
+			}
+			return true;
 		}
 	}
 
 	// ---- status effects of the skills
-	public static final Holder<MobEffect> STUNNED = effect("stunned", new EsEffect(MobEffectCategory.HARMFUL, 0xC8B464)
+	public static final Holder<MobEffect> STUNNED = effect("stunned", new EsEffect(MobEffectCategory.HARMFUL, 0xC8B464, Look.HEAD_RING, net.minecraft.core.particles.ParticleTypes.ENCHANTED_HIT)
 			.addAttributeModifier(Attributes.MOVEMENT_SPEED, EnderSkills.id("stunned"), -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
 			.addAttributeModifier(Attributes.JUMP_STRENGTH, EnderSkills.id("stunned"), -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
 			.addAttributeModifier(Attributes.ATTACK_DAMAGE, EnderSkills.id("stunned"), -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
-	public static final Holder<MobEffect> ELECTRIFIED = effect("electrified", new EsEffect(MobEffectCategory.HARMFUL, 0x7FD4FF)
+	public static final Holder<MobEffect> ELECTRIFIED = effect("electrified", new EsEffect(MobEffectCategory.HARMFUL, 0x7FD4FF, Look.BODY_SPARKS, net.minecraft.core.particles.ParticleTypes.ELECTRIC_SPARK)
 			.addAttributeModifier(Attributes.MOVEMENT_SPEED, EnderSkills.id("electrified"), -0.5, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
-	public static final Holder<MobEffect> ROOTED = effect("rooted", new EsEffect(MobEffectCategory.HARMFUL, 0x3C2A50)
+	public static final Holder<MobEffect> ROOTED = effect("rooted", new EsEffect(MobEffectCategory.HARMFUL, 0x5A8C3A, Look.FEET_RING, net.minecraft.core.particles.ParticleTypes.SPORE_BLOSSOM_AIR)
 			.addAttributeModifier(Attributes.MOVEMENT_SPEED, EnderSkills.id("rooted"), -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
 			.addAttributeModifier(Attributes.JUMP_STRENGTH, EnderSkills.id("rooted"), -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
-	public static final Holder<MobEffect> BLEEDING = effect("bleeding", new EsEffect(MobEffectCategory.HARMFUL, 0x8B0000));
-	public static final Holder<MobEffect> GASSED = effect("gassed", new EsEffect(MobEffectCategory.HARMFUL, 0x6B8E23));
-	public static final Holder<MobEffect> BLACK_FLAME = effect("black_flame", new EsEffect(MobEffectCategory.HARMFUL, 0x1A0A2A));
+	public static final Holder<MobEffect> BLEEDING = effect("bleeding", new EsEffect(MobEffectCategory.HARMFUL, 0x8B0000, Look.DRIP, new net.minecraft.core.particles.DustParticleOptions(0x8B0000, 1.0F)));
+	public static final Holder<MobEffect> GASSED = effect("gassed", new EsEffect(MobEffectCategory.HARMFUL, 0x6B8E23, Look.CLOUD, new net.minecraft.core.particles.DustParticleOptions(0x6B8E23, 1.5F)));
+	public static final Holder<MobEffect> BLACK_FLAME = effect("black_flame", new EsEffect(MobEffectCategory.HARMFUL, 0x5020A0, Look.FLAMES, net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME));
 
 	// ---- potion effects
 	/** +25% ability power per level. */
