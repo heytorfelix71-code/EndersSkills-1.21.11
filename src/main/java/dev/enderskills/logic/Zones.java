@@ -82,9 +82,12 @@ public final class Zones {
 			if (z.radius() <= 0) {
 				continue;
 			}
-			double reach = z.radius() + 0.4;
+			// portals: only stepping (almost) into the middle sends you through, not standing a block or two away
+			double reach = z.exit() != null ? Math.max(0.1, dev.enderskills.data.EsSettings.get().portalReach) : z.radius() + 0.4;
 			for (LivingEntity e : z.level().getEntitiesOfClass(LivingEntity.class,
-					new AABB(c.x - reach, c.y - 0.5, c.z - reach, c.x + reach, c.y + 2.5, c.z + reach), x -> x.isAlive() && !x.isSpectator())) {
+					new AABB(c.x - reach - 1, c.y - 0.5, c.z - reach - 1, c.x + reach + 1, c.y + 2.5, c.z + reach + 1),
+					x -> x.isAlive() && !x.isSpectator() && Math.hypot(x.getX() - c.x, x.getZ() - c.z) <= reach
+							&& x.getY() >= c.y - 0.5 && x.getY() <= c.y + 2.0)) {
 				UUID id = e.getUUID();
 				insideNow.add(id);
 				if (INSIDE.contains(id) || RECENT.containsKey(id)) {

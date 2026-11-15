@@ -638,5 +638,7 @@
   "enderskills.shadows.slider": "Sombras: %s",
   "enderskills.shadows.count": "Sombras: %s (o teu nível permite %s)",
   "enderskills.config.invis_unbreakable": "Invisível: dano não quebra a partir do nível",
-  "enderskills.config.invis_unbreakable.desc": "A partir deste nível da Invisibilidade, levar dano não quebra mais ela (0 = nunca quebra)."
+  "enderskills.config.invis_unbreakable.desc": "A partir deste nível da Invisibilidade, levar dano não quebra mais ela (0 = nunca quebra).",
+  "enderskills.config.portal_reach": "Alcance do portal (blocos)",
+  "enderskills.config.portal_reach.desc": "O quanto você precisa chegar perto do meio do portal para atravessar (0,5 = meio bloco)."
 }

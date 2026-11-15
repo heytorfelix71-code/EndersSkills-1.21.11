@@ -638,5 +638,7 @@
   "enderskills.shadows.slider": "Shadows: %s",
   "enderskills.shadows.count": "Shadows: %s (your level allows %s)",
   "enderskills.config.invis_unbreakable": "Invisible: damage doesn't break it from level",
-  "enderskills.config.invis_unbreakable.desc": "From this Invisibility level on, taking damage no longer breaks it (0 = it never breaks)."
+  "enderskills.config.invis_unbreakable.desc": "From this Invisibility level on, taking damage no longer breaks it (0 = it never breaks).",
+  "enderskills.config.portal_reach": "Portal reach (blocks)",
+  "enderskills.config.portal_reach.desc": "How close to the middle of a portal you must step to go through it (0.5 = half a block)."
 }

@@ -329,6 +329,7 @@ public final class EsConfigScreen {
 				g.option(num("portal_range_max", def.portalRangeMax, 1, 30_000_000, () -> c.portalRangeMax, v -> c.portalRangeMax = v));
 				g.option(num("portal_aim_range", def.portalAimRange, 8, 1024, () -> c.portalAimRange, v -> c.portalAimRange = v));
 				g.option(integer("portal_max_pairs", def.portalMaxPairs, 1, 100, () -> c.portalMaxPairs, v -> c.portalMaxPairs = v));
+				g.option(num("portal_reach", def.portalReach, 0.1, 3, () -> c.portalReach, v -> c.portalReach = v));
 				g.option(bool("coordinates", def.coordinateTargeting, () -> c.coordinateTargeting, v -> c.coordinateTargeting = v));
 			}
 			case "speed_boost" -> {

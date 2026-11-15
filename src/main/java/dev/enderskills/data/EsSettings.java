@@ -125,6 +125,8 @@ public final class EsSettings {
 	public int portalAutoCloseEnd = 60;
 	/** How many pairs of portals can be open at once; a new pair past this closes the oldest. */
 	public int portalMaxPairs = 5;
+	/** How close to the middle of a portal you must step to go through it, in blocks. */
+	public double portalReach = 0.5;
 	// ---- Wall and Dome
 	/** From this skill level on, Wall and Dome stay until you use the ability again. */
 	public int earthToggleLevel = 40;

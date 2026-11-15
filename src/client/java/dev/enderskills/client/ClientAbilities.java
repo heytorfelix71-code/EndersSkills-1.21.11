@@ -200,11 +200,13 @@ public final class ClientAbilities {
 			while (SLOT_KEYS[i].consumeClick()) {
 				if (free && i < slots.size()) {
 					String skill = slots.get(i);
-					if (client.options.keyShift.isDown() && skill.equals("shadow")) {
+					// the Shift key itself (also with "toggle sneak", where the sneak key isn't "down"), or the sneak key
+					boolean sneak = client.hasShiftDown() || client.options.keyShift.isDown();
+					if (sneak && skill.equals("shadow")) {
 						client.setScreen(new ShadowCountScreen()); // how many fighting shadows
-					} else if (client.options.keyShift.isDown() && skill.equals("portal")) {
+					} else if (sneak && skill.equals("portal")) {
 						PortalScreen.open(); // manage the portals: close, move, new portal at coordinates
-					} else if (client.options.keyShift.isDown() && dev.enderskills.data.EsSettings.get().coordinateTargeting
+					} else if (sneak && dev.enderskills.data.EsSettings.get().coordinateTargeting
 							&& skill.equals("teleport")) {
 						client.setScreen(new CoordScreen(skill));
 					} else {
