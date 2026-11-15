@@ -145,8 +145,17 @@ public final class EsSettings {
 	 * The passives of the altar are weak by design (Speed is +10% at its last level, Attack Speed +80%): these multiply what
 	 * the game really applies. 1 = the original numbers.
 	 */
-	public double speedPassivePower = 6.0;
-	public double swimSpeedPower = 1.0;
+	public double speedPassivePower = 7.5;
+	/** Extra swimming push of the Swim Speed passive (0.3 = up to 30% faster at the last level). */
+	public double swimSpeedPower = 0.3;
+	/** How much of the water efficiency of the Swim Speed passive is used (1 = swims as fast as you run). */
+	public double swimEfficiencyScale = 0.5;
+	/** Extra air from the Swim Speed passive: at the last level you lose air this many times slower (before the infinite level). */
+	public double swimBreathBonus = 10.0;
+	/** From this Swim Speed level you see clearly under water (0 = never). */
+	public int swimVisionLevel = 20;
+	/** From this Swim Speed level your air never runs out and the bubbles don't even show (0 = never). */
+	public int swimInfiniteAirLevel = 50;
 	public double attackSpeedPower = 2.0;
 	/** Damage multiplier of a critical hit (Critical Chance passive). */
 	public double critMultiplier = 2.0;
@@ -414,6 +423,13 @@ public final class EsSettings {
 							read.blackHoleDuration = fresh.blackHoleDuration;
 							read.portalReach = fresh.portalReach;
 							read.balanceVersion = 3;
+						}
+						if (read.balanceVersion < 4) {
+							// 1.19.1: calmer swimming (it was hard to control), a little more running speed
+							EsSettings fresh = new EsSettings();
+							read.swimSpeedPower = fresh.swimSpeedPower;
+							read.speedPassivePower = fresh.speedPassivePower;
+							read.balanceVersion = 4;
 						}
 						instance = read;
 					}

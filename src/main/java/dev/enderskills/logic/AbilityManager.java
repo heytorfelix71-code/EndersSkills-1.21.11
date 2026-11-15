@@ -204,6 +204,13 @@ public final class AbilityManager {
 			if (phasing(player)) {
 				player.resetFallDistance(); // sinking through blocks never hurts
 			}
+			if (AttributeEffects.infiniteAir(player) && player.getAirSupply() < player.getMaxAirSupply()) {
+				player.setAirSupply(player.getMaxAirSupply()); // never drowns, and the bubbles don't even show
+			}
+			if (now % 20 == 0 && player.isUnderWater() && AttributeEffects.waterVision(player)) {
+				// clear sight under water (conduit power's vision), without an icon or particles
+				player.addEffect(new MobEffectInstance(MobEffects.CONDUIT_POWER, 80, 0, true, false, false));
+			}
 			if (now % 20 == 0) {
 				AttributeEffects.apply(player); // every second (it changes nothing when nothing changed)
 				Integer at = REPORT_AT.get(player.getUUID());

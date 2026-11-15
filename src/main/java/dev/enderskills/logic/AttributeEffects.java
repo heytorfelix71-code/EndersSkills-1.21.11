@@ -40,7 +40,10 @@ public final class AttributeEffects {
 		double extra = Math.max(0.0, modifier(player, "jump_height"));
 		set(player, Attributes.JUMP_STRENGTH, "jump_height", extra <= 0 ? 0.0 : Math.sqrt((1.25 + extra) / 1.25) - 1.0,
 				AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
-		set(player, Attributes.WATER_MOVEMENT_EFFICIENCY, "swim_speed", modifier(player, "swim_speed"), AttributeModifier.Operation.ADD_VALUE);
+		set(player, Attributes.WATER_MOVEMENT_EFFICIENCY, "swim_speed",
+				modifier(player, "swim_speed") * Math.max(0.0, dev.enderskills.data.EsSettings.get().swimEfficiencyScale), AttributeModifier.Operation.ADD_VALUE);
+		// more air under water: the vanilla oxygen bonus (Respiration), growing with the level
+		set(player, Attributes.OXYGEN_BONUS, "swim_breath", swimBreath(player), AttributeModifier.Operation.ADD_VALUE);
 		set(player, Attributes.ATTACK_DAMAGE, "damage", modifier(player, "damage"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 		set(player, Attributes.ATTACK_SPEED, "attack_speed", modifier(player, "attack_speed") * Math.max(0.0, dev.enderskills.data.EsSettings.get().attackSpeedPower),
 				AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
@@ -68,6 +71,33 @@ public final class AttributeEffects {
 		if (value != 0.0) {
 			instance.addTransientModifier(new AttributeModifier(id, value, operation));
 		}
+	}
+
+	/** Level of Swim Speed as a share of its last level (0 when not owned). */
+	private static double swimShare(Player player) {
+		int lv = Progression.data(player).level("swim_speed");
+		if (lv < 0 || SkillConfigs.disabled("swim_speed")) {
+			return 0.0;
+		}
+		return Math.min(1.0, lv / (double) Math.max(1, Math.min(50, SkillConfigs.maxLevel("swim_speed"))));
+	}
+
+	private static double swimBreath(Player player) {
+		return swimShare(player) * Math.max(0.0, dev.enderskills.data.EsSettings.get().swimBreathBonus);
+	}
+
+	/** From the configured level your air never runs out (and the bubbles never show). */
+	public static boolean infiniteAir(Player player) {
+		int need = dev.enderskills.data.EsSettings.get().swimInfiniteAirLevel;
+		return need > 0 && Progression.data(player).level("swim_speed") >= Math.min(need, SkillConfigs.maxLevel("swim_speed"))
+				&& !SkillConfigs.disabled("swim_speed");
+	}
+
+	/** From the configured level you see clearly under water. */
+	public static boolean waterVision(Player player) {
+		int need = dev.enderskills.data.EsSettings.get().swimVisionLevel;
+		return need > 0 && Progression.data(player).level("swim_speed") >= Math.min(need, SkillConfigs.maxLevel("swim_speed"))
+				&& !SkillConfigs.disabled("swim_speed");
 	}
 
 	/** A critical hit you can see, hear and read. */

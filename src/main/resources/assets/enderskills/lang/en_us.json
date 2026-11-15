@@ -710,5 +710,13 @@
   "enderskills.config.passive_report": "Passive report in the chat",
   "enderskills.config.passive_report.desc": "Once after you join, the chat lists what each passive really does (read from the game's own attributes).",
   "enderskills.passives.title": "Ender Skills: your passives right now:",
-  "enderskills.crit": "CRITICAL!"
+  "enderskills.crit": "CRITICAL!",
+  "enderskills.config.swim_efficiency": "Swim water efficiency (x)",
+  "enderskills.config.swim_efficiency.desc": "How much of the water efficiency of the Swim Speed passive is used. 1 = you swim as fast as you run (too hard to control); lower is calmer.",
+  "enderskills.config.swim_breath": "Extra air (x)",
+  "enderskills.config.swim_breath.desc": "At the last level (before the infinite one) you lose air this many times slower. It grows with the level.",
+  "enderskills.config.swim_vision_level": "Clear sight under water from level",
+  "enderskills.config.swim_vision_level.desc": "From this Swim Speed level you see clearly under water (0 = never).",
+  "enderskills.config.swim_air_level": "Infinite air from level",
+  "enderskills.config.swim_air_level.desc": "From this Swim Speed level your air never runs out and the bubbles don't even show (0 = never)."
 }

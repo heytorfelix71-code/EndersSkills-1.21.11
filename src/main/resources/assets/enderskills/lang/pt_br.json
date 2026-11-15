@@ -710,5 +710,13 @@
   "enderskills.config.passive_report": "Relatório das passivas no chat",
   "enderskills.config.passive_report.desc": "Uma vez depois de entrar, o chat lista o que cada passiva realmente faz (lido dos atributos do próprio jogo).",
   "enderskills.passives.title": "Ender Skills: suas passivas agora:",
-  "enderskills.crit": "CRÍTICO!"
+  "enderskills.crit": "CRÍTICO!",
+  "enderskills.config.swim_efficiency": "Eficiência na água do nado (x)",
+  "enderskills.config.swim_efficiency.desc": "Quanto da eficiência na água da passiva Velocidade de Nado é usada. 1 = você nada tão rápido quanto corre (difícil de controlar); menos é mais calmo.",
+  "enderskills.config.swim_breath": "Ar extra (x)",
+  "enderskills.config.swim_breath.desc": "No último nível (antes do infinito) você perde ar tantas vezes mais devagar. Cresce com o nível.",
+  "enderskills.config.swim_vision_level": "Visão clara na água a partir do nível",
+  "enderskills.config.swim_vision_level.desc": "A partir deste nível da Velocidade de Nado você enxerga bem embaixo d'água (0 = nunca).",
+  "enderskills.config.swim_air_level": "Ar infinito a partir do nível",
+  "enderskills.config.swim_air_level.desc": "A partir deste nível da Velocidade de Nado o seu ar nunca acaba e as bolhas nem aparecem (0 = nunca)."
 }
