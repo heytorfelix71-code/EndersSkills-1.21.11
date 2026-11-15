@@ -186,6 +186,18 @@ public final class EsSettings {
 	public int gloomVolleyLevel = 30;
 	/** Number of Gloom shots at the max level. */
 	public int gloomMaxShots = 5;
+	/** How long the areas of the abilities stay (gas cloud, black hole, blood pool, flaming rain...): 1 = original time. */
+	public double areaDurationMultiplier = 1.5;
+	/** Size of the Gas Cloud (1 = original). */
+	public double gasCloudSize = 1.4;
+	/** Seconds the Gas Cloud holds a mob in place (it is also blinded). */
+	public double gasCloudHoldSeconds = 3.0;
+	/** Size and pull area of the Black Hole (1 = original). */
+	public double blackHoleSize = 1.6;
+	/** Extra time of the Black Hole, on top of the area time (1 = original). */
+	public double blackHoleDuration = 2.0;
+	/** Size of the Blood Pool (1 = original); the blood follows the ground. */
+	public double bloodPoolSize = 1.4;
 
 	/** Passive abilities (Shadow, Bleed, Life Steal, Fire Spirit): switched with a key, always on, or always on with a single tree. */
 	public enum PassiveMode { BUTTON, ALWAYS, SINGLE_TREE }

@@ -154,6 +154,7 @@ public final class OffenseAbilities {
 
 	private static void zone(ServerPlayer p, Vec3 center, double radius, int duration, int every, ParticleOptions particle,
 			Consumer<LivingEntity> action) {
+		duration = (int) Math.max(1, duration * Math.max(0.1, dev.enderskills.data.EsSettings.get().areaDurationMultiplier));
 		ZONES.add(new Zone(p, (ServerLevel) p.level(), center, radius, now + Math.max(1, duration), Math.max(1, every), particle, action, Vfx.skill));
 		Fx.zone(p, center, radius, Math.max(1, duration));
 	}
@@ -285,7 +286,8 @@ public final class OffenseAbilities {
 				Bolt b = bolt(p, v(p, skill, "RANGE"));
 				b.particle = ParticleTypes.SNEEZE;
 				b.onEnd = at -> {
-					double r = v(p, skill, "SIZE") / 2;
+					double r = v(p, skill, "SIZE") / 2 * Math.max(0.1, dev.enderskills.data.EsSettings.get().gasCloudSize);
+					int hold = (int) (20 * Math.max(0, dev.enderskills.data.EsSettings.get().gasCloudHoldSeconds));
 					Shapes.send(level, Shapes.CLOUD, at, r, r, null, Shapes.color(skill, 0x7A3CC8), (int) Math.max(40, v(p, skill, "DURATION")), -1);
 					for (LivingEntity e : enemies(p, at, r)) {
 						hit(p, e, v(p, skill, "DAMAGE"), 0);
@@ -294,6 +296,14 @@ public final class OffenseAbilities {
 						if (!e.hasEffect(dev.enderskills.registry.ModEffects.GASSED) && !e.hasEffect(MobEffects.POISON)) {
 							dot(p, e, v(p, skill, "DOT"), 0, v(p, skill, "DOT_DURATION"));
 							AbilityManager.status(e, dev.enderskills.registry.ModEffects.GASSED, MobEffects.POISON, (int) v(p, skill, "DOT_DURATION"), 0);
+							// caught in the cloud: held in place and blinded for a moment
+							if (hold > 0) {
+								AbilityManager.status(e, dev.enderskills.registry.ModEffects.ROOTED, MobEffects.SLOWNESS, hold, 10);
+								AbilityManager.status(e, null, MobEffects.BLINDNESS, hold + 20, 0);
+								if (e instanceof net.minecraft.world.entity.Mob mob) {
+									mob.setTarget(null);
+								}
+							}
 						}
 					});
 					sound(level, at, SoundEvents.GENERIC_EXPLODE.value(), 0.6F, 1.6F);
@@ -312,13 +322,15 @@ public final class OffenseAbilities {
 			}
 			case "black_hole" -> {
 				Vec3 at = AbilityManager.aim(level, p, v(p, skill, "RANGE")).add(0, 1.0, 0);
-				double r = v(p, skill, "SIZE");
-				Shapes.send(level, Shapes.BLACK_HOLE, at, Math.max(0.8, r * 0.3), r, null, Shapes.color(skill, 0x8A3CFF), (int) v(p, skill, "DURATION"), -1);
+				double r = v(p, skill, "SIZE") * Math.max(0.1, dev.enderskills.data.EsSettings.get().blackHoleSize);
+				int life = (int) (v(p, skill, "DURATION") * Math.max(0.1, dev.enderskills.data.EsSettings.get().blackHoleDuration));
+				int total = (int) Math.max(1, life * Math.max(0.1, dev.enderskills.data.EsSettings.get().areaDurationMultiplier));
+				Shapes.send(level, Shapes.BLACK_HOLE, at, Math.max(0.8, r * 0.3), r, null, Shapes.color(skill, 0x8A3CFF), total, -1);
 				for (LivingEntity e : enemies(p, at, r)) {
 					hit(p, e, v(p, skill, "DAMAGE"), 0);
 					dot(p, e, v(p, skill, "DOT"), 0, v(p, skill, "DOT_DURATION"));
 				}
-				zone(p, at, r, (int) v(p, skill, "DURATION"), 1, ParticleTypes.REVERSE_PORTAL, e -> {
+				zone(p, at, r, life, 1, ParticleTypes.REVERSE_PORTAL, e -> {
 					Vec3 d = at.subtract(e.position());
 					if (d.lengthSqr() > 0.5) {
 						e.setDeltaMovement(e.getDeltaMovement().scale(0.6).add(d.normalize().scale(0.18)));
@@ -326,14 +338,15 @@ public final class OffenseAbilities {
 					}
 				});
 				sound(level, at, SoundEvents.END_PORTAL_SPAWN, 0.6F, 0.5F);
-				later((int) v(p, skill, "DURATION"), () -> Environment.blast(level, at, r * 0.8)); // collapses and tears the ground
+				later(total, () -> Environment.blast(level, at, r * 0.8)); // collapses and tears the ground
 			}
 			// ---------------- Blood
 			case "blood_pool" -> {
 				Vec3 at = AbilityManager.aim(level, p, 8);
-				Environment.spread(level, at, v(p, skill, "POOL_RANGE") / 2, dev.enderskills.registry.ModContent.BLOOD,
-						(int) Math.max(4, Math.pow(v(p, skill, "POOL_RANGE") / 2, 2) * 2), (int) v(p, skill, "POOL_DURATION"));
-				zone(p, at, v(p, skill, "POOL_RANGE") / 2, (int) v(p, skill, "POOL_DURATION"), 20, ParticleTypes.DAMAGE_INDICATOR,
+				double pool = v(p, skill, "POOL_RANGE") / 2 * Math.max(0.1, dev.enderskills.data.EsSettings.get().bloodPoolSize);
+				int poolTicks = (int) (v(p, skill, "POOL_DURATION") * Math.max(0.1, dev.enderskills.data.EsSettings.get().areaDurationMultiplier));
+				Environment.fill(level, at, pool, dev.enderskills.registry.ModContent.BLOOD, poolTicks); // the blood follows the ground
+				zone(p, at, pool, (int) v(p, skill, "POOL_DURATION"), 20, ParticleTypes.DAMAGE_INDICATOR,
 						e -> {
 							dot(p, e, v(p, skill, "DOT") / Math.max(1, v(p, skill, "DOT_DURATION") / 20), 0, 20);
 							bleed(e, 30);

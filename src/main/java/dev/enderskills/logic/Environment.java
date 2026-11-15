@@ -48,6 +48,21 @@ public final class Environment {
 		}
 	}
 
+	/** Covers every column of a circle (on the ground at each one, so it follows hills and steps). */
+	public static void fill(ServerLevel level, Vec3 center, double radius, Block block, int ticks) {
+		if (!EsSettings.get().modifyEnvironment) {
+			return;
+		}
+		int r = (int) Math.ceil(Math.min(12, radius));
+		for (int x = -r; x <= r; x++) {
+			for (int z = -r; z <= r; z++) {
+				if (x * x + z * z <= radius * radius) {
+					place(level, BlockPos.containing(center.x + x, center.y + 0.2, center.z + z), block, ticks);
+				}
+			}
+		}
+	}
+
 	/** Breaks the blocks in a ball (Black Hole, Explode, Fireball) when "destroy the environment" is on. Hard blocks stay. */
 	public static void blast(ServerLevel level, Vec3 center, double radius) {
 		if (!EsSettings.get().destroyEnvironment) {

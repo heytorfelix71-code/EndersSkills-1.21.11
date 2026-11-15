@@ -189,6 +189,14 @@ public final class FxDraw {
 		}
 	}
 
+	/** Textured quad around a center, spanned by two half-axis vectors (any orientation). */
+	public static void plane(VertexConsumer vc, Matrix4f m, Vec3 c, Vec3 a, Vec3 b, int color) {
+		vt(vc, m, c.x - a.x - b.x, c.y - a.y - b.y, c.z - a.z - b.z, 0, 1, color);
+		vt(vc, m, c.x + a.x - b.x, c.y + a.y - b.y, c.z + a.z - b.z, 1, 1, color);
+		vt(vc, m, c.x + a.x + b.x, c.y + a.y + b.y, c.z + a.z + b.z, 1, 0, color);
+		vt(vc, m, c.x - a.x + b.x, c.y - a.y + b.y, c.z - a.z + b.z, 0, 0, color);
+	}
+
 	/** Square facing the camera. */
 	public static void sprite(VertexConsumer vc, Matrix4f m, Vector3fc left, Vector3fc up, double x, double y, double z, double half,
 			float roll, int color) {

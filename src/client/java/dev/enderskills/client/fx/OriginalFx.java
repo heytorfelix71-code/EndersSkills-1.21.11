@@ -63,6 +63,8 @@ public final class OriginalFx {
 		boolean ended;
 		long seed;
 		net.minecraft.world.entity.monster.zombie.Zombie creature;
+		Vec3 origin;
+		Vec3 dir;
 		final ArrayDeque<Vec3> trail = new ArrayDeque<>();
 	}
 
@@ -195,6 +197,12 @@ public final class OriginalFx {
 		e.to = new Vec3(p.tx(), p.ty(), p.tz());
 		e.radius = Math.max(0.3F, p.radius());
 		e.seed = R.nextLong();
+		Minecraft mc = Minecraft.getInstance();
+		Entity caster = mc.level == null ? null : mc.level.getEntity(p.entity());
+		if (caster != null && p.phase() == CAST) {
+			e.origin = caster.getEyePosition().add(0, -0.4, 0);
+			e.dir = caster.getViewVector(1F).normalize();
+		}
 		return e;
 	}
 
@@ -527,6 +535,9 @@ public final class OriginalFx {
 
 	/** Particles an effect makes while it lasts (zones, channels, auras). */
 	private static void emit(ClientLevel level, Fx e) {
+		if (e.phase == HIT) {
+			return; // a hit only makes its burst (hit()), not the whole ability again on the target
+		}
 		Entity caster = level.getEntity(e.entity);
 		Vec3 c = e.phase == ZONE ? e.pos : (caster != null ? caster.position() : e.dest);
 		float r = e.radius;
@@ -730,6 +741,9 @@ public final class OriginalFx {
 	}
 
 	private static void draw(ClientLevel level, MultiBufferSource buffers, Matrix4f m, Camera camera, Vec3 cam, Fx e, float partial, double time) {
+		if (e.phase == HIT && !e.skill.equals("slash")) {
+			return;
+		}
 		Entity caster = level.getEntity(e.entity);
 		Vec3 follow = caster != null ? caster.getPosition(partial) : e.dest;
 		float f = fade(e, partial);
@@ -754,7 +768,8 @@ public final class OriginalFx {
 					}
 					FxDraw.tube(arms, m, p, rad, tint, 10);
 				}
-				FxDraw.sphere(buffers.getBuffer(FxDraw.universeDark()), m, c.x, c.y, c.z, core, FxDraw.argb(0xFFFFFF, f), 14);
+				// the core: a ball of purple, starry space (like the gas cloud)
+				FxDraw.sphere(buffers.getBuffer(FxDraw.universe()), m, c.x, c.y, c.z, core, FxDraw.argb(color(e.skill, VOID), 0.97F * f), 16);
 			}
 			case "gas_cloud" -> {
 				Vec3 c = e.pos.add(0, Math.max(0.6, r * 0.45), 0).subtract(cam);
@@ -890,11 +905,23 @@ public final class OriginalFx {
 						FxDraw.argb(color(e.skill, e.skill.equals("taunt") ? 0xFF4040 : 0xFFFBE0), (float) (1 - life)), 0F, 1F);
 			}
 			case "slash" -> {
-				if (caster != null) {
-					Vec3 c = caster.getPosition(partial).add(0, 1.1, 0).subtract(cam);
-					double yaw = Math.toRadians(-caster.getViewYRot(partial)) + Math.PI;
-					FxDraw.texFlat(buffers.getBuffer(FxDraw.additive("slash")), m, c.x + Math.sin(yaw) * -1.2, c.y, c.z + Math.cos(yaw) * -1.2,
-							Math.max(1.5, r * 0.5), -yaw, FxDraw.argb(color(e.skill, 0xFFFFFF), (float) (1 - life)), 0F, 1F);
+				// a standing blade of wind that flies forward from in front of you (not around you); hit mobs get their own cut
+				if (e.phase == HIT) {
+					Vec3 c = e.pos.add(0, Math.max(0.5, r) * 0.6, 0).subtract(cam);
+					Vec3 side = new Vec3(camera.leftVector().x(), camera.leftVector().y(), camera.leftVector().z());
+					Vec3 up = new Vec3(camera.upVector().x(), camera.upVector().y(), camera.upVector().z());
+					double tilt = (e.seed & 1) == 0 ? 0.6 : -0.6;
+					FxDraw.plane(buffers.getBuffer(FxDraw.additive("slash")), m, c, side.scale(0.9).add(up.scale(tilt * 0.9)),
+							up.scale(0.9).subtract(side.scale(tilt * 0.9)), FxDraw.argb(color(e.skill, 0xFFFFFF), (float) (1 - life)));
+				} else if (e.dir != null) {
+					double travel = 1.6 + Math.min(1.0, life * 2.5) * Math.max(3.0, r);
+					Vec3 c = e.origin.add(e.dir.scale(travel)).subtract(cam);
+					Vec3 right = new Vec3(-e.dir.z, 0, e.dir.x).normalize();
+					Vec3 up = right.cross(e.dir).normalize();
+					double w = Math.max(1.2, r * 0.45);
+					// tilted a little, like a sword swing
+					FxDraw.plane(buffers.getBuffer(FxDraw.additive("slash")), m, c, right.scale(w).add(up.scale(w * 0.35)),
+							up.scale(w * 0.6).subtract(right.scale(w * 0.2)), FxDraw.argb(color(e.skill, 0xFFFFFF), (float) Math.max(0, 1 - life * 1.4)));
 				}
 			}
 			case "suffocate", "crush" -> {
@@ -908,6 +935,9 @@ public final class OriginalFx {
 				}
 			}
 			case "blood_pool" -> {
+				if (EsSettings.get().modifyEnvironment) {
+					return; // the blood blocks on the ground show the pool (and follow the terrain)
+				}
 				Vec3 c = e.pos.add(0, 0.05, 0).subtract(cam);
 				FxDraw.texFlat(buffers.getBuffer(FxDraw.alpha("blood")), m, c.x, c.y, c.z, Math.max(1.0, r), e.seed % 7,
 						FxDraw.argb(color(e.skill, 0xFFFFFF), 0.85F * f), 0F, 1F);

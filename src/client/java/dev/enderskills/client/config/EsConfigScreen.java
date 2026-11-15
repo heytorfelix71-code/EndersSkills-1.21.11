@@ -131,6 +131,7 @@ public final class EsConfigScreen {
 								.controller(o -> dev.isxander.yacl3.api.controller.EnumControllerBuilder.create(o).enumClass(EsSettings.PassiveMode.class)
 										.formatValue(v -> t("passive_mode." + v.name().toLowerCase())))
 								.build())
+						.option(slider("area_duration", def.areaDurationMultiplier, 0.25, 5, () -> c.areaDurationMultiplier, v -> c.areaDurationMultiplier = v))
 						.option(bool("modify_environment", def.modifyEnvironment, () -> c.modifyEnvironment, v -> c.modifyEnvironment = v))
 						.option(bool("destroy_environment", def.destroyEnvironment, () -> c.destroyEnvironment, v -> c.destroyEnvironment = v))
 						.option(integer("environment_seconds", def.environmentSeconds, 1, 600, () -> c.environmentSeconds, v -> c.environmentSeconds = v))
@@ -330,6 +331,15 @@ public final class EsConfigScreen {
 				g.option(num("speed_boost_power", def.speedBoostPower, 0, 5, () -> c.speedBoostPower, v -> c.speedBoostPower = v));
 				g.option(num("speed_boost_step", def.speedBoostStep, 0, 4, () -> c.speedBoostStep, v -> c.speedBoostStep = v));
 			}
+			case "gas_cloud" -> {
+				g.option(slider("gas_cloud_size", def.gasCloudSize, 0.5, 3, () -> c.gasCloudSize, v -> c.gasCloudSize = v));
+				g.option(num("gas_cloud_hold", def.gasCloudHoldSeconds, 0, 30, () -> c.gasCloudHoldSeconds, v -> c.gasCloudHoldSeconds = v));
+			}
+			case "black_hole" -> {
+				g.option(slider("black_hole_size", def.blackHoleSize, 0.5, 4, () -> c.blackHoleSize, v -> c.blackHoleSize = v));
+				g.option(slider("black_hole_duration", def.blackHoleDuration, 0.5, 6, () -> c.blackHoleDuration, v -> c.blackHoleDuration = v));
+			}
+			case "blood_pool" -> g.option(slider("blood_pool_size", def.bloodPoolSize, 0.5, 3, () -> c.bloodPoolSize, v -> c.bloodPoolSize = v));
 			case "gloom" -> {
 				g.option(integer("gloom_volley_level", def.gloomVolleyLevel, 0, 1000, () -> c.gloomVolleyLevel, v -> c.gloomVolleyLevel = v));
 				g.option(integer("gloom_max_shots", def.gloomMaxShots, 2, 20, () -> c.gloomMaxShots, v -> c.gloomMaxShots = v));

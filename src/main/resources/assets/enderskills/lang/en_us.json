@@ -589,5 +589,17 @@
   "enderskills.config.gloom_volley_level": "Volley from level",
   "enderskills.config.gloom_volley_level.desc": "From this level Gloom fires several shots at once, each at another mob in front of you.",
   "enderskills.config.gloom_max_shots": "Shots at max level",
-  "enderskills.config.gloom_max_shots.desc": "How many shots Gloom fires at the max level (it grows from 2 at the volley level)."
+  "enderskills.config.gloom_max_shots.desc": "How many shots Gloom fires at the max level (it grows from 2 at the volley level).",
+  "enderskills.config.area_duration": "Area time",
+  "enderskills.config.area_duration.desc": "How long the areas of the abilities stay on the ground (gas cloud, black hole, blood pool, flaming rain...): 1 = original, 1.5 = 50% longer.",
+  "enderskills.config.gas_cloud_size": "Cloud size",
+  "enderskills.config.gas_cloud_size.desc": "Size of the Gas Cloud (1 = original).",
+  "enderskills.config.gas_cloud_hold": "Hold (seconds)",
+  "enderskills.config.gas_cloud_hold.desc": "Mobs caught in the cloud are held in place and blinded for this long (0 = no).",
+  "enderskills.config.black_hole_size": "Black Hole size",
+  "enderskills.config.black_hole_size.desc": "Size and pull area of the Black Hole (1 = original).",
+  "enderskills.config.black_hole_duration": "Black Hole time",
+  "enderskills.config.black_hole_duration.desc": "Extra time of the Black Hole, on top of the area time (1 = original).",
+  "enderskills.config.blood_pool_size": "Pool size",
+  "enderskills.config.blood_pool_size.desc": "Size of the Blood Pool (1 = original); the blood covers the ground and follows it."
 }
