@@ -151,15 +151,17 @@ public final class EsConfigScreen {
 				.category(power.build()).category(sounds.build()).category(hud).category(rules)
 				.save(EsSettings::save);
 		for (Skills.Tab tab : Skills.Tab.values()) {
-			builder.category(skillCategory(c, tab));
+			skillCategories(c, tab).forEach(builder::category);
 		}
 		return builder.build().generateScreen(parent);
 	}
 
 	/** Every skill of a class: on/off, max level and each property at level 0 and at the max level. */
-	private static ConfigCategory skillCategory(EsSettings c, Skills.Tab tab) {
-		ConfigCategory.Builder cat = ConfigCategory.createBuilder()
-				.name(Component.translatable("enderskills.config.category.skills", Component.translatable("enderskills.tab." + tab.id)));
+	/** One tab per element of the class (e.g. "Mobility · Wind"), each with one folding group per ability. */
+	private static java.util.List<ConfigCategory> skillCategories(EsSettings c, Skills.Tab tab) {
+		java.util.List<ConfigCategory> out = new java.util.ArrayList<>();
+		ConfigCategory.Builder cat = null;
+		String current = null;
 		java.util.List<String[]> entries = new java.util.ArrayList<>();
 		for (Skills.Page page : Skills.pages(tab)) {
 			for (String id : page.abilities()) {
@@ -171,8 +173,16 @@ public final class EsConfigScreen {
 		}
 		for (String[] e : entries) {
 			String id = e[0];
+			if (!e[1].equals(current)) {
+				if (cat != null) {
+					out.add(cat.build());
+				}
+				current = e[1];
+				cat = ConfigCategory.createBuilder().name(Component.translatable("enderskills.tab." + tab.id).append(" · ")
+						.append(Component.translatable(e[1])));
+			}
 			OptionGroup.Builder g = OptionGroup.createBuilder().collapsed(true)
-					.name(Component.translatable(e[1]).withColor(tab.color).append(" · ").append(Component.translatable("skill.enderskills." + id)))
+					.name(Component.translatable("skill.enderskills." + id).withColor(tab.color))
 					.description(OptionDescription.of(Component.translatable("skill.enderskills." + id + ".desc")));
 			g.option(Option.<Boolean>createBuilder().name(t("skill_enabled")).description(d("skill_enabled"))
 					.binding(true, () -> !c.disabledSkills.contains(id), v -> {
@@ -219,7 +229,10 @@ public final class EsConfigScreen {
 			}
 			cat.group(g.build());
 		}
-		return cat.build();
+		if (cat != null) {
+			out.add(cat.build());
+		}
+		return out;
 	}
 
 	/** Special settings of Portal, Teleport, Wall and Dome, inside their own group. */
