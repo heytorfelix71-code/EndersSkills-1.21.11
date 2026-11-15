@@ -211,22 +211,39 @@ public final class EarthStructures {
 				return true;
 			}
 		}
+		for (Structure s : LEFTOVER) {
+			if (s.level == level && s.placed.containsKey(pos)) {
+				return true;
+			}
+		}
 		return false;
 	}
 
 	/** Puts back what was there before (only where the wall block is still in place). */
 	private static void dissolve(Structure s) {
-		for (Map.Entry<BlockPos, BlockState> e : s.placed.entrySet()) {
+		for (Iterator<Map.Entry<BlockPos, BlockState>> it = s.placed.entrySet().iterator(); it.hasNext();) {
+			Map.Entry<BlockPos, BlockState> e = it.next();
 			BlockPos pos = e.getKey();
-			if (s.level.getBlockState(pos) == e.getValue()) {
+			if (!s.level.hasChunkAt(pos)) {
+				continue; // far away and not loaded: kept to be put back as soon as the chunk is loaded
+			}
+			// same block counts (a grass block turns into dirt under the wall, doors/stairs change their state...)
+			if (s.level.getBlockState(pos).is(e.getValue().getBlock())) {
 				s.level.setBlock(pos, s.original.get(pos), FLAGS);
 				if (s.level.getRandom().nextInt(3) == 0) {
 					s.level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, e.getValue()),
 							pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 4, 0.3, 0.3, 0.3, 0.05);
 				}
 			}
+			it.remove();
+		}
+		if (!s.placed.isEmpty()) {
+			LEFTOVER.add(s);
 		}
 	}
+
+	/** Structures with blocks still in chunks that were not loaded when they went away. */
+	private static final List<Structure> LEFTOVER = new ArrayList<>();
 
 	/** Ability used again in toggle mode: the wall goes away. */
 	public static void remove(ServerPlayer p, String skill) {
@@ -239,6 +256,12 @@ public final class EarthStructures {
 
 	static void tick(int tick) {
 		now = tick;
+		if (!LEFTOVER.isEmpty() && tick % 20 == 0) {
+			for (Structure s : List.copyOf(LEFTOVER)) {
+				LEFTOVER.remove(s);
+				dissolve(s); // goes back to LEFTOVER if some chunk is still not loaded
+			}
+		}
 		for (Iterator<Structure> it = STRUCTURES.iterator(); it.hasNext();) {
 			Structure s = it.next();
 			if (s.until <= now) {
@@ -267,6 +290,7 @@ public final class EarthStructures {
 			dissolve(s);
 		}
 		STRUCTURES.clear();
+		LEFTOVER.clear();
 	}
 
 	/** Fixed size, or the skill's size times the multiplier, never above the limit (0 = no limit) and never below 1. */
