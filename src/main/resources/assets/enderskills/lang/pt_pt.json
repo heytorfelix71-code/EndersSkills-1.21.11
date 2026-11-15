@@ -616,9 +616,13 @@
   "enderskills.portals.close_all": "Fechar todos",
   "enderskills.portals.waiting": "À espera do par: %s",
   "enderskills.portals.cancel_wait": "Remover",
-  "enderskills.portals.new_label": "Novo portal nas coordenadas (o próximo uso do Portal liga-se a ele)",
+  "enderskills.portals.new_label": "Novo par: entrada à tua frente, saída nas coordenadas",
   "enderskills.portals.move_label": "Mover o portal %s do par #%s para:",
   "enderskills.portals.create": "Criar",
   "enderskills.portals.move": "Mover",
-  "enderskills.portals.stop_edit": "Cancelar"
+  "enderskills.portals.stop_edit": "Cancelar",
+  "enderskills.config.invis_mobs_forget": "Invisível: mobs esquecem você",
+  "enderskills.config.invis_mobs_forget.desc": "Com a Invisibilidade ligada, os mobs param de te seguir, até os que você bate: eles não sabem onde você está.",
+  "enderskills.config.invis_particles": "Invisível: esconder partículas",
+  "enderskills.config.invis_particles.desc": "Nenhuma partícula aparece em volta de um jogador invisível (bolhas de poção, passos, golpes, efeitos de habilidades)."
 }

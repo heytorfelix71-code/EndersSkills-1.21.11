@@ -6,7 +6,9 @@
   "client": [
     "LivingEntityRendererMixin",
     "RenderTypeAccessor",
-    "AbstractClientPlayerMixin"
+    "AbstractClientPlayerMixin",
+    "ParticleAccessor",
+    "ParticleEngineMixin"
   ],
   "injectors": {
     "defaultRequire": 1

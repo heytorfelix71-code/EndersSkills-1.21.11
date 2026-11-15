@@ -163,6 +163,10 @@ public final class EsSettings {
 	/** Invisibility: no name tag above your head and no dust while sprinting. */
 	public boolean invisibilityHidesName = true;
 	public boolean invisibilityNoSprintDust = true;
+	/** While Invisibility is on, mobs forget you, even the ones you hit (they don't know where you are). */
+	public boolean invisibilityMobsForget = true;
+	/** While someone is invisible, no particle shows around them (potion swirls, steps, ability effects...). */
+	public boolean invisibilityHidesParticles = true;
 
 	/** Teleport only when you aim at a block (never into the sky). */
 	public boolean teleportNoSky = true;

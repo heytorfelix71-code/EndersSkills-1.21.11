@@ -81,6 +81,8 @@ public final class EsConfigScreen {
 						.build())
 				.option(bool("invis_name", def.invisibilityHidesName, () -> c.invisibilityHidesName, v -> c.invisibilityHidesName = v))
 				.option(bool("invis_dust", def.invisibilityNoSprintDust, () -> c.invisibilityNoSprintDust, v -> c.invisibilityNoSprintDust = v))
+				.option(bool("invis_mobs_forget", def.invisibilityMobsForget, () -> c.invisibilityMobsForget, v -> c.invisibilityMobsForget = v))
+				.option(bool("invis_particles", def.invisibilityHidesParticles, () -> c.invisibilityHidesParticles, v -> c.invisibilityHidesParticles = v))
 				.option(bool("status_overlay", def.statusOverlay, () -> c.statusOverlay, v -> c.statusOverlay = v))
 				.option(bool("hud_visible", def.hudVisible, () -> c.hudVisible, v -> c.hudVisible = v))
 				.option(integer("hud_x", def.hudX, 0, 4000, () -> c.hudX, v -> c.hudX = v))

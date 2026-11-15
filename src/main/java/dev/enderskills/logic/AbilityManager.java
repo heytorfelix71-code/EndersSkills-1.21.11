@@ -190,6 +190,9 @@ public final class AbilityManager {
 		}
 		for (ServerPlayer player : srv.getPlayerList().getPlayers()) {
 			State s = state(player);
+			if (active(s, "invisibility") && EsSettings.get().invisibilityMobsForget) {
+				unseen(player);
+			}
 			if (now % 5 == 0 && active(s, "fog")) {
 				fogPulse(player, now % 10 == 0);
 			}
@@ -396,15 +399,22 @@ public final class AbilityManager {
 				if (!finite || !EsSettings.get().coordinateTargeting || !level.getWorldBorder().isWithinBounds(net.minecraft.core.BlockPos.containing(target))) {
 					return;
 				}
+				// both portals at once: the entrance in front of you, the exit at the coordinates
 				State s = state(player);
 				double cost = value(player, "portal", "ENDURANCE");
 				if (s.endurance < cost) {
 					return;
 				}
+				double range = scaled(player, "portal", EsSettings.get().portalRangeStart, EsSettings.get().portalRangeMax);
+				Vec3 entrance = player.position().add(player.getViewVector(1.0F).multiply(2, 0, 2));
+				if (entrance.distanceTo(target) > range) {
+					tooFar(player, range);
+					return;
+				}
 				s.endurance -= cost;
 				s.lastUse = now;
 				s.dirty = true;
-				Portals.setWaiting(player, level, target); // the next use of the ability links a portal to it
+				Portals.pair(player, level, entrance, target, portalLife(player));
 			}
 			default -> Portals.sync(player);
 		}
@@ -833,6 +843,45 @@ public final class AbilityManager {
 				&& level.getRandom().nextDouble() < settings.enderTokenDropRate) {
 			level.addFreshEntity(new ItemEntity(level, entity.getX(), entity.getY() + 0.5, entity.getZ(), new ItemStack(ModContent.TOKEN)));
 		}
+	}
+
+	/** Invisible: every mob around forgets the player, even one that was just hit (it doesn't know where the player is). */
+	private static void unseen(ServerPlayer player) {
+		ServerLevel level = (ServerLevel) player.level();
+		for (Mob mob : level.getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(48), Mob::isAlive)) {
+			if (mob.getTarget() == player) {
+				mob.setTarget(null);
+			}
+			if (mob.getLastHurtByMob() == player) {
+				mob.setLastHurtByMob(null);
+			}
+			if (mob instanceof net.minecraft.world.entity.NeutralMob neutral && neutral.isAngryAt(player, level)) {
+				neutral.stopBeingAngry();
+			}
+			var brain = mob.getBrain();
+			if (brain.hasMemoryValue(net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET)
+					&& brain.getMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET).orElse(null) == player) {
+				brain.eraseMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
+			}
+			if (brain.hasMemoryValue(net.minecraft.world.entity.ai.memory.MemoryModuleType.ANGRY_AT)
+					&& player.getUUID().equals(brain.getMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.ANGRY_AT).orElse(null))) {
+				brain.eraseMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.ANGRY_AT);
+			}
+		}
+	}
+
+	/** A player with Invisibility on stands right here: particles sent from the server at this spot are dropped. */
+	public static boolean nearInvisible(ServerLevel level, double x, double y, double z) {
+		if (!EsSettings.get().invisibilityHidesParticles) {
+			return false;
+		}
+		for (ServerPlayer p : level.players()) {
+			State s = STATES.get(p.getUUID());
+			if (s != null && active(s, "invisibility") && p.getBoundingBox().inflate(1.5, 1.0, 1.5).contains(x, y, z)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** Called after a player took damage: Invisibility breaks. */

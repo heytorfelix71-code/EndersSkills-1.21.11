@@ -268,6 +268,19 @@ public final class FxDraw {
 		}
 	}
 
+	/** Textured cube (every face shows the whole texture). */
+	public static void texCube(VertexConsumer vc, Matrix4f m, double cx, double cy, double cz, double half, int color) {
+		int[][] faces = {{0, 1, 3, 2}, {4, 6, 7, 5}, {0, 4, 5, 1}, {2, 3, 7, 6}, {0, 2, 6, 4}, {1, 5, 7, 3}};
+		float[][] uv = {{0, 1}, {1, 1}, {1, 0}, {0, 0}};
+		for (int[] f : faces) {
+			for (int k = 0; k < 4; k++) {
+				int i = f[k];
+				vt(vc, m, cx + ((i & 1) == 0 ? -half : half), cy + ((i & 2) == 0 ? -half : half), cz + ((i & 4) == 0 ? -half : half),
+						uv[k][0], uv[k][1], color);
+			}
+		}
+	}
+
 	/** Box along a direction (the black fists of Shadow Jab): width x width x length. */
 	public static void box(VertexConsumer vc, Matrix4f m, Vec3 center, Vec3 dir, double width, double length, int color) {
 		Vec3 d = dir.lengthSqr() < 1.0E-8 ? new Vec3(0, 0, 1) : dir.normalize();

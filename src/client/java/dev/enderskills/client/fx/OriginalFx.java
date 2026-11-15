@@ -934,7 +934,8 @@ public final class OriginalFx {
 				Vec3 c = e.to.add(0, 1, 0).subtract(cam);
 				if (e.skill.equals("crush")) {
 					double s = 1.4 * (1 - life * 0.6);
-					FxDraw.cube(buffers.getBuffer(FxDraw.alpha("crush")), m, c.x, c.y, c.z, s, 0, 0, FxDraw.argb(0xFFFFFF, f));
+					// textured cube: the plain cube had no texture coordinates on this textured type (broken vertices every frame)
+					FxDraw.texCube(buffers.getBuffer(FxDraw.alpha("crush")), m, c.x, c.y, c.z, s, FxDraw.argb(0xFFFFFF, f));
 				} else {
 					FxDraw.texSphere(buffers.getBuffer(FxDraw.alpha("suffocate")), m, c.x, c.y, c.z, 1.0,
 							FxDraw.argb(color(e.skill, 0xFFFFFF), 0.8F * f), 10, 2F, (float) (time * 0.02));

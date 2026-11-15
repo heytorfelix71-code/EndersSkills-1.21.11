@@ -108,16 +108,22 @@ public final class Portals {
 		}
 		Zones.remove(w.marker());
 		m.waiting = null;
-		Pair pair = new Pair(m.nextId++, w.level(), w.at(), second, until);
+		pair(p, w.level(), w.at(), second, until);
+	}
+
+	/** A new pair of linked portals right away (portal menu: entrance in front of you, exit at the coordinates). */
+	public static void pair(ServerPlayer p, ServerLevel level, Vec3 a, Vec3 b, int until) {
+		Mine m = mine(p);
+		Pair pair = new Pair(m.nextId++, level, a, b, until);
 		pair.open();
 		m.pairs.add(pair);
 		int max = Math.max(1, EsSettings.get().portalMaxPairs);
 		while (m.pairs.size() > max) {
 			m.pairs.remove(0).shut();
 		}
-		Zones.flash(w.level(), w.at());
-		Zones.flash(w.level(), second);
-		w.level().playSound(null, second.x, second.y, second.z, SoundEvents.PORTAL_TRIGGER, SoundSource.PLAYERS, Vfx.vol() * 0.4F, 1.6F);
+		Zones.flash(level, a);
+		Zones.flash(level, b);
+		level.playSound(null, b.x, b.y, b.z, SoundEvents.PORTAL_TRIGGER, SoundSource.PLAYERS, Vfx.vol() * 0.4F, 1.6F);
 		sync(p);
 	}
 
