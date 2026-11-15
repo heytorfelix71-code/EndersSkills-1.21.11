@@ -123,6 +123,8 @@ public final class EsSettings {
 	/** Seconds before portals close by themselves at level 0 and just below the top level. */
 	public int portalAutoCloseStart = 30;
 	public int portalAutoCloseEnd = 60;
+	/** How many pairs of portals can be open at once; a new pair past this closes the oldest. */
+	public int portalMaxPairs = 5;
 	// ---- Wall and Dome
 	/** From this skill level on, Wall and Dome stay until you use the ability again. */
 	public int earthToggleLevel = 40;
@@ -141,6 +143,8 @@ public final class EsSettings {
 	public boolean domeRoof = true;
 	/** Size multiplier of the automatic Wall size (1 = normal, 0.5 = half). */
 	public double wallSizeScale = 1.0;
+	/** In toggle mode (stays until used again) Wall and Dome still go away by themselves after this many seconds (0 = never). */
+	public int earthToggleMaxSeconds = 120;
 	/** Largest Wall width and height in blocks (0 = no limit). */
 	public int wallMaxWidth = 0;
 	public int wallMaxHeight = 0;

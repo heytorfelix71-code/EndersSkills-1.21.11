@@ -39,6 +39,13 @@ public final class Zones {
 		ZONES.add(zone);
 	}
 
+	/** Server stopping. */
+	static void clear() {
+		ZONES.clear();
+		RECENT.clear();
+		INSIDE.clear();
+	}
+
 	/** Entities that are standing inside a portal right now (they go through only when they step in). */
 	private static final java.util.Set<UUID> INSIDE = new java.util.HashSet<>();
 

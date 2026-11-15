@@ -51,9 +51,6 @@ public final class AbilityManager {
 		boolean smashing;
 		double smashStartY;
 		int smashStarted;
-		Vec3 portalEntrance;
-		ServerLevel portalLevel;
-		java.util.List<Zones.Zone> portalZones = java.util.List.of();
 		boolean dirty = true;
 		float sentEndurance = -1;
 	}
@@ -71,8 +68,8 @@ public final class AbilityManager {
 
 	public static void forget(ServerPlayer player) {
 		State st = STATES.get(player.getUUID());
-		if (st != null && st.portalZones.isEmpty()) {
-			STATES.remove(player.getUUID());
+		if (st != null) {
+			STATES.remove(player.getUUID()); // portals live in Portals and stay open
 		}
 	}
 
@@ -123,15 +120,6 @@ public final class AbilityManager {
 		double f = Math.min(1.0, Math.max(0, Progression.data(p).level(skill)) / (double) cap);
 		start = Math.max(1.0, start);
 		return start * Math.pow(Math.max(start, max) / start, f);
-	}
-
-	private static void closePortals(ServerPlayer player, State s) {
-		s.portalZones.forEach(Zones::remove);
-		s.portalZones = java.util.List.of();
-		s.activeUntil.remove("portal");
-		s.cooldownUntil.put("portal", now + 40);
-		s.dirty = true;
-		player.level().playSound(null, player.blockPosition(), SoundEvents.PORTAL_TRAVEL, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.3F, 1.8F);
 	}
 
 	/** Passive on-hit abilities: owned, off cooldown and enough endurance; pays and starts the cooldown. */
@@ -186,6 +174,7 @@ public final class AbilityManager {
 		server = srv;
 		now = srv.getTickCount();
 		Zones.tick(now);
+		Portals.tick(now);
 		DefenseAbilities.tick(now);
 		EarthStructures.tick(now);
 		OffenseAbilities.tick(now);
@@ -202,7 +191,7 @@ public final class AbilityManager {
 		for (ServerPlayer player : srv.getPlayerList().getPlayers()) {
 			State s = state(player);
 			if (now % 5 == 0 && active(s, "fog")) {
-				fogPulse(player);
+				fogPulse(player, now % 10 == 0);
 			}
 			if (now % 100 == 0) {
 				AttributeEffects.apply(player); // after joining, reloads and config changes too
@@ -324,24 +313,29 @@ public final class AbilityManager {
 	}
 
 	/** Fog and smoke around the player; enemies inside are blinded and forget their target. */
-	private static void fogPulse(ServerPlayer player) {
+	private static void fogPulse(ServerPlayer player, boolean visuals) {
 		ServerLevel level = (ServerLevel) player.level();
 		double r = Math.max(1.0, EsSettings.get().fogRadius);
 		Vec3 c = player.position();
-		Vfx.loud(() -> {
-			int count = Math.max(4, Vfx.n((int) (r * r * 0.8)));
-			for (int i = 0; i < count; i++) {
-				double a = level.getRandom().nextDouble() * Math.PI * 2;
-				double d = Math.sqrt(level.getRandom().nextDouble()) * r;
-				double x = c.x + Math.cos(a) * d;
-				double z = c.z + Math.sin(a) * d;
-				double y = c.y + level.getRandom().nextDouble() * 2.5;
-				level.sendParticles(i % 3 == 0 ? ParticleTypes.CAMPFIRE_COSY_SMOKE : ParticleTypes.LARGE_SMOKE, x, y, z, 1, 0.3, 0.2, 0.3, 0.005);
-				if (i % 4 == 0) {
-					level.sendParticles(ParticleTypes.CLOUD, x, y, z, 1, 0.4, 0.3, 0.4, 0.0);
+		// It used to send up to r*r*0.8 single particles every 5 ticks, a third of them campfire smoke that lives ~14 s:
+		// thousands of big see-through particles piled up and froze the game. Now: fewer spots, a few particles each,
+		// short-lived smoke only, every 10 ticks, and never more than 30 spots.
+		if (visuals) {
+			Vfx.loud(() -> {
+				int spots = Math.max(3, Math.min(30, Vfx.n((int) (r * r * 0.35))));
+				for (int i = 0; i < spots; i++) {
+					double a = level.getRandom().nextDouble() * Math.PI * 2;
+					double d = Math.sqrt(level.getRandom().nextDouble()) * r;
+					double x = c.x + Math.cos(a) * d;
+					double z = c.z + Math.sin(a) * d;
+					double y = c.y + level.getRandom().nextDouble() * 2.2;
+					level.sendParticles(ParticleTypes.LARGE_SMOKE, x, y, z, 3, 0.6, 0.4, 0.6, 0.004);
+					if (i % 3 == 0) {
+						level.sendParticles(ParticleTypes.CLOUD, x, y, z, 2, 0.6, 0.4, 0.6, 0.0);
+					}
 				}
-			}
-		});
+			});
+		}
 		for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(r),
 				x -> x != player && x.isAlive() && !x.isSpectator() && x.distanceToSqr(player) <= r * r && !DefenseAbilities.isAlly(player, x))) {
 			status(e, null, MobEffects.BLINDNESS, 60, 0);
@@ -355,12 +349,6 @@ public final class AbilityManager {
 	/** A timed ability ran out. */
 	private static void end(ServerPlayer player, String skill) {
 		dev.enderskills.registry.ModEffects.stop((ServerLevel) player.level(), player.position(), skill);
-		if (skill.equals("portal")) {
-			State s = state(player);
-			s.portalZones.forEach(Zones::remove);
-			s.portalZones = java.util.List.of();
-			player.level().playSound(null, player.blockPosition(), SoundEvents.PORTAL_TRAVEL, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.3F, 1.8F);
-		}
 		if (skill.equals("speed_boost")) {
 			AttributeEffects.set(player, Attributes.MOVEMENT_SPEED, "speed_boost", 0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 			AttributeEffects.set(player, Attributes.STEP_HEIGHT, "speed_boost_step", 0, AttributeModifier.Operation.ADD_VALUE);
@@ -375,7 +363,51 @@ public final class AbilityManager {
 				|| !Double.isFinite(target.x) || !Double.isFinite(target.y) || !Double.isFinite(target.z)) {
 			return;
 		}
+		if (skill.equals("portal")) {
+			portalMenu(player, dev.enderskills.network.EsNetwork.PortalAction.WAIT_AT, 0, 0, target);
+			return;
+		}
 		use(player, skill, 0, 0, target);
+	}
+
+	/** The portal menu (sneak + Portal key): list, close, move a portal, or put the next pair's first portal at coordinates. */
+	public static void portalMenu(ServerPlayer player, int action, int id, int which, Vec3 target) {
+		SkillData data = Progression.data(player);
+		if (!data.owns("portal") || SkillConfigs.disabled("portal") || !player.isAlive()) {
+			return;
+		}
+		boolean finite = Double.isFinite(target.x) && Double.isFinite(target.y) && Double.isFinite(target.z)
+				&& Math.abs(target.x) < 3.0E7 && Math.abs(target.z) < 3.0E7 && Math.abs(target.y) < 1.0E5;
+		ServerLevel level = (ServerLevel) player.level();
+		switch (action) {
+			case dev.enderskills.network.EsNetwork.PortalAction.CLOSE -> Portals.close(player, id);
+			case dev.enderskills.network.EsNetwork.PortalAction.CANCEL_WAIT -> Portals.cancelWaiting(player);
+			case dev.enderskills.network.EsNetwork.PortalAction.MOVE -> {
+				if (!finite || !EsSettings.get().coordinateTargeting) {
+					return;
+				}
+				double range = scaled(player, "portal", EsSettings.get().portalRangeStart, EsSettings.get().portalRangeMax);
+				if (!Portals.move(player, id, which, target, range)) {
+					tooFar(player, range);
+					Portals.sync(player);
+				}
+			}
+			case dev.enderskills.network.EsNetwork.PortalAction.WAIT_AT -> {
+				if (!finite || !EsSettings.get().coordinateTargeting || !level.getWorldBorder().isWithinBounds(net.minecraft.core.BlockPos.containing(target))) {
+					return;
+				}
+				State s = state(player);
+				double cost = value(player, "portal", "ENDURANCE");
+				if (s.endurance < cost) {
+					return;
+				}
+				s.endurance -= cost;
+				s.lastUse = now;
+				s.dirty = true;
+				Portals.setWaiting(player, level, target); // the next use of the ability links a portal to it
+			}
+			default -> Portals.sync(player);
+		}
 	}
 
 	public static void use(ServerPlayer player, String skill, float dx, float dz) {
@@ -465,12 +497,9 @@ public final class AbilityManager {
 		ServerLevel level = (ServerLevel) player.level();
 		Vfx.skill = skill;
 		boostFor(player, skill);
-		if (skill.equals("portal") && active(s, skill)) {
-			closePortals(player, s); // the portals stay until you close them
-			return false;
-		}
 		double cost = value(player, skill, "ENDURANCE");
-		boolean secondPortal = skill.equals("portal") && s.portalEntrance != null;
+		Portals.Waiting waiting = skill.equals("portal") ? Portals.waiting(player) : null;
+		boolean secondPortal = waiting != null && waiting.level() == level;
 		if ((skill.equals("wall") || skill.equals("dome")) && EarthStructures.has(player, skill) && EarthStructures.toggleMode(player, skill)) {
 			EarthStructures.remove(player, skill); // toggle mode: the second use takes the wall down
 			s.activeUntil.remove(skill);
@@ -588,7 +617,7 @@ public final class AbilityManager {
 				// a cloud of fog and smoke around you: everyone else inside is blinded and loses track of you
 				int duration = fogToggle(player) ? 20 * Math.max(1, EsSettings.get().fogMaxSeconds) : (int) Math.max(20, value(player, skill, "DURATION"));
 				s.activeUntil.put(skill, now + duration);
-				fogPulse(player);
+				fogPulse(player, true);
 				level.playSound(null, player.blockPosition(), SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 0.6F);
 			}
 			case "unstable_portal" -> {
@@ -598,43 +627,23 @@ public final class AbilityManager {
 				level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.PORTAL_TRIGGER, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.4F, 1.6F);
 			}
 			case "portal" -> {
+				// 1st use: a portal waiting for its partner; 2nd use: the partner, linked to it (a pair). 3rd and 4th: another pair...
 				EsSettings cfg = EsSettings.get();
-				Vec3 spot = aimAt != null ? aimAt : aim(level, player, cfg.portalAimRange);
-				if (aimAt != null) {
-					// typed coordinates: entrance in front of you, exit at the coordinates
-					s.portalEntrance = player.position().add(player.getViewVector(1.0F).multiply(2, 0, 2));
-					s.portalLevel = level;
-					s.endurance -= cost;
-					cost = 0;
-				}
-				if (aimAt == null && (!secondPortal || s.portalLevel != level)) {
-					s.portalEntrance = spot;
-					s.portalLevel = level;
+				Vec3 spot = aim(level, player, cfg.portalAimRange);
+				if (!secondPortal) {
 					s.endurance -= cost;
 					s.lastUse = now;
 					s.dirty = true;
-					Zones.add(new Zones.Zone(level, spot, 0.0, now + 1200, null, 0));
-					Zones.flash(level, spot);
-					level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.PORTAL_AMBIENT, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.5F, 1.4F);
-					return false; // the exit is placed with the next use
+					Portals.setWaiting(player, level, spot);
+					return false; // its partner is placed with the next use
 				}
 				double range = scaled(player, skill, cfg.portalRangeStart, cfg.portalRangeMax);
-				if (s.portalEntrance.distanceTo(spot) > range) {
+				if (waiting.at().distanceTo(spot) > range) {
 					tooFar(player, range);
 					return false;
 				}
-				int life = portalLife(player);
-				Zones.Zone a = new Zones.Zone(level, s.portalEntrance, 1.0, life, spot, 0);
-				Zones.Zone b = new Zones.Zone(level, spot, 1.0, life, s.portalEntrance, 0);
-				Zones.add(a);
-				Zones.add(b);
-				Zones.flash(level, a.center());
-				Zones.flash(level, spot);
-				s.portalZones = java.util.List.of(a, b);
-				s.activeUntil.put(skill, life);
-				s.portalEntrance = null;
+				Portals.link(player, spot, portalLife(player));
 				cost = 0;
-				level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.PORTAL_TRIGGER, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.4F, 1.6F);
 			}
 			default -> {
 				if (TOGGLES.contains(skill)) {

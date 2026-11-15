@@ -603,5 +603,22 @@
   "enderskills.config.blood_pool_size": "Pool size",
   "enderskills.config.blood_pool_size.desc": "Size of the Blood Pool (1 = original); the blood covers the ground and follows it.",
   "enderskills.config.second_rune_ring_level": "Second circle level",
-  "enderskills.config.second_rune_ring_level.desc": "From this level on, two rune circles spin around you instead of one."
+  "enderskills.config.second_rune_ring_level.desc": "From this level on, two rune circles spin around you instead of one.",
+  "enderskills.config.earth_toggle_max": "Toggle mode: vanish after (s)",
+  "enderskills.config.earth_toggle_max.desc": "In toggle mode the Wall / Dome stays until you use the ability again, but still goes away by itself after this many seconds, so it is never forgotten (0 = never).",
+  "enderskills.config.portal_max_pairs": "Pairs of portals",
+  "enderskills.config.portal_max_pairs.desc": "How many pairs of portals can be open at once (1st + 2nd use = a pair, 3rd + 4th = another...). A new pair past this closes the oldest.",
+  "enderskills.portals.title": "Portals",
+  "enderskills.portals.none": "No pair open. Use Portal twice to open one.",
+  "enderskills.portals.edit_a": "Edit A",
+  "enderskills.portals.edit_b": "Edit B",
+  "enderskills.portals.close": "Close",
+  "enderskills.portals.close_all": "Close all",
+  "enderskills.portals.waiting": "Waiting for its pair: %s",
+  "enderskills.portals.cancel_wait": "Remove",
+  "enderskills.portals.new_label": "New portal at coordinates (the next use of Portal links to it)",
+  "enderskills.portals.move_label": "Move portal %s of pair #%s to:",
+  "enderskills.portals.create": "Create",
+  "enderskills.portals.move": "Move",
+  "enderskills.portals.stop_edit": "Cancel"
 }

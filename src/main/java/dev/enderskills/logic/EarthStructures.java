@@ -81,7 +81,10 @@ public final class EarthStructures {
 			dissolve(old);
 			STRUCTURES.remove(old);
 		}
-		int duration = toggleMode(p, skill) ? Integer.MAX_VALUE : now + (int) Math.max(20, AbilityManager.value(p, skill, "DURATION"));
+		// toggle mode: stays until used again, but goes away by itself after the configured time so it is never forgotten
+		int toggleTicks = 20 * Math.max(0, cfg.earthToggleMaxSeconds);
+		int duration = toggleMode(p, skill) ? (toggleTicks > 0 ? now + toggleTicks : Integer.MAX_VALUE)
+				: now + (int) Math.max(20, AbilityManager.value(p, skill, "DURATION"));
 		Structure s = new Structure(p.getUUID(), skill, level, duration);
 		double force = AbilityManager.value(p, skill, "FORCE");
 		if (skill.equals("wall")) {

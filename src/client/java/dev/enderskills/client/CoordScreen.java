@@ -38,7 +38,7 @@ public class CoordScreen extends Screen {
 		setInitialFocus(x);
 	}
 
-	private static double parse(String text, double own) {
+	static double parse(String text, double own) {
 		String t = text.trim();
 		if (t.isEmpty() || t.equals("~")) {
 			return own;

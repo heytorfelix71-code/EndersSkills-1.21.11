@@ -83,6 +83,68 @@ public final class EsNetwork {
 		}
 	}
 
+	/** Client → server: the portal menu (list, close a pair, move a portal, first portal of a pair at coordinates). */
+	public record PortalAction(int action, int id, int which, double x, double y, double z) implements CustomPacketPayload {
+		public static final int LIST = 0;
+		public static final int CLOSE = 1;
+		public static final int MOVE = 2;
+		public static final int WAIT_AT = 3;
+		public static final int CANCEL_WAIT = 4;
+		public static final Type<PortalAction> TYPE = new Type<>(EnderSkills.id("portal_action"));
+		public static final StreamCodec<RegistryFriendlyByteBuf, PortalAction> CODEC = StreamCodec.composite(
+				ByteBufCodecs.VAR_INT, PortalAction::action,
+				ByteBufCodecs.VAR_INT, PortalAction::id,
+				ByteBufCodecs.VAR_INT, PortalAction::which,
+				ByteBufCodecs.DOUBLE, PortalAction::x,
+				ByteBufCodecs.DOUBLE, PortalAction::y,
+				ByteBufCodecs.DOUBLE, PortalAction::z,
+				PortalAction::new);
+
+		@Override
+		public Type<? extends CustomPacketPayload> type() {
+			return TYPE;
+		}
+	}
+
+	/** Server → client: the player's portal pairs {id, ax, ay, az, bx, by, bz, seconds left or -1} and the waiting portal {x, y, z}. */
+	public record PortalList(java.util.List<double[]> pairs, double[] waiting) implements CustomPacketPayload {
+		public static final Type<PortalList> TYPE = new Type<>(EnderSkills.id("portal_list"));
+		public static final StreamCodec<RegistryFriendlyByteBuf, PortalList> CODEC = StreamCodec.of((buf, v) -> {
+			buf.writeVarInt(v.pairs().size());
+			for (double[] d : v.pairs()) {
+				writeDoubles(buf, d);
+			}
+			writeDoubles(buf, v.waiting());
+		}, buf -> {
+			int n = Math.min(256, buf.readVarInt());
+			java.util.List<double[]> list = new java.util.ArrayList<>();
+			for (int i = 0; i < n; i++) {
+				list.add(readDoubles(buf));
+			}
+			return new PortalList(list, readDoubles(buf));
+		});
+
+		private static void writeDoubles(RegistryFriendlyByteBuf buf, double[] d) {
+			buf.writeVarInt(d.length);
+			for (double x : d) {
+				buf.writeDouble(x);
+			}
+		}
+
+		private static double[] readDoubles(RegistryFriendlyByteBuf buf) {
+			double[] d = new double[Math.min(16, buf.readVarInt())];
+			for (int i = 0; i < d.length; i++) {
+				d[i] = buf.readDouble();
+			}
+			return d;
+		}
+
+		@Override
+		public Type<? extends CustomPacketPayload> type() {
+			return TYPE;
+		}
+	}
+
 	/** Server → client: draw a 3D effect (see Shapes). */
 	/** What an ability is doing, for the original-style rendering on the client (see logic.Fx). */
 	public record SkillFx(String skill, int phase, int id, int entity, double x, double y, double z, double tx, double ty, double tz,
@@ -162,6 +224,11 @@ public final class EsNetwork {
 		PayloadTypeRegistry.playC2S().register(AltarAction.TYPE, AltarAction.CODEC);
 		PayloadTypeRegistry.playC2S().register(UseAbility.TYPE, UseAbility.CODEC);
 		PayloadTypeRegistry.playC2S().register(UseAbilityAt.TYPE, UseAbilityAt.CODEC);
+		PayloadTypeRegistry.playC2S().register(PortalAction.TYPE, PortalAction.CODEC);
+		PayloadTypeRegistry.playS2C().register(PortalList.TYPE, PortalList.CODEC);
+		ServerPlayNetworking.registerGlobalReceiver(PortalAction.TYPE, (payload, context) ->
+				dev.enderskills.logic.AbilityManager.portalMenu(context.player(), payload.action(), payload.id(), payload.which(),
+						new net.minecraft.world.phys.Vec3(payload.x(), payload.y(), payload.z())));
 		ServerPlayNetworking.registerGlobalReceiver(UseAbilityAt.TYPE, (payload, context) ->
 				dev.enderskills.logic.AbilityManager.useAt(context.player(), payload.skill(),
 						new net.minecraft.world.phys.Vec3(payload.x(), payload.y(), payload.z())));

@@ -603,5 +603,22 @@
   "enderskills.config.blood_pool_size": "Tamanho da poça",
   "enderskills.config.blood_pool_size.desc": "Tamanho da Poça de Sangue (1 = original); o sangue cobre o chão e acompanha o terreno.",
   "enderskills.config.second_rune_ring_level": "Nível do segundo círculo",
-  "enderskills.config.second_rune_ring_level.desc": "A partir deste nível, dois círculos de runas giram ao seu redor em vez de um."
+  "enderskills.config.second_rune_ring_level.desc": "A partir deste nível, dois círculos de runas giram ao seu redor em vez de um.",
+  "enderskills.config.earth_toggle_max": "Modo fixo: sumir após (s)",
+  "enderskills.config.earth_toggle_max.desc": "No modo fixo a Parede / Domo fica até você usar a habilidade de novo, mas some sozinha depois desses segundos, para não ficar esquecida (0 = nunca).",
+  "enderskills.config.portal_max_pairs": "Pares de portais",
+  "enderskills.config.portal_max_pairs.desc": "Quantos pares de portais podem ficar abertos ao mesmo tempo (1º + 2º uso = um par, 3º + 4º = outro...). Um par novo além disso fecha o mais antigo.",
+  "enderskills.portals.title": "Portais",
+  "enderskills.portals.none": "Nenhum par aberto. Use o Portal duas vezes para abrir um.",
+  "enderskills.portals.edit_a": "Editar A",
+  "enderskills.portals.edit_b": "Editar B",
+  "enderskills.portals.close": "Fechar",
+  "enderskills.portals.close_all": "Fechar todos",
+  "enderskills.portals.waiting": "Esperando o par: %s",
+  "enderskills.portals.cancel_wait": "Remover",
+  "enderskills.portals.new_label": "Novo portal nas coordenadas (o próximo uso do Portal se liga a ele)",
+  "enderskills.portals.move_label": "Mover o portal %s do par #%s para:",
+  "enderskills.portals.create": "Criar",
+  "enderskills.portals.move": "Mover",
+  "enderskills.portals.stop_edit": "Cancelar"
 }

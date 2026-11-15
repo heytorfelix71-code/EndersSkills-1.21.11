@@ -76,6 +76,8 @@ public final class EnderSkills implements ModInitializer {
 				dev.enderskills.logic.EarthStructures.onBreak(world, pos));
 		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server ->
 				dev.enderskills.logic.EarthStructures.restoreAll());
+		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server ->
+				dev.enderskills.logic.Portals.clear());
 
 		BiomeModifications.addFeature(BiomeSelectors.foundInOverworld(), GenerationStep.Decoration.UNDERGROUND_ORES,
 				ResourceKey.create(Registries.PLACED_FEATURE, id("ender_ore")));

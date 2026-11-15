@@ -325,6 +325,7 @@ public final class EsConfigScreen {
 				g.option(num("portal_range_start", def.portalRangeStart, 1, 30_000_000, () -> c.portalRangeStart, v -> c.portalRangeStart = v));
 				g.option(num("portal_range_max", def.portalRangeMax, 1, 30_000_000, () -> c.portalRangeMax, v -> c.portalRangeMax = v));
 				g.option(num("portal_aim_range", def.portalAimRange, 8, 1024, () -> c.portalAimRange, v -> c.portalAimRange = v));
+				g.option(integer("portal_max_pairs", def.portalMaxPairs, 1, 100, () -> c.portalMaxPairs, v -> c.portalMaxPairs = v));
 				g.option(bool("coordinates", def.coordinateTargeting, () -> c.coordinateTargeting, v -> c.coordinateTargeting = v));
 			}
 			case "speed_boost" -> {
@@ -359,6 +360,7 @@ public final class EsConfigScreen {
 			}
 			case "wall", "dome" -> {
 				g.option(integer("earth_toggle_level", def.earthToggleLevel, 0, 1000, () -> c.earthToggleLevel, v -> c.earthToggleLevel = v));
+				g.option(integer("earth_toggle_max", def.earthToggleMaxSeconds, 0, 86400, () -> c.earthToggleMaxSeconds, v -> c.earthToggleMaxSeconds = v));
 				if (id.equals("wall")) {
 					g.option(slider("wall_scale", def.wallSizeScale, 0.1, 2, () -> c.wallSizeScale, v -> c.wallSizeScale = v));
 					g.option(integer("wall_max_width", def.wallMaxWidth, 0, 64, () -> c.wallMaxWidth, v -> c.wallMaxWidth = v));
