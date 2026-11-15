@@ -133,6 +133,16 @@ public final class EsSettings {
 	public int domeRadius = 0;
 	public int domeHeight = 0;
 	public boolean domeRoof = true;
+	/** Size multiplier of the automatic Wall size (1 = normal, 0.5 = half). */
+	public double wallSizeScale = 1.0;
+	/** Largest Wall width and height in blocks (0 = no limit). */
+	public int wallMaxWidth = 0;
+	public int wallMaxHeight = 0;
+	/** Size multiplier of the automatic Dome size (1 = normal, 0.5 = half). */
+	public double domeSizeScale = 1.0;
+	/** Largest Dome radius and height in blocks (0 = no limit). */
+	public int domeMaxRadius = 0;
+	public int domeMaxHeight = 0;
 	/** Build with the block found on the ground (dirt, stone, cobblestone...). */
 	public boolean earthCopyGround = true;
 	/** Block used when the ground can't be copied (sand, gravel, chests...) or copying is off. */
@@ -164,6 +174,18 @@ public final class EsSettings {
 	public boolean extraSounds = true;
 	/** Volume of each skill's original sound (1 = normal), on top of the master volume. */
 	public java.util.Map<String, Double> skillVolume = defaultVolumes();
+	/** Skill -> particle amount multiplier (1 = normal, 0 = none). */
+	public java.util.Map<String, Double> skillParticles = new java.util.LinkedHashMap<>();
+	/** Skill -> custom RGB color of its glows, shapes and trails (absent = automatic). */
+	public java.util.Map<String, Integer> skillColors = new java.util.LinkedHashMap<>();
+	/** Most particles a single effect may send (protects weak computers). */
+	public int maxParticlesPerEffect = 120;
+	/** 3D shapes: light columns, beams, black holes, clouds, fire rain. */
+	public boolean vfxShapes = true;
+	/** See-through trail behind Dash, Warp, Teleport and Speed Boost. */
+	public boolean vfxTrails = true;
+	/** Blurred vibrating copies around a player under Speed Boost (like the Reverse Flash). */
+	public boolean vfxVibrate = true;
 	/** Amount of particles in the visual effects (1 = normal, 2 = double...). */
 	public double vfxDensity = 1.0;
 

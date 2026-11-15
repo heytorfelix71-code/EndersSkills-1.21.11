@@ -148,6 +148,7 @@ public final class AbilityManager {
 		s.endurance -= cost;
 		s.lastUse = now;
 		boostFor(player, skill);
+		Vfx.skill = skill;
 		s.cooldownUntil.put(skill, now + (int) value(player, skill, "COOLDOWN"));
 		s.dirty = true;
 		ModEffectsHook.sound(player, skill);
@@ -378,6 +379,7 @@ public final class AbilityManager {
 		}
 		State s = state(player);
 		ServerLevel level = (ServerLevel) player.level();
+		Vfx.skill = skill;
 		boostFor(player, skill);
 		if (skill.equals("portal") && active(s, skill)) {
 			closePortals(player, s); // the portals stay until you close them
@@ -411,8 +413,14 @@ public final class AbilityManager {
 		Vec3 eye = player.getEyePosition();
 		Vec3 look = player.getViewVector(1.0F);
 		boolean done = true;
+		if (skill.equals("warp") || skill.equals("teleport")) {
+			Shapes.afterimage(player, skill, 10);
+		}
 		switch (skill) {
-			case "dash" -> effect(level, player, ParticleTypes.CLOUD, SoundEvents.BREEZE_JUMP);
+			case "dash" -> {
+				effect(level, player, ParticleTypes.CLOUD, SoundEvents.BREEZE_JUMP);
+				Shapes.afterimage(player, skill, 12);
+			}
 			case "extra_jump" -> {
 				s.jumpsUsed++;
 				player.resetFallDistance();
@@ -457,6 +465,8 @@ public final class AbilityManager {
 			case "speed_boost" -> {
 				s.activeUntil.put(skill, now + (int) value(player, skill, "DURATION"));
 				effect(level, player, ParticleTypes.CLOUD, SoundEvents.BREEZE_WIND_CHARGE_BURST.value());
+				Shapes.afterimage(player, skill, (int) value(player, skill, "DURATION"));
+				Shapes.vibrate(player, skill, (int) value(player, skill, "DURATION"));
 			}
 			case "hasten" -> {
 				s.activeUntil.put(skill, now + (int) value(player, skill, "DURATION"));

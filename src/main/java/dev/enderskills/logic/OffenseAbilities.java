@@ -42,18 +42,19 @@ public final class OffenseAbilities {
 		BiConsumer<LivingEntity, Vec3> onHit = (e, at) -> { };
 		Consumer<Vec3> onEnd = at -> { };
 		final Set<LivingEntity> hit = new HashSet<>();
+		final String skill = Vfx.skill;
 	}
 
 	/** An area on the ground that does something to the enemies inside every few ticks. */
 	private record Zone(ServerPlayer owner, ServerLevel level, Vec3 center, double radius, int until, int every,
-			ParticleOptions particle, Consumer<LivingEntity> action) {
+			ParticleOptions particle, Consumer<LivingEntity> action, String skill) {
 	}
 
-	private record Delayed(int at, Runnable run) {
+	private record Delayed(int at, Runnable run, String skill) {
 	}
 
 	/** A cast that lasts a few ticks (breath, punches, volleys, beams). */
-	private record Channel(ServerPlayer owner, int until, int every, Runnable step) {
+	private record Channel(ServerPlayer owner, int until, int every, Runnable step, String skill) {
 	}
 
 	private static final List<Bolt> BOLTS = new ArrayList<>();
@@ -143,15 +144,15 @@ public final class OffenseAbilities {
 
 	private static void zone(ServerPlayer p, Vec3 center, double radius, int duration, int every, ParticleOptions particle,
 			Consumer<LivingEntity> action) {
-		ZONES.add(new Zone(p, (ServerLevel) p.level(), center, radius, now + Math.max(1, duration), Math.max(1, every), particle, action));
+		ZONES.add(new Zone(p, (ServerLevel) p.level(), center, radius, now + Math.max(1, duration), Math.max(1, every), particle, action, Vfx.skill));
 	}
 
 	private static void later(int ticks, Runnable run) {
-		DELAYED.add(new Delayed(now + Math.max(1, ticks), run));
+		DELAYED.add(new Delayed(now + Math.max(1, ticks), run, Vfx.skill));
 	}
 
 	private static void channel(ServerPlayer p, int duration, int every, Runnable step) {
-		CHANNELS.add(new Channel(p, now + Math.max(1, duration), Math.max(1, every), step));
+		CHANNELS.add(new Channel(p, now + Math.max(1, duration), Math.max(1, every), step, Vfx.skill));
 	}
 
 	/** Enemies in a cone in front of the player. */
@@ -253,6 +254,7 @@ public final class OffenseAbilities {
 				b.particle = ParticleTypes.SNEEZE;
 				b.onEnd = at -> {
 					double r = v(p, skill, "SIZE") / 2;
+					Shapes.send(level, Shapes.CLOUD, at, r, r, null, Shapes.color(skill, 0x7A3CC8), (int) Math.max(40, v(p, skill, "DURATION")), -1);
 					for (LivingEntity e : enemies(p, at, r)) {
 						hit(p, e, v(p, skill, "DAMAGE"), 0);
 					}
@@ -279,6 +281,7 @@ public final class OffenseAbilities {
 			case "black_hole" -> {
 				Vec3 at = AbilityManager.aim(level, p, v(p, skill, "RANGE")).add(0, 1.0, 0);
 				double r = v(p, skill, "SIZE");
+				Shapes.send(level, Shapes.BLACK_HOLE, at, Math.max(0.8, r * 0.3), r, null, Shapes.color(skill, 0x8A3CFF), (int) v(p, skill, "DURATION"), -1);
 				for (LivingEntity e : enemies(p, at, r)) {
 					hit(p, e, v(p, skill, "DAMAGE"), 0);
 					dot(p, e, v(p, skill, "DOT"), 0, v(p, skill, "DOT_DURATION"));
@@ -367,7 +370,7 @@ public final class OffenseAbilities {
 			case "crush" -> {
 				Bolt b = bolt(p, v(p, skill, "RANGE"));
 				b.speed = 1.6;
-				b.particle = ParticleTypes.GUST_EMITTER_SMALL;
+				b.particle = ParticleTypes.GUST;
 				b.onEnd = at -> {
 					for (LivingEntity e : enemies(p, at, v(p, skill, "SIZE") / 2)) {
 						hit(p, e, v(p, skill, "DAMAGE"), 0);
@@ -426,6 +429,7 @@ public final class OffenseAbilities {
 			case "flaming_rain" -> {
 				Vec3 at = AbilityManager.aim(level, p, v(p, skill, "RANGE"));
 				double r = v(p, skill, "SIZE") / 2;
+				Shapes.send(level, Shapes.FIRE_RAIN, at, r, 9, null, Shapes.color(skill, 0xFFB030), (int) v(p, skill, "DURATION"), -1);
 				zone(p, at, r, (int) v(p, skill, "DURATION"), 10, ParticleTypes.LAVA, e -> {
 					if (e.getRemainingFireTicks() <= 0) {
 						burn(p, e, skill);
@@ -466,6 +470,7 @@ public final class OffenseAbilities {
 						burn(p, e, skill);
 					}
 					burst(level, at, ParticleTypes.EXPLOSION, 3, v(p, skill, "SIZE") / 3);
+					Shapes.send(level, Shapes.SPHERE, at, v(p, skill, "SIZE") / 2 + 0.5, 0, null, Shapes.color(skill, 0xFF8A2A), 8, -1);
 					sound(level, at, SoundEvents.GENERIC_EXPLODE.value(), 0.8F, 1.2F);
 				};
 				sound(level, p.position(), SoundEvents.BLAZE_SHOOT, 1.0F, 1.0F);
@@ -480,6 +485,7 @@ public final class OffenseAbilities {
 					e.hurtMarked = true;
 				}
 				burst(level, p.position(), ParticleTypes.EXPLOSION_EMITTER, 1, 0);
+				Shapes.send(level, Shapes.SPHERE, p.position().add(0, 1, 0), r, 0, null, Shapes.color(skill, 0xFF6A1A), 12, -1);
 				burst(level, p.position(), ParticleTypes.FLAME, 80, r / 2);
 				sound(level, p.position(), SoundEvents.GENERIC_EXPLODE.value(), 1.5F, 0.8F);
 			}
@@ -488,6 +494,7 @@ public final class OffenseAbilities {
 				Vec3 at = AbilityManager.aim(level, p, v(p, skill, "RANGE"));
 				double r = v(p, skill, "SIZE") / 2 + 0.5;
 				later((int) Math.max(5, v(p, skill, "DURATION")), () -> {
+					Shapes.send(level, Shapes.BEAM_UP, at, r, 28, null, Shapes.color(skill, 0x8FEAFF), 16, -1);
 					for (double y = 0; y < 12; y += 0.5) {
 						level.sendParticles(ParticleTypes.END_ROD, at.x, at.y + y, at.z, 2, r / 3, 0.1, r / 3, 0);
 					}
@@ -524,11 +531,14 @@ public final class OffenseAbilities {
 						glow(p, e);
 					}
 					burst(level, at, ParticleTypes.FIREWORK, 30, 0.6);
+					Shapes.send(level, Shapes.SPHERE, at, r, 0, null, Shapes.color(skill, 0xFFFBE0), 7, -1);
 					burst(level, at, ParticleTypes.END_ROD, 40, r / 2);
 					sound(level, at, SoundEvents.FIREWORK_ROCKET_BLAST, 1.0F, 1.2F);
 				});
 			}
 			case "solar_lance" -> {
+				Shapes.send(level, Shapes.BEAM_LINE, p.getEyePosition().add(0, -0.2, 0), Math.max(0.25, v(p, skill, "SIZE") / 4), v(p, skill, "RANGE"),
+						look, Shapes.color(skill, 0xFFE38A), 10, -1);
 				for (LivingEntity e : beam(p, p.getEyePosition(), look, v(p, skill, "RANGE"), v(p, skill, "SIZE") / 2,
 						(int) v(p, skill, "PIERCING"), ParticleTypes.END_ROD)) {
 					hit(p, e, v(p, skill, "DAMAGE"), 0);
@@ -566,6 +576,8 @@ public final class OffenseAbilities {
 				later(delay, () -> {
 					sound(level, p.position(), SoundEvents.BEACON_ACTIVATE, 1.5F, 1.8F);
 					channel(p, (int) v(p, skill, "DURATION"), 5, () -> {
+						Shapes.send(level, Shapes.BEAM_LINE, p.getEyePosition().add(0, -0.2, 0), v(p, skill, "SIZE") / 3, v(p, skill, "RANGE"),
+								p.getViewVector(1.0F), Shapes.color(skill, 0xFFF6C8), 6, -1);
 						for (LivingEntity e : beam(p, p.getEyePosition(), p.getViewVector(1.0F), v(p, skill, "RANGE"),
 								v(p, skill, "SIZE") / 2, 99, ParticleTypes.END_ROD)) {
 							hit(p, e, v(p, skill, "DOT") / 4, 0);
@@ -588,6 +600,7 @@ public final class OffenseAbilities {
 						dot(p, e, v(p, skill, "DOT"), v(p, skill, "TRUE_DOT"), v(p, skill, "DOT_DURATION"));
 					}
 					burst(level, at, ParticleTypes.SOUL_FIRE_FLAME, raging ? 120 : 30, r / 2);
+					Shapes.send(level, Shapes.SPHERE, at, r, 0, null, Shapes.color(skill, 0x5A2AD0), raging ? 14 : 8, -1);
 					sound(level, at, SoundEvents.GENERIC_EXPLODE.value(), raging ? 1.2F : 0.6F, 0.7F);
 					if (raging) {
 						zone(p, at, r, (int) v(p, skill, "DURATION"), 20, ParticleTypes.SOUL_FIRE_FLAME,
@@ -628,6 +641,7 @@ public final class OffenseAbilities {
 						dot(p, e, v(p, skill, "DOT"), v(p, skill, "TRUE_DOT"), v(p, skill, "DOT_DURATION"));
 					}
 					burst(level, at, ParticleTypes.EXPLOSION_EMITTER, 1, 0);
+					Shapes.send(level, Shapes.SPHERE, at, r, 0, null, Shapes.color(skill, 0x4A1AB0), 16, -1);
 					burst(level, at, ParticleTypes.SOUL_FIRE_FLAME, 200, r / 2);
 					sound(level, at, SoundEvents.GENERIC_EXPLODE.value(), 2.0F, 0.5F);
 				});
@@ -658,6 +672,7 @@ public final class OffenseAbilities {
 		NEW_BOLTS.clear();
 		for (Iterator<Bolt> it = BOLTS.iterator(); it.hasNext();) {
 			Bolt b = it.next();
+			Vfx.skill = b.skill;
 			if (!b.owner.isAlive() || b.owner.level() != b.level) {
 				it.remove();
 				continue;
@@ -679,6 +694,7 @@ public final class OffenseAbilities {
 		}
 		DELAYED.removeIf(d -> {
 			if (d.at() <= now) {
+				Vfx.skill = d.skill();
 				d.run().run();
 				return true;
 			}
@@ -689,12 +705,14 @@ public final class OffenseAbilities {
 				return true;
 			}
 			if ((c.until() - now) % c.every() == 0) {
+				Vfx.skill = c.skill();
 				c.step().run();
 			}
 			return false;
 		});
 		ZONES.removeIf(z -> z.until() <= now || !z.owner().isAlive());
 		for (Zone z : List.copyOf(ZONES)) {
+			Vfx.skill = z.skill();
 			if (now % 4 == 0) {
 				z.level().sendParticles(z.particle(), z.center().x, z.center().y + 0.3, z.center().z, Vfx.n(8), z.radius() / 2, 0.2, z.radius() / 2, 0.01);
 				Vfx.ring(z.level(), z.center(), z.radius(), Vfx.halo(z.particle()), (int) (z.radius() * 8 + 6));

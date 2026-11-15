@@ -17,9 +17,29 @@ public final class Vfx {
 	private Vfx() {
 	}
 
-	/** Particle count scaled by the "effects density" setting. */
+	/** Skill whose effects are being drawn right now (for its particle amount and color). */
+	public static String skill = "";
+
+	/** Particle count scaled by the global and the skill's particle settings, never above the cap. */
 	public static int n(int count) {
-		return Math.max(1, (int) Math.round(count * EsSettings.get().vfxDensity));
+		EsSettings s = EsSettings.get();
+		double k = s.vfxDensity * s.skillParticles.getOrDefault(skill, 1.0);
+		if (k <= 0) {
+			return 0;
+		}
+		return Math.max(1, Math.min(Math.max(1, s.maxParticlesPerEffect), (int) Math.round(count * k)));
+	}
+
+	/** Heavy particles (gusts, emitters, explosions) replaced by light ones in rings, beams and halos. */
+	public static ParticleOptions light(ParticleOptions p) {
+		if (p == ParticleTypes.GUST || p == ParticleTypes.GUST_EMITTER_SMALL || p == ParticleTypes.GUST_EMITTER_LARGE
+				|| p == ParticleTypes.SWEEP_ATTACK) {
+			return ParticleTypes.CLOUD;
+		}
+		if (p == ParticleTypes.EXPLOSION || p == ParticleTypes.EXPLOSION_EMITTER) {
+			return ParticleTypes.POOF;
+		}
+		return p;
 	}
 
 	/** Volume factor for the extra (vanilla) sounds of the abilities. */
@@ -30,6 +50,10 @@ public final class Vfx {
 
 	/** Glow color that goes with a particle (used for the soft halo around cores). */
 	public static ParticleOptions halo(ParticleOptions core) {
+		Integer custom = EsSettings.get().skillColors.get(skill);
+		if (custom != null) {
+			return new DustParticleOptions(custom, 1.4F);
+		}
 		if (core == ParticleTypes.ELECTRIC_SPARK) {
 			return new DustParticleOptions(0x8FE8FF, 1.2F);
 		}
@@ -56,6 +80,14 @@ public final class Vfx {
 
 	/** A glowing point: the core particle plus a soft halo and a sparkle now and then. */
 	public static void glow(ServerLevel level, Vec3 at, ParticleOptions core, double spread) {
+		ParticleOptions c = light(core);
+		if (c != core && level.getRandom().nextInt(4) == 0) {
+			level.sendParticles(core, at.x, at.y, at.z, 1, spread, spread, spread, 0.0);
+		}
+		core = c;
+		if (n(2) == 0) {
+			return;
+		}
 		level.sendParticles(core, at.x, at.y, at.z, n(2), spread, spread, spread, 0.0);
 		level.sendParticles(halo(core), at.x, at.y, at.z, n(2), spread * 1.8 + 0.05, spread * 1.8 + 0.05, spread * 1.8 + 0.05, 0.0);
 		if (level.getRandom().nextInt(4) == 0) {
@@ -69,8 +101,9 @@ public final class Vfx {
 			lightning(level, from, to);
 			return;
 		}
+		core = light(core);
 		double len = from.distanceTo(to);
-		int steps = (int) Math.max(2, len * 3 * EsSettings.get().vfxDensity);
+		int steps = Math.min(Math.max(2, EsSettings.get().maxParticlesPerEffect * 2), (int) Math.max(2, n((int) (len * 3))));
 		ParticleOptions halo = halo(core);
 		for (int i = 0; i <= steps; i++) {
 			Vec3 at = from.lerp(to, i / (double) steps);
@@ -86,13 +119,13 @@ public final class Vfx {
 		RandomSource r = level.getRandom();
 		DustParticleOptions glow = new DustParticleOptions(0xBFF4FF, 1.0F);
 		Vec3 prev = from;
-		int segments = (int) Math.max(3, from.distanceTo(to) * 1.2);
+		int segments = (int) Math.min(40, Math.max(3, from.distanceTo(to) * 1.2));
 		for (int i = 1; i <= segments; i++) {
 			Vec3 next = from.lerp(to, i / (double) segments);
 			if (i < segments) {
 				next = next.add((r.nextDouble() - 0.5) * 0.7, (r.nextDouble() - 0.5) * 0.7, (r.nextDouble() - 0.5) * 0.7);
 			}
-			int steps = (int) Math.max(2, prev.distanceTo(next) * 5 * EsSettings.get().vfxDensity);
+			int steps = Math.min(12, (int) Math.max(2, n((int) (prev.distanceTo(next) * 5))));
 			for (int k = 0; k <= steps; k++) {
 				Vec3 at = prev.lerp(next, k / (double) steps);
 				level.sendParticles(ParticleTypes.ELECTRIC_SPARK, at.x, at.y, at.z, 1, 0.02, 0.02, 0.02, 0.0);
@@ -114,7 +147,8 @@ public final class Vfx {
 
 	/** A flat ring on the ground. */
 	public static void ring(ServerLevel level, Vec3 center, double radius, ParticleOptions particle, int count) {
-		int c = n(count);
+		particle = light(particle);
+		int c = Math.min(n(count), 64);
 		double phase = level.getRandom().nextDouble() * Math.PI;
 		for (int i = 0; i < c; i++) {
 			double a = phase + Math.PI * 2 * i / c;
@@ -124,8 +158,9 @@ public final class Vfx {
 
 	/** Expanding shock wave: a few rings and an upward flash of the halo color. */
 	public static void shockwave(ServerLevel level, Vec3 center, double radius, ParticleOptions core) {
+		core = light(core);
 		ParticleOptions halo = halo(core);
-		for (double r = radius * 0.3; r <= radius; r += Math.max(0.5, radius / 4)) {
+		for (double r = radius * 0.3; r <= radius; r += Math.max(0.5, radius / 3)) {
 			ring(level, center, r, core, (int) (r * 10));
 			ring(level, center, r + 0.2, halo, (int) (r * 6));
 		}

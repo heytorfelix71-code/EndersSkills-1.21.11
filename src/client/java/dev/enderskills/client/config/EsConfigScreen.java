@@ -62,20 +62,6 @@ public final class EsConfigScreen {
 			power.group(group.build());
 		}
 
-		ConfigCategory portal = ConfigCategory.createBuilder().name(t("category.portal"))
-				.option(bool("portal_always_open", def.portalAlwaysOpen, () -> c.portalAlwaysOpen, v -> c.portalAlwaysOpen = v))
-				.option(integer("portal_close_start", def.portalAutoCloseStart, 1, 100000, () -> c.portalAutoCloseStart, v -> c.portalAutoCloseStart = v))
-				.option(integer("portal_close_end", def.portalAutoCloseEnd, 1, 100000, () -> c.portalAutoCloseEnd, v -> c.portalAutoCloseEnd = v))
-				.option(bool("coordinates", def.coordinateTargeting, () -> c.coordinateTargeting, v -> c.coordinateTargeting = v))
-				.option(bool("teleport_no_sky", def.teleportNoSky, () -> c.teleportNoSky, v -> c.teleportNoSky = v))
-				.option(bool("teleport_ground", def.teleportGroundOnly, () -> c.teleportGroundOnly, v -> c.teleportGroundOnly = v))
-				.option(num("portal_range_start", def.portalRangeStart, 1, 30_000_000, () -> c.portalRangeStart, v -> c.portalRangeStart = v))
-				.option(num("portal_range_max", def.portalRangeMax, 1, 30_000_000, () -> c.portalRangeMax, v -> c.portalRangeMax = v))
-				.option(num("portal_aim_range", def.portalAimRange, 8, 1024, () -> c.portalAimRange, v -> c.portalAimRange = v))
-				.option(num("teleport_range_start", def.teleportRangeStart, 1, 30_000_000, () -> c.teleportRangeStart, v -> c.teleportRangeStart = v))
-				.option(num("teleport_range_max", def.teleportRangeMax, 1, 30_000_000, () -> c.teleportRangeMax, v -> c.teleportRangeMax = v))
-				.build();
-
 		ConfigCategory hud = ConfigCategory.createBuilder().name(t("category.hud"))
 				.option(Option.<EsSettings.HudStyle>createBuilder().name(t("hud_style")).description(d("hud_style"))
 						.binding(def.hudStyle, () -> c.hudStyle, v -> c.hudStyle = v)
@@ -127,23 +113,6 @@ public final class EsConfigScreen {
 						.build())
 				.build();
 
-		ConfigCategory earth = ConfigCategory.createBuilder().name(t("category.earth"))
-				.option(integer("earth_toggle_level", def.earthToggleLevel, 0, 1000, () -> c.earthToggleLevel, v -> c.earthToggleLevel = v))
-				.option(integer("wall_width", def.wallWidth, 0, 64, () -> c.wallWidth, v -> c.wallWidth = v))
-				.option(integer("wall_height", def.wallHeight, 0, 64, () -> c.wallHeight, v -> c.wallHeight = v))
-				.option(integer("wall_thickness", def.wallThickness, 1, 8, () -> c.wallThickness, v -> c.wallThickness = v))
-				.option(integer("wall_wings", def.wallWings, 0, 16, () -> c.wallWings, v -> c.wallWings = v))
-				.option(num("wall_distance", def.wallDistance, 0, 32, () -> c.wallDistance, v -> c.wallDistance = v))
-				.option(integer("dome_radius", def.domeRadius, 0, 32, () -> c.domeRadius, v -> c.domeRadius = v))
-				.option(integer("dome_height", def.domeHeight, 0, 64, () -> c.domeHeight, v -> c.domeHeight = v))
-				.option(bool("dome_roof", def.domeRoof, () -> c.domeRoof, v -> c.domeRoof = v))
-				.option(bool("earth_copy_ground", def.earthCopyGround, () -> c.earthCopyGround, v -> c.earthCopyGround = v))
-				.option(bool("earth_replace_small", def.earthReplaceSmall, () -> c.earthReplaceSmall, v -> c.earthReplaceSmall = v))
-				.option(Option.<String>createBuilder().name(t("earth_fallback")).description(d("earth_fallback"))
-						.binding(def.earthFallbackBlock, () -> c.earthFallbackBlock, v -> c.earthFallbackBlock = v)
-						.controller(dev.isxander.yacl3.api.controller.StringControllerBuilder::create).build())
-				.build();
-
 		ConfigCategory.Builder sounds = ConfigCategory.createBuilder().name(t("category.sounds"))
 				.group(OptionGroup.createBuilder().name(t("group.global"))
 						.option(slider("sound_volume", def.soundVolume, 0, 2, () -> c.soundVolume, v -> c.soundVolume = v))
@@ -154,6 +123,10 @@ public final class EsConfigScreen {
 										.formatValue(v -> t("effect_style." + v.name().toLowerCase())))
 								.build())
 						.option(slider("vfx_density", def.vfxDensity, 0.1, 4, () -> c.vfxDensity, v -> c.vfxDensity = v))
+						.option(integer("max_particles", def.maxParticlesPerEffect, 1, 2000, () -> c.maxParticlesPerEffect, v -> c.maxParticlesPerEffect = v))
+						.option(bool("vfx_shapes", def.vfxShapes, () -> c.vfxShapes, v -> c.vfxShapes = v))
+						.option(bool("vfx_trails", def.vfxTrails, () -> c.vfxTrails, v -> c.vfxTrails = v))
+						.option(bool("vfx_vibrate", def.vfxVibrate, () -> c.vfxVibrate, v -> c.vfxVibrate = v))
 						.build());
 		for (Skills.Page page : Skills.PAGES) {
 			OptionGroup.Builder group = OptionGroup.createBuilder().collapsed(true)
@@ -170,7 +143,7 @@ public final class EsConfigScreen {
 		}
 
 		YetAnotherConfigLib.Builder builder = YetAnotherConfigLib.createBuilder().title(t("title"))
-				.category(power.build()).category(portal).category(earth).category(sounds.build()).category(hud).category(rules)
+				.category(power.build()).category(sounds.build()).category(hud).category(rules)
 				.save(EsSettings::save);
 		for (Skills.Tab tab : Skills.Tab.values()) {
 			builder.category(skillCategory(c, tab));
@@ -212,6 +185,29 @@ public final class EsConfigScreen {
 							c.skillMaxLevel.put(id, v);
 						}
 					}).controller(o -> IntegerFieldControllerBuilder.create(o).range(0, 1000)).build());
+			extras(g, c, id);
+			g.option(Option.<Double>createBuilder().name(t("skill_particles")).description(d("skill_particles"))
+					.binding(1.0, () -> c.skillParticles.getOrDefault(id, 1.0), v -> {
+						if (Math.abs(v - 1.0) < 1.0E-6) {
+							c.skillParticles.remove(id);
+						} else {
+							c.skillParticles.put(id, v);
+						}
+					}).controller(o -> dev.isxander.yacl3.api.controller.DoubleSliderControllerBuilder.create(o).range(0.0, 3.0).step(0.05)).build());
+			g.option(Option.<Boolean>createBuilder().name(t("skill_custom_color")).description(d("skill_custom_color"))
+					.binding(false, () -> c.skillColors.containsKey(id), v -> {
+						if (!v) {
+							c.skillColors.remove(id);
+						} else {
+							c.skillColors.putIfAbsent(id, tab.color);
+						}
+					}).controller(TickBoxControllerBuilder::create).build());
+			g.option(Option.<Color>createBuilder().name(t("skill_color")).description(d("skill_color"))
+					.binding(new Color(tab.color), () -> new Color(c.skillColors.getOrDefault(id, tab.color)), v -> {
+						if (c.skillColors.containsKey(id)) {
+							c.skillColors.put(id, v.getRGB() & 0xFFFFFF);
+						}
+					}).controller(ColorControllerBuilder::create).build());
 			for (String prop : dev.enderskills.dsl.SkillConfigs.get(id).map.keySet()) {
 				g.option(propOption(c, id, prop, 0));
 				g.option(propOption(c, id, prop, 1));
@@ -219,6 +215,55 @@ public final class EsConfigScreen {
 			cat.group(g.build());
 		}
 		return cat.build();
+	}
+
+	/** Special settings of Portal, Teleport, Wall and Dome, inside their own group. */
+	private static void extras(OptionGroup.Builder g, EsSettings c, String id) {
+		EsSettings def = new EsSettings();
+		switch (id) {
+			case "portal" -> {
+				g.option(bool("portal_always_open", def.portalAlwaysOpen, () -> c.portalAlwaysOpen, v -> c.portalAlwaysOpen = v));
+				g.option(integer("portal_close_start", def.portalAutoCloseStart, 1, 100000, () -> c.portalAutoCloseStart, v -> c.portalAutoCloseStart = v));
+				g.option(integer("portal_close_end", def.portalAutoCloseEnd, 1, 100000, () -> c.portalAutoCloseEnd, v -> c.portalAutoCloseEnd = v));
+				g.option(num("portal_range_start", def.portalRangeStart, 1, 30_000_000, () -> c.portalRangeStart, v -> c.portalRangeStart = v));
+				g.option(num("portal_range_max", def.portalRangeMax, 1, 30_000_000, () -> c.portalRangeMax, v -> c.portalRangeMax = v));
+				g.option(num("portal_aim_range", def.portalAimRange, 8, 1024, () -> c.portalAimRange, v -> c.portalAimRange = v));
+				g.option(bool("coordinates", def.coordinateTargeting, () -> c.coordinateTargeting, v -> c.coordinateTargeting = v));
+			}
+			case "teleport" -> {
+				g.option(num("teleport_range_start", def.teleportRangeStart, 1, 30_000_000, () -> c.teleportRangeStart, v -> c.teleportRangeStart = v));
+				g.option(num("teleport_range_max", def.teleportRangeMax, 1, 30_000_000, () -> c.teleportRangeMax, v -> c.teleportRangeMax = v));
+				g.option(bool("teleport_no_sky", def.teleportNoSky, () -> c.teleportNoSky, v -> c.teleportNoSky = v));
+				g.option(bool("teleport_ground", def.teleportGroundOnly, () -> c.teleportGroundOnly, v -> c.teleportGroundOnly = v));
+			}
+			case "wall", "dome" -> {
+				g.option(integer("earth_toggle_level", def.earthToggleLevel, 0, 1000, () -> c.earthToggleLevel, v -> c.earthToggleLevel = v));
+				if (id.equals("wall")) {
+					g.option(slider("wall_scale", def.wallSizeScale, 0.1, 2, () -> c.wallSizeScale, v -> c.wallSizeScale = v));
+					g.option(integer("wall_max_width", def.wallMaxWidth, 0, 64, () -> c.wallMaxWidth, v -> c.wallMaxWidth = v));
+					g.option(integer("wall_max_height", def.wallMaxHeight, 0, 64, () -> c.wallMaxHeight, v -> c.wallMaxHeight = v));
+					g.option(integer("wall_width", def.wallWidth, 0, 64, () -> c.wallWidth, v -> c.wallWidth = v));
+					g.option(integer("wall_height", def.wallHeight, 0, 64, () -> c.wallHeight, v -> c.wallHeight = v));
+					g.option(integer("wall_thickness", def.wallThickness, 1, 8, () -> c.wallThickness, v -> c.wallThickness = v));
+					g.option(integer("wall_wings", def.wallWings, 0, 16, () -> c.wallWings, v -> c.wallWings = v));
+					g.option(num("wall_distance", def.wallDistance, 0, 32, () -> c.wallDistance, v -> c.wallDistance = v));
+				} else {
+					g.option(slider("dome_scale", def.domeSizeScale, 0.1, 2, () -> c.domeSizeScale, v -> c.domeSizeScale = v));
+					g.option(integer("dome_max_radius", def.domeMaxRadius, 0, 32, () -> c.domeMaxRadius, v -> c.domeMaxRadius = v));
+					g.option(integer("dome_max_height", def.domeMaxHeight, 0, 64, () -> c.domeMaxHeight, v -> c.domeMaxHeight = v));
+					g.option(integer("dome_radius", def.domeRadius, 0, 32, () -> c.domeRadius, v -> c.domeRadius = v));
+					g.option(integer("dome_height", def.domeHeight, 0, 64, () -> c.domeHeight, v -> c.domeHeight = v));
+					g.option(bool("dome_roof", def.domeRoof, () -> c.domeRoof, v -> c.domeRoof = v));
+				}
+				g.option(bool("earth_copy_ground", def.earthCopyGround, () -> c.earthCopyGround, v -> c.earthCopyGround = v));
+				g.option(bool("earth_replace_small", def.earthReplaceSmall, () -> c.earthReplaceSmall, v -> c.earthReplaceSmall = v));
+				g.option(Option.<String>createBuilder().name(t("earth_fallback")).description(d("earth_fallback"))
+						.binding(def.earthFallbackBlock, () -> c.earthFallbackBlock, v -> c.earthFallbackBlock = v)
+						.controller(dev.isxander.yacl3.api.controller.StringControllerBuilder::create).build());
+			}
+			default -> {
+			}
+		}
 	}
 
 	/** Property value at level 0 (end 0) or at the max level (end 1), in display units. */

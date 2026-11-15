@@ -57,6 +57,7 @@ public final class Zones {
 		RECENT.values().removeIf(t -> t <= now);
 		java.util.Set<UUID> insideNow = new java.util.HashSet<>();
 		for (Zone z : List.copyOf(ZONES)) {
+			Vfx.skill = z.exit() != null ? "portal" : "unstable_portal";
 			Vec3 c = z.center();
 			double r = Math.max(0.5, z.radius());
 			if (now % 2 == 0) {

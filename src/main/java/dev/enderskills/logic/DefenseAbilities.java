@@ -350,6 +350,7 @@ public final class DefenseAbilities {
 
 	/** Called every tick for each player with an aura switched on. */
 	static void aura(ServerPlayer p, String skill) {
+		Vfx.skill = skill;
 		ServerLevel level = (ServerLevel) p.level();
 		Vec3 pos = p.position();
 		switch (skill) {
@@ -449,6 +450,7 @@ public final class DefenseAbilities {
 		BOOSTED.entrySet().removeIf(e -> e.getValue().until() <= now);
 
 		// voltaic sentinel: zaps the nearest enemy every second
+		Vfx.skill = "voltaic_sentinel";
 		for (Iterator<Timed> it = SENTINELS.values().iterator(); it.hasNext();) {
 			Timed t = it.next();
 			ServerPlayer p = t.owner();
@@ -478,6 +480,7 @@ public final class DefenseAbilities {
 		}
 
 		// ring of fire: enemies inside can't leave and burn
+		Vfx.skill = "ring_of_fire";
 		RINGS.removeIf(r -> r.until() <= now);
 		for (Ring r : RINGS) {
 			if (now % 4 == 0) {
@@ -518,6 +521,7 @@ public final class DefenseAbilities {
 		}
 
 		// home star: heat waves from the caster
+		Vfx.skill = "home_star";
 		for (Iterator<Map.Entry<UUID, Integer>> it = STAR_NEXT.entrySet().iterator(); it.hasNext();) {
 			Map.Entry<UUID, Integer> e = it.next();
 			ServerPlayer p = AbilityManager.player(e.getKey());

@@ -85,8 +85,8 @@ public final class EarthStructures {
 		Structure s = new Structure(p.getUUID(), skill, level, duration);
 		double force = AbilityManager.value(p, skill, "FORCE");
 		if (skill.equals("wall")) {
-			int width = cfg.wallWidth > 0 ? cfg.wallWidth : (int) AbilityManager.value(p, skill, "WIDTH");
-			int height = cfg.wallHeight > 0 ? cfg.wallHeight : (int) AbilityManager.value(p, skill, "HEIGHT");
+			int width = size(cfg.wallWidth, AbilityManager.value(p, skill, "WIDTH"), cfg.wallSizeScale, cfg.wallMaxWidth);
+			int height = size(cfg.wallHeight, AbilityManager.value(p, skill, "HEIGHT"), cfg.wallSizeScale, cfg.wallMaxHeight);
 			double range = cfg.wallDistance > 0 ? cfg.wallDistance : Math.min(AbilityManager.value(p, skill, "RANGE"), 6.0);
 			Vec3 look = p.getViewVector(1.0F);
 			Vec3 fwd = new Vec3(look.x, 0, look.z);
@@ -109,8 +109,8 @@ public final class EarthStructures {
 				}
 			}
 		} else {
-			int r = cfg.domeRadius > 0 ? cfg.domeRadius : (int) Math.round(AbilityManager.value(p, skill, "WIDTH"));
-			int height = cfg.domeHeight > 0 ? cfg.domeHeight : (int) AbilityManager.value(p, skill, "HEIGHT");
+			int r = size(cfg.domeRadius, AbilityManager.value(p, skill, "WIDTH"), cfg.domeSizeScale, cfg.domeMaxRadius);
+			int height = size(cfg.domeHeight, AbilityManager.value(p, skill, "HEIGHT"), cfg.domeSizeScale, cfg.domeMaxHeight);
 			BlockPos c = p.blockPosition();
 			for (int x = -r; x <= r; x++) {
 				for (int z = -r; z <= r; z++) {
@@ -264,5 +264,14 @@ public final class EarthStructures {
 			dissolve(s);
 		}
 		STRUCTURES.clear();
+	}
+
+	/** Fixed size, or the skill's size times the multiplier, never above the limit (0 = no limit) and never below 1. */
+	private static int size(int fixed, double auto, double scale, int max) {
+		int v = fixed > 0 ? fixed : (int) Math.round(auto * Math.max(0.0, scale));
+		if (max > 0) {
+			v = Math.min(v, max);
+		}
+		return Math.max(1, v);
 	}
 }

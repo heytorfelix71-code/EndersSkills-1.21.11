@@ -83,6 +83,32 @@ public final class EsNetwork {
 		}
 	}
 
+	/** Server → client: draw a 3D effect (see Shapes). */
+	public record VfxShape(int kind, double x, double y, double z, float radius, float height, float dx, float dy, float dz,
+			int color, int ticks, int entity) implements CustomPacketPayload {
+		public static final Type<VfxShape> TYPE = new Type<>(EnderSkills.id("vfx_shape"));
+		public static final StreamCodec<RegistryFriendlyByteBuf, VfxShape> CODEC = StreamCodec.of((buf, v) -> {
+			buf.writeVarInt(v.kind());
+			buf.writeDouble(v.x());
+			buf.writeDouble(v.y());
+			buf.writeDouble(v.z());
+			buf.writeFloat(v.radius());
+			buf.writeFloat(v.height());
+			buf.writeFloat(v.dx());
+			buf.writeFloat(v.dy());
+			buf.writeFloat(v.dz());
+			buf.writeInt(v.color());
+			buf.writeVarInt(v.ticks());
+			buf.writeVarInt(v.entity() + 1);
+		}, buf -> new VfxShape(buf.readVarInt(), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readFloat(), buf.readFloat(),
+				buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readInt(), buf.readVarInt(), buf.readVarInt() - 1));
+
+		@Override
+		public Type<? extends CustomPacketPayload> type() {
+			return TYPE;
+		}
+	}
+
 	/** Server → client: endurance, and remaining ticks of cooldowns and active abilities. */
 	public record AbilitySync(float endurance, float maxEndurance, java.util.Map<String, Integer> cooldowns,
 			java.util.Map<String, Integer> active) implements CustomPacketPayload {
@@ -105,6 +131,7 @@ public final class EsNetwork {
 	public static void init() {
 		PayloadTypeRegistry.playS2C().register(OpenAltar.TYPE, OpenAltar.CODEC);
 		PayloadTypeRegistry.playS2C().register(AbilitySync.TYPE, AbilitySync.CODEC);
+		PayloadTypeRegistry.playS2C().register(VfxShape.TYPE, VfxShape.CODEC);
 		PayloadTypeRegistry.playC2S().register(AltarAction.TYPE, AltarAction.CODEC);
 		PayloadTypeRegistry.playC2S().register(UseAbility.TYPE, UseAbility.CODEC);
 		PayloadTypeRegistry.playC2S().register(UseAbilityAt.TYPE, UseAbilityAt.CODEC);
