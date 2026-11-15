@@ -93,7 +93,25 @@ public final class AbilityManager {
 
 	/** Strength multiplier of abilities: Ability Power attribute + Power Boost. */
 	public static double power(ServerPlayer player) {
-		return 1.0 + AttributeEffects.modifier(player, "ability_power") + DefenseAbilities.boost(player);
+		return 1.0 + AttributeEffects.modifier(player, "ability_power") + DefenseAbilities.boost(player)
+				+ (isActive(player, "sacrifice") ? value(player, "sacrifice", "POWER") : 0.0);
+	}
+
+	/** Passive on-hit abilities: owned, off cooldown and enough endurance; pays and starts the cooldown. */
+	public static boolean tryPassive(ServerPlayer player, String skill) {
+		if (!Progression.data(player).owns(skill)) {
+			return false;
+		}
+		State s = state(player);
+		double cost = value(player, skill, "ENDURANCE");
+		if (s.cooldownUntil.getOrDefault(skill, 0) > now || s.endurance < cost) {
+			return false;
+		}
+		s.endurance -= cost;
+		s.lastUse = now;
+		s.cooldownUntil.put(skill, now + (int) value(player, skill, "COOLDOWN"));
+		s.dirty = true;
+		return true;
 	}
 
 	public static boolean isActive(ServerPlayer player, String skill) {
@@ -123,6 +141,7 @@ public final class AbilityManager {
 		now = srv.getTickCount();
 		Zones.tick(now);
 		DefenseAbilities.tick(now);
+		OffenseAbilities.tick(now);
 		if (now % 5 == 0) {
 			for (Iterator<Map.Entry<Mob, Integer>> it = FOGGED.entrySet().iterator(); it.hasNext();) {
 				Map.Entry<Mob, Integer> e = it.next();
@@ -341,7 +360,7 @@ public final class AbilityManager {
 					s.dirty = true;
 					return; // the cooldown starts when switched off
 				}
-				done = DefenseAbilities.use(player, skill);
+				done = DefenseAbilities.use(player, skill) || OffenseAbilities.use(player, skill);
 			}
 		}
 		if (!done) {

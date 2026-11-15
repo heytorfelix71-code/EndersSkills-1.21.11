@@ -60,6 +60,10 @@ public final class EnderSkills implements ModInitializer {
 		net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.AFTER_DAMAGE.register((victim, source, base, taken, blocked) -> {
 			dev.enderskills.logic.HurtTimer.after(victim);
 			dev.enderskills.logic.DefenseAbilities.afterDamage(victim, source, taken);
+			if (source.getEntity() instanceof ServerPlayer attacker && source.getDirectEntity() == attacker && victim != attacker
+					&& !dev.enderskills.logic.AbilityManager.skillDamage && taken > 0) {
+				dev.enderskills.logic.OffenseAbilities.onMelee(attacker, victim, taken);
+			}
 			if (victim instanceof ServerPlayer player && taken > 0) {
 				dev.enderskills.logic.AbilityManager.onHurt(player);
 			}

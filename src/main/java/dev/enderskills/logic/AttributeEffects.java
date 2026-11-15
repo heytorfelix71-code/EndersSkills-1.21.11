@@ -67,6 +67,9 @@ public final class AttributeEffects {
 		}
 		if (!AbilityManager.skillDamage && source.getEntity() instanceof Player attacker && source.getDirectEntity() == attacker
 				&& attacker != victim) {
+			if (attacker instanceof ServerPlayer sp && AbilityManager.isActive(sp, "sacrifice")) {
+				amount *= (float) (1.0 + AbilityManager.value(sp, "sacrifice", "POWER"));
+			}
 			double stealth = modifier(attacker, "stealth_damage");
 			if (stealth > 0 && !inSight(victim, attacker)) {
 				amount *= (float) (1.0 + stealth);

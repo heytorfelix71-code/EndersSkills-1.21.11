@@ -14,9 +14,17 @@ public final class Abilities {
 			"charm", "heal_aura", "power_boost", "heal_other", "heal_self", "nearby_invincibility",
 			"taunt", "wall", "dome", "thorny", "shockwave", "animated_stone_golem",
 			"shocking_aura", "electric_pulse", "magnetic_pull", "power_drain", "energize", "voltaic_sentinel",
-			"flares", "blazing_aura", "ring_of_fire", "overheat", "warm_heart", "home_star");
+			"flares", "blazing_aura", "ring_of_fire", "overheat", "warm_heart", "home_star",
+			"shadow", "gloom", "shadow_jab", "gas_cloud", "grasp", "black_hole",
+			"bleed", "blood_pool", "contaminate", "life_steal", "syphon", "sacrifice",
+			"slash", "push", "pull", "crush", "updraft", "suffocate",
+			"fire_spirit", "flaming_breath", "flaming_rain", "focus_flame", "fireball", "explode",
+			"radiant_ray", "lumen_wave", "gleam_flash", "solar_lance", "barrage_wisps", "final_flash",
+			"black_flame_ball", "black_scouring_flame", "black_blessing_flame", "black_raging_flame_ball",
+			"black_volley_flame", "black_flare_flame");
 	/** Abilities with their own trigger (double tap, jump, sneak) instead of an ability key. */
-	private static final Set<String> SPECIAL = Set.of("dash", "warp", "extra_jump", "hover", "smash");
+	private static final Set<String> SPECIAL = Set.of("dash", "warp", "extra_jump", "hover", "smash",
+			"shadow", "bleed", "life_steal", "fire_spirit");
 
 	private Abilities() {
 	}
