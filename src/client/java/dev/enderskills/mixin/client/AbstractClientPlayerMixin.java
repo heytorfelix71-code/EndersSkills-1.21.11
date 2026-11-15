@@ -26,6 +26,10 @@ public abstract class AbstractClientPlayerMixin {
 			if (boost != null && boost.amount() > -1) {
 				value /= 1.0 + boost.amount();
 			}
+			AttributeModifier speed = instance == null ? null : instance.getModifier(dev.enderskills.EnderSkills.id("speed"));
+			if (speed != null) {
+				value -= instance.getBaseValue() * speed.amount();
+			}
 		}
 		return value;
 	}

@@ -44,6 +44,8 @@ final class ShapeRenderer {
 	private static final Map<Integer, long[]> TRAIL = new HashMap<>(); // entity -> [until, color]
 	private static final Map<Integer, long[]> VIBRATE = new HashMap<>();
 	private static final Map<Integer, Deque<double[]>> HISTORY = new HashMap<>();
+	/** entity -> kind -> [until, count, white] (Shadow clone, rune rings, red look). */
+	private static final Map<Integer, Map<Integer, long[]>> ON_PLAYER = new HashMap<>();
 	private static final RandomSource RANDOM = RandomSource.create();
 
 	private ShapeRenderer() {
@@ -58,6 +60,18 @@ final class ShapeRenderer {
 		long now = time();
 		if (p.kind() == Shapes.AFTERIMAGE) {
 			TRAIL.put(p.entity(), new long[] {now + p.ticks(), p.color()});
+			return;
+		}
+		if (p.kind() == Shapes.CLONE || p.kind() == Shapes.RUNES || p.kind() == Shapes.RED) {
+			if (p.ticks() <= 0) {
+				Map<Integer, long[]> m = ON_PLAYER.get(p.entity());
+				if (m != null) {
+					m.remove(p.kind());
+				}
+			} else {
+				ON_PLAYER.computeIfAbsent(p.entity(), k -> new HashMap<>()).put(p.kind(),
+						new long[] {p.ticks() >= Integer.MAX_VALUE / 2 ? Long.MAX_VALUE : now + p.ticks(), (long) p.height(), p.dx() > 0.5F ? 1 : 0});
+			}
 			return;
 		}
 		if (p.kind() == Shapes.VIBRATE) {
@@ -75,6 +89,7 @@ final class ShapeRenderer {
 		TRAIL.clear();
 		VIBRATE.clear();
 		HISTORY.clear();
+		ON_PLAYER.clear();
 	}
 
 	static void tick(Minecraft mc) {
@@ -86,6 +101,8 @@ final class ShapeRenderer {
 		SHAPES.removeIf(s -> now > s.start() + s.ticks());
 		TRAIL.values().removeIf(v -> v[0] < now);
 		VIBRATE.values().removeIf(v -> v[0] < now);
+		ON_PLAYER.values().forEach(m -> m.values().removeIf(v -> v[0] < now));
+		ON_PLAYER.values().removeIf(Map::isEmpty);
 		HISTORY.keySet().removeIf(id -> !TRAIL.containsKey(id));
 		for (int id : TRAIL.keySet()) {
 			Entity e = mc.level.getEntity(id);
@@ -124,6 +141,11 @@ final class ShapeRenderer {
 				float life = (float) (age / s.ticks());
 				float fade = Math.min(1F, (float) age / 4F) * Math.min(1F, (1F - life) * 3F);
 				drawShape(glow, buffers, m, s, cam, now, life, Math.max(0F, fade));
+			}
+		}
+		for (Map.Entry<Integer, Map<Integer, long[]>> e : ON_PLAYER.entrySet()) {
+			if (mc.level.getEntity(e.getKey()) instanceof AbstractClientPlayer p) {
+				onPlayer(ctx, p, e.getValue(), cam, partial, now);
 			}
 		}
 		if ((cfg.vfxTrails && !TRAIL.isEmpty()) || (cfg.vfxVibrate && !VIBRATE.isEmpty())) {
@@ -292,6 +314,16 @@ final class ShapeRenderer {
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	private static void ghosts(WorldRenderContext ctx, AbstractClientPlayer player, List<double[]> spots, int color, float alphaStart,
 			float alphaStep, Vec3 cam, float partial) {
+		ghosts(ctx, player, spots, color, alphaStart, alphaStep, alphaStart, cam, partial, 1.0F);
+	}
+
+	/**
+	 * Copies of the player in their current pose and animation (other animation mods included), at the given spots.
+	 * Each copy is one color, {@code bottomFactor} x as opaque at the feet as at the top.
+	 */
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	private static void ghosts(WorldRenderContext ctx, AbstractClientPlayer player, List<double[]> spots, int color, float alphaStart,
+			float alphaStep, float bottomFactor, Vec3 cam, float partial, float grow) {
 		Minecraft mc = Minecraft.getInstance();
 		EntityRenderer<?, ?> renderer = mc.getEntityRenderDispatcher().getRenderer(player);
 		if (!(renderer instanceof AvatarRenderer avatar) || spots.isEmpty()) {
@@ -316,9 +348,12 @@ final class ShapeRenderer {
 			pose.translate(s[0] - cam.x, s[1] - cam.y, s[2] - cam.z);
 			pose.mulPose(Axis.YP.rotationDegrees(180.0F - (float) s[3]));
 			pose.scale(-1.0F, -1.0F, 1.0F);
-			pose.scale(scale, scale, scale);
+			pose.scale(scale * grow, scale * grow, scale * grow);
 			pose.translate(0.0F, -1.501F, 0.0F);
-			model.renderToBuffer(pose, consumer, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, argb(color, alpha));
+			float feet = (float) (s[1] - cam.y);
+			VertexConsumer tinted = new GradientConsumer(consumer, color, feet, state.boundingBoxHeight > 0 ? state.boundingBoxHeight : 1.8F,
+					alpha, alpha * bottomFactor);
+			model.renderToBuffer(pose, tinted, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, argb(color, alpha));
 			pose.popPose();
 			alpha -= alphaStep;
 		}
@@ -343,10 +378,46 @@ final class ShapeRenderer {
 			if (dx * dx + dz * dz < 0.36) { // too close to the previous copy (standing still)
 				continue;
 			}
-			spots.add(h);
+			spots.add(new double[] {h[0], h[1], h[2], p.yBodyRot});
 			last = h;
 		}
-		ghosts(ctx, p, spots, color, 0.45F, 0.08F, cam, partial);
+		// black, fading from the head down to the feet; each copy moves and looks like the player right now
+		ghosts(ctx, p, spots, 0x000000, 0.62F, 0.1F, 0.0F, cam, partial, 1.0F);
+	}
+
+	/** Shadow clone at the side, rune rings, red look. */
+	private static void onPlayer(WorldRenderContext ctx, AbstractClientPlayer p, Map<Integer, long[]> fx, Vec3 cam, float partial, double now) {
+		Minecraft mc = Minecraft.getInstance();
+		Vec3 at = p.getPosition(partial);
+		boolean firstPerson = p == mc.player && !mc.gameRenderer.getMainCamera().isDetached();
+		long[] clone = fx.get(Shapes.CLONE);
+		if (clone != null) {
+			double yaw = Math.toRadians(p.yBodyRot);
+			double rx = -Math.cos(yaw);
+			double rz = -Math.sin(yaw);
+			double fx2 = -Math.sin(yaw);
+			double fz2 = Math.cos(yaw);
+			List<double[]> spot = List.of(new double[] {at.x + rx * 1.1 - fx2 * 0.3, at.y, at.z + rz * 1.1 - fz2 * 0.3, p.yBodyRot});
+			ghosts(ctx, p, spot, 0x000000, 0.94F, 0F, 0.55F, cam, partial, 1.0F);
+		}
+		long[] red = fx.get(Shapes.RED);
+		if (red != null && !firstPerson) {
+			ghosts(ctx, p, List.of(new double[] {at.x, at.y, at.z, p.yBodyRot}), 0xC00010, 0.32F, 0F, 0.5F, cam, partial, 1.04F);
+		}
+		long[] runes = fx.get(Shapes.RUNES);
+		if (runes != null) {
+			boolean white = runes[2] == 1;
+			VertexConsumer vc = ctx.consumers().getBuffer(dev.enderskills.client.fx.FxDraw.additive(white ? "fire_spirit_" : "fire_spirit"));
+			Matrix4f m = ctx.matrices().last().pose();
+			int count = (int) Math.max(1, Math.min(2, runes[1]));
+			for (int i = 0; i < count; i++) {
+				double y = at.y - cam.y + 0.15 + i * 0.9;
+				double half = 1.25 + i * 0.3;
+				double angle = now * (i % 2 == 0 ? 0.04 : -0.06);
+				dev.enderskills.client.fx.FxDraw.texFlat(vc, m, at.x - cam.x, y, at.z - cam.z, half, angle,
+						dev.enderskills.client.fx.FxDraw.argb(0xFFFFFF, 0.9F), 0F, 1F);
+			}
+		}
 	}
 
 	/** A few blurred copies shaking around the player (Reverse Flash look). */

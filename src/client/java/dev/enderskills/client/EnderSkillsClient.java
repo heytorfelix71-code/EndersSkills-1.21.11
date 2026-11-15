@@ -37,6 +37,8 @@ public final class EnderSkillsClient implements ClientModInitializer {
 				net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements.CHAT, dev.enderskills.EnderSkills.id("group_label"),
 				ClientAbilities::groupLabel);
 		BlockRenderLayerMap.putBlock(ModContent.CRYSTAL, ChunkSectionLayer.TRANSLUCENT);
+		BlockRenderLayerMap.putBlock(ModContent.BLACK_FIRE, ChunkSectionLayer.CUTOUT);
+		BlockRenderLayerMap.putBlock(ModContent.BLOOD, ChunkSectionLayer.TRANSLUCENT);
 		BlockRenderLayerMap.putBlocks(ChunkSectionLayer.CUTOUT, ModContent.OAK_ALTAR, ModContent.SPRUCE_ALTAR, ModContent.BIRCH_ALTAR,
 				ModContent.JUNGLE_ALTAR, ModContent.ACACIA_ALTAR, ModContent.DARK_OAK_ALTAR, ModContent.ULTIMATE_ALTAR);
 	}

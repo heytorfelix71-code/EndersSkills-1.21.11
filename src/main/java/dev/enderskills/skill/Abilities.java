@@ -29,6 +29,39 @@ public final class Abilities {
 	private Abilities() {
 	}
 
+	/** Passive abilities that get an ability key (on/off) unless they are always on. */
+	public static final Set<String> PASSIVES = Set.of("shadow", "bleed", "life_steal", "fire_spirit");
+
+	/** Passives use a key (switch on/off) with the current setting and the trees of this player. */
+	public static boolean passiveKeys(SkillData data) {
+		dev.enderskills.data.EsSettings.PassiveMode mode = dev.enderskills.data.EsSettings.get().passiveMode;
+		if (mode == dev.enderskills.data.EsSettings.PassiveMode.ALWAYS) {
+			return false;
+		}
+		if (mode == dev.enderskills.data.EsSettings.PassiveMode.SINGLE_TREE) {
+			return trees(data) > 1;
+		}
+		return true;
+	}
+
+	/** Number of skill trees the player has abilities in. */
+	public static int trees(SkillData data) {
+		int n = 0;
+		for (Skills.Page page : Skills.PAGES) {
+			for (String id : page.abilities()) {
+				if (data.owns(id)) {
+					n++;
+					break;
+				}
+			}
+		}
+		return n;
+	}
+
+	private static boolean keyed(SkillData data, String id) {
+		return !SPECIAL.contains(id) || (PASSIVES.contains(id) && passiveKeys(data));
+	}
+
 	/** Ability with its own trigger or passive (no ability key). */
 	public static boolean special(String ability) {
 		return SPECIAL.contains(ability);
@@ -40,7 +73,7 @@ public final class Abilities {
 		for (Skills.Page page : Skills.PAGES) {
 			List<String> skills = new ArrayList<>();
 			for (String id : page.abilities()) {
-				if (data.owns(id) && IMPLEMENTED.contains(id) && !SPECIAL.contains(id)) {
+				if (data.owns(id) && IMPLEMENTED.contains(id) && keyed(data, id)) {
 					skills.add(id);
 				}
 			}
@@ -59,7 +92,7 @@ public final class Abilities {
 	public static List<String> slots(SkillData data) {
 		List<String> list = new ArrayList<>();
 		for (String id : data.order()) {
-			if (data.owns(id) && IMPLEMENTED.contains(id) && !SPECIAL.contains(id)) {
+			if (data.owns(id) && IMPLEMENTED.contains(id) && keyed(data, id)) {
 				list.add(id);
 			}
 		}

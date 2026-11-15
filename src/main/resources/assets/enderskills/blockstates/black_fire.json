@@ -1,0 +1,14 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "enderskills:block/black_fire_floor0"
+      }
+    },
+    {
+      "apply": {
+        "model": "enderskills:block/black_fire_floor1"
+      }
+    }
+  ]
+}

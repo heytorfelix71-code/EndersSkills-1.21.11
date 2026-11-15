@@ -57,6 +57,20 @@ public final class ModContent {
 	private ModContent() {
 	}
 
+	/** Black fire left by the Black Flame abilities (goes out by itself). */
+	public static final Block BLACK_FIRE = temp("black_fire", true, 12);
+	/** Blood on the ground left by Blood Pool and Bleed (dries up by itself). */
+	public static final Block BLOOD = temp("blood", false, 0);
+
+	private static Block temp(String name, boolean fire, int light) {
+		ResourceKey<Block> key = ResourceKey.create(Registries.BLOCK, EnderSkills.id(name));
+		return Registry.register(BuiltInRegistries.BLOCK, key, new dev.enderskills.block.TempBlock(BlockBehaviour.Properties.of()
+				.mapColor(fire ? MapColor.COLOR_BLACK : MapColor.COLOR_RED).noCollision().instabreak().noLootTable().replaceable()
+				.noOcclusion().lightLevel(s -> light).pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY)
+				.sound(fire ? net.minecraft.world.level.block.SoundType.WOOL : net.minecraft.world.level.block.SoundType.HONEY_BLOCK)
+				.setId(key), fire));
+	}
+
 	private static Block altar(String name, boolean ultimate) {
 		return block(name, p -> new AltarBlock(ultimate, p), BlockBehaviour.Properties.of()
 				.mapColor(MapColor.WOOD).strength(2.5F, 1200.0F).sound(SoundType.WOOD).noOcclusion()

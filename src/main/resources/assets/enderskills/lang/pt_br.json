@@ -556,5 +556,18 @@
   "enderskills.config.fog_max_seconds": "Névoa: tempo limite (segundos)",
   "enderskills.config.fog_max_seconds.desc": "Nesse nível, a névoa acaba sozinha depois desse tempo.",
   "enderskills.config.speed_boost_step": "Subir blocos (step assist)",
-  "enderskills.config.speed_boost_step.desc": "Com o Impulso de Velocidade ligado você sobe blocos sozinho: altura extra do passo em blocos (1,4 = 2 blocos, 0 = desligado)."
+  "enderskills.config.speed_boost_step.desc": "Com o Impulso de Velocidade ligado você sobe blocos sozinho: altura extra do passo em blocos (1,4 = 2 blocos, 0 = desligado).",
+  "enderskills.config.passive_mode": "Habilidades passivas",
+  "enderskills.config.passive_mode.desc": "Botão: Sombra, Sangramento, Roubo de Vida e Espírito de Fogo ganham uma tecla para ligar e desligar. Sempre ativas: funcionam sempre. Sempre ativas com 1 árvore: sempre ativas só se você tiver uma única árvore de habilidades, senão com botão.",
+  "enderskills.config.passive_mode.button": "Botão",
+  "enderskills.config.passive_mode.always": "Sempre ativas",
+  "enderskills.config.passive_mode.single_tree": "Sempre ativas com 1 árvore",
+  "enderskills.config.modify_environment": "Modificar o ambiente",
+  "enderskills.config.modify_environment.desc": "As habilidades deixam coisas no mundo por um tempo: fogo negro das Chamas Negras, sangue no chão da Poça de Sangue e do Sangramento. Somem sozinhas.",
+  "enderskills.config.destroy_environment": "Destruir o ambiente",
+  "enderskills.config.destroy_environment.desc": "Buraco Negro, Explodir e Bola de Fogo quebram os blocos ao redor (habilidade maior = buraco maior).",
+  "enderskills.config.environment_seconds": "Ambiente: segundos",
+  "enderskills.config.environment_seconds.desc": "Quanto tempo o fogo negro e o sangue ficam.",
+  "block.enderskills.black_fire": "Fogo Negro",
+  "block.enderskills.blood": "Sangue"
 }

@@ -556,5 +556,18 @@
   "enderskills.config.fog_max_seconds": "Fog: time limit (seconds)",
   "enderskills.config.fog_max_seconds.desc": "At that level, the fog ends by itself after this time.",
   "enderskills.config.speed_boost_step": "Step assist",
-  "enderskills.config.speed_boost_step.desc": "While Speed Boost is on you walk up blocks by yourself: extra step height in blocks (1.4 = 2 blocks, 0 = off)."
+  "enderskills.config.speed_boost_step.desc": "While Speed Boost is on you walk up blocks by yourself: extra step height in blocks (1.4 = 2 blocks, 0 = off).",
+  "enderskills.config.passive_mode": "Passive abilities",
+  "enderskills.config.passive_mode.desc": "Button: Shadow, Bleed, Life Steal and Fire Spirit get an ability key to switch them on and off. Always on: they always work. Always on with one tree: always on only if you have a single skill tree, otherwise with a button.",
+  "enderskills.config.passive_mode.button": "Button",
+  "enderskills.config.passive_mode.always": "Always on",
+  "enderskills.config.passive_mode.single_tree": "Always on with one tree",
+  "enderskills.config.modify_environment": "Modify the environment",
+  "enderskills.config.modify_environment.desc": "Abilities leave things in the world for a while: black fire of the Black Flames, blood on the ground of Blood Pool and Bleed. They go away by themselves.",
+  "enderskills.config.destroy_environment": "Destroy the environment",
+  "enderskills.config.destroy_environment.desc": "Black Hole, Explode and Fireball break the blocks around them (bigger ability = bigger hole).",
+  "enderskills.config.environment_seconds": "Environment: seconds",
+  "enderskills.config.environment_seconds.desc": "How long the black fire and the blood stay.",
+  "block.enderskills.black_fire": "Black Fire",
+  "block.enderskills.blood": "Blood"
 }

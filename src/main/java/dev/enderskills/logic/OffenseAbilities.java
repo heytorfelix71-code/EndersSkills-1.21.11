@@ -89,11 +89,17 @@ public final class OffenseAbilities {
 	}
 
 	private static void bleed(LivingEntity t, double ticks) {
+		if (t.level() instanceof ServerLevel level && level.getRandom().nextInt(3) == 0) {
+			Environment.place(level, t.blockPosition(), dev.enderskills.registry.ModContent.BLOOD);
+		}
 		AbilityManager.status(t, dev.enderskills.registry.ModEffects.BLEEDING, null, (int) Math.max(20, ticks), 0);
 	}
 
 	private static void dot(ServerPlayer p, LivingEntity t, double dot, double truePercent, double ticks) {
 		Fx.hit(t);
+		if (truePercent > 0 || Vfx.skill.startsWith("black_")) {
+			Environment.place((ServerLevel) p.level(), t.blockPosition(), dev.enderskills.registry.ModContent.BLACK_FIRE);
+		}
 		if (truePercent > 0) {
 			AbilityManager.status(t, dev.enderskills.registry.ModEffects.BLACK_FLAME, null, (int) Math.max(20, ticks), 0);
 		}
@@ -299,10 +305,13 @@ public final class OffenseAbilities {
 					}
 				});
 				sound(level, at, SoundEvents.END_PORTAL_SPAWN, 0.6F, 0.5F);
+				later((int) v(p, skill, "DURATION"), () -> Environment.blast(level, at, r * 0.8)); // collapses and tears the ground
 			}
 			// ---------------- Blood
 			case "blood_pool" -> {
 				Vec3 at = AbilityManager.aim(level, p, 8);
+				Environment.spread(level, at, v(p, skill, "POOL_RANGE") / 2, dev.enderskills.registry.ModContent.BLOOD,
+						(int) Math.max(4, Math.pow(v(p, skill, "POOL_RANGE") / 2, 2) * 2), (int) v(p, skill, "POOL_DURATION"));
 				zone(p, at, v(p, skill, "POOL_RANGE") / 2, (int) v(p, skill, "POOL_DURATION"), 20, ParticleTypes.DAMAGE_INDICATOR,
 						e -> {
 							dot(p, e, v(p, skill, "DOT") / Math.max(1, v(p, skill, "DOT_DURATION") / 20), 0, 20);
@@ -477,6 +486,7 @@ public final class OffenseAbilities {
 					burst(level, at, ParticleTypes.EXPLOSION, 3, v(p, skill, "SIZE") / 3);
 					Shapes.send(level, Shapes.SPHERE, at, v(p, skill, "SIZE") / 2 + 0.5, 0, null, Shapes.color(skill, 0xFF8A2A), 8, -1);
 					sound(level, at, SoundEvents.GENERIC_EXPLODE.value(), 0.8F, 1.2F);
+					Environment.blast(level, at, v(p, skill, "SIZE") / 3);
 				};
 				sound(level, p.position(), SoundEvents.BLAZE_SHOOT, 1.0F, 1.0F);
 			}
@@ -493,6 +503,7 @@ public final class OffenseAbilities {
 				Shapes.send(level, Shapes.SPHERE, p.position().add(0, 1, 0), r, 0, null, Shapes.color(skill, 0xFF6A1A), 12, -1);
 				burst(level, p.position(), ParticleTypes.FLAME, 80, r / 2);
 				sound(level, p.position(), SoundEvents.GENERIC_EXPLODE.value(), 1.5F, 0.8F);
+				Environment.blast(level, p.position().add(0, -0.5, 0), r * 0.5);
 			}
 			// ---------------- Light
 			case "radiant_ray" -> {
@@ -631,7 +642,9 @@ public final class OffenseAbilities {
 				});
 			}
 			case "black_blessing_flame" -> {
-				AbilityManager.setActive(p, skill, (int) Math.max(60, v(p, skill, "DURATION") * 10));
+				int blessing = (int) Math.max(60, v(p, skill, "DURATION") * 10);
+				AbilityManager.setActive(p, skill, blessing);
+				Shapes.onPlayer(p, Shapes.RUNES, blessing, AbilityManager.runeRings(p, skill), true);
 				burst(level, p.position(), ParticleTypes.SOUL_FIRE_FLAME, 40, 0.5);
 				sound(level, p.position(), SoundEvents.SOUL_ESCAPE.value(), 1.0F, 0.6F);
 			}
@@ -696,6 +709,10 @@ public final class OffenseAbilities {
 			}
 			if (!step(b)) {
 				Fx.boltEnd(b.level, b.skill, b, b.pos);
+				if (b.skill.startsWith("black_")) {
+					Environment.spread(b.level, b.pos, 1.5, dev.enderskills.registry.ModContent.BLACK_FIRE, 3,
+							20 * Math.max(1, dev.enderskills.data.EsSettings.get().environmentSeconds));
+				}
 				b.onEnd.accept(b.pos);
 				it.remove();
 			}

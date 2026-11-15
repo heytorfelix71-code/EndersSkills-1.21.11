@@ -142,6 +142,10 @@ public final class AbilityManager {
 		State s = state(player);
 		double cost = value(player, skill, "ENDURANCE");
 		boostFor(player, skill);
+		if (dev.enderskills.skill.Abilities.PASSIVES.contains(skill) && dev.enderskills.skill.Abilities.passiveKeys(Progression.data(player))
+				&& !active(s, skill)) {
+			return false; // switched off with its key
+		}
 		if (s.cooldownUntil.getOrDefault(skill, 0) > now || s.endurance < cost) {
 			return false;
 		}
@@ -199,6 +203,14 @@ public final class AbilityManager {
 			State s = state(player);
 			if (now % 5 == 0 && active(s, "fog")) {
 				fogPulse(player);
+			}
+			if (now % 100 == 0) {
+				AttributeEffects.apply(player); // after joining, reloads and config changes too
+				for (String passive : dev.enderskills.skill.Abilities.PASSIVES) {
+					if (active(s, passive)) {
+						passiveLook(player, passive, true); // players who came near later see it too
+					}
+				}
 			}
 			double max = maxEndurance(player);
 			if (s.endurance < 0) {
@@ -284,6 +296,23 @@ public final class AbilityManager {
 		s.activeUntil.remove(toggle);
 		s.cooldownUntil.put(toggle, now + (int) value(player, toggle, "COOLDOWN"));
 		s.dirty = true;
+	}
+
+	/** Shadow clone at your side, rune rings of Fire Spirit (2 at the max level), red look of Bleed. */
+	static void passiveLook(ServerPlayer player, String skill, boolean on) {
+		int ticks = on ? Integer.MAX_VALUE : 0;
+		switch (skill) {
+			case "shadow" -> Shapes.onPlayer(player, Shapes.CLONE, ticks, 1, false);
+			case "bleed" -> Shapes.onPlayer(player, Shapes.RED, ticks, 1, false);
+			case "fire_spirit" -> Shapes.onPlayer(player, Shapes.RUNES, ticks, runeRings(player, skill), false);
+			default -> {
+			}
+		}
+	}
+
+	/** One rune ring, two at the max level. */
+	static int runeRings(ServerPlayer player, String skill) {
+		return Progression.data(player).level(skill) >= SkillConfigs.maxLevel(skill) ? 2 : 1;
 	}
 
 	/** From the toggle level on (50 by default) Fog stays until used again or until the time limit. */
@@ -443,6 +472,20 @@ public final class AbilityManager {
 			EarthStructures.remove(player, skill); // toggle mode: the second use takes the wall down
 			s.activeUntil.remove(skill);
 			s.cooldownUntil.put(skill, now + 20);
+			s.dirty = true;
+			return false;
+		}
+		if (dev.enderskills.skill.Abilities.PASSIVES.contains(skill)) {
+			// passives: the key switches them on and off (no cost)
+			if (active(s, skill)) {
+				s.activeUntil.remove(skill);
+				Fx.end(player, skill);
+				passiveLook(player, skill, false);
+			} else {
+				s.activeUntil.put(skill, Integer.MAX_VALUE);
+				ModEffectsHook.sound(player, skill);
+				passiveLook(player, skill, true);
+			}
 			s.dirty = true;
 			return false;
 		}

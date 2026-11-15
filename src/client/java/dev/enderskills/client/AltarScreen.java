@@ -398,7 +398,7 @@ public class AltarScreen extends Screen {
 			rty += 10;
 		}
 		buttons.add(new Btn(x + 6, by, dw - 12, 18, Component.translatable(data.owns(skill) ? "enderskills.altar.upgrade" : "enderskills.altar.unlock"),
-				status == Status.AVAILABLE, tab.color, () -> send(EsNetwork.AltarAction.UPGRADE, skill, 0)));
+				status == Status.AVAILABLE, tab.color, () -> send(EsNetwork.AltarAction.UPGRADE, skill, net.minecraft.client.Minecraft.getInstance().hasControlDown() ? 1000 : 0)));
 	}
 
 	private double powerMultiplier(SkillData data, String skill) {

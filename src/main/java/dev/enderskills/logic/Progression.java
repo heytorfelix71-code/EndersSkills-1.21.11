@@ -83,7 +83,7 @@ public final class Progression {
 			} else if (action.action() == EsNetwork.AltarAction.TAKE_XP) {
 				takeXp(player, action.amount());
 			} else if (action.action() == EsNetwork.AltarAction.UPGRADE && creativeFree(player)) {
-				upgrade(player, action.skill(), player.blockPosition(), true);
+				upgradeMany(player, action.skill(), player.blockPosition(), true, action.amount());
 			}
 			return;
 		}
@@ -92,7 +92,7 @@ public final class Progression {
 			return;
 		}
 		switch (action.action()) {
-			case EsNetwork.AltarAction.UPGRADE -> upgrade(player, action.skill(), session.pos(), altar.isUltimate());
+			case EsNetwork.AltarAction.UPGRADE -> upgradeMany(player, action.skill(), session.pos(), altar.isUltimate(), action.amount());
 			case EsNetwork.AltarAction.STORE_XP -> storeXp(player, action.amount());
 			case EsNetwork.AltarAction.TAKE_XP -> takeXp(player, action.amount());
 			case EsNetwork.AltarAction.RESET -> reset(player);
@@ -101,10 +101,20 @@ public final class Progression {
 		}
 	}
 
-	private static void upgrade(ServerPlayer player, String skillId, BlockPos pos, boolean ultimate) {
+	/** Ctrl + click: level up again and again until the XP (or the max level) runs out. */
+	private static void upgradeMany(ServerPlayer player, String skillId, BlockPos pos, boolean ultimate, int amount) {
+		int times = Math.max(1, Math.min(1000, amount));
+		for (int i = 0; i < times; i++) {
+			if (!upgrade(player, skillId, pos, ultimate, i > 0)) {
+				return;
+			}
+		}
+	}
+
+	private static boolean upgrade(ServerPlayer player, String skillId, BlockPos pos, boolean ultimate, boolean quiet) {
 		Skills.Skill skill = Skills.get(skillId);
 		if (skill == null) {
-			return;
+			return false;
 		}
 		SkillData data = data(player);
 		double power = SkillTree.altarPower(AltarBlock.crystals(player.level(), pos), ultimate);
@@ -114,17 +124,23 @@ public final class Progression {
 			blocked = null;
 		}
 		if (blocked != null) {
-			fail(player, "enderskills.altar.blocked." + blocked);
-			return;
+			if (!quiet) {
+				fail(player, "enderskills.altar.blocked." + blocked);
+			}
+			return false;
 		}
 		if (!free && data.enderLevel() < SkillTree.levelsNeeded(data, skillId)) {
-			fail(player, "enderskills.altar.blocked.levels");
-			return;
+			if (!quiet) {
+				fail(player, "enderskills.altar.blocked.levels");
+			}
+			return false;
 		}
 		int cost = free ? 0 : SkillTree.xpCost(data, skillId);
 		if (data.storedXp() + XpUtil.total(player) < cost) {
-			fail(player, "enderskills.altar.blocked.xp");
-			return;
+			if (!quiet) {
+				fail(player, "enderskills.altar.blocked.xp");
+			}
+			return false;
 		}
 		int fromStore = Math.min(cost, data.storedXp());
 		if (cost > fromStore) {
@@ -135,8 +151,12 @@ public final class Progression {
 				.withSkill(skillId, owned ? data.level(skillId) + 1 : 0, skill.isAbility())
 				.withSpent(data.xpSpent() + cost);
 		set(player, next);
+		if (quiet) {
+			return true;
+		}
 		player.level().playSound(null, pos, owned ? SoundEvents.PLAYER_LEVELUP : SoundEvents.ENCHANTMENT_TABLE_USE,
 				SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 1.0F);
+		return true;
 	}
 
 	private static void storeXp(ServerPlayer player, int amount) {

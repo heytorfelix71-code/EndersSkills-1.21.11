@@ -175,6 +175,18 @@ public final class EsSettings {
 	/** Extra step height while Speed Boost is on (1.4 = walks up 2 blocks). */
 	public double speedBoostStep = 1.4;
 
+	/** Passive abilities (Shadow, Bleed, Life Steal, Fire Spirit): switched with a key, always on, or always on with a single tree. */
+	public enum PassiveMode { BUTTON, ALWAYS, SINGLE_TREE }
+
+	public PassiveMode passiveMode = PassiveMode.BUTTON;
+
+	/** Abilities leave temporary things in the world (black fire, blood pools). */
+	public boolean modifyEnvironment = true;
+	/** Black Hole, Explode and Fireball break blocks around them. */
+	public boolean destroyEnvironment = false;
+	/** Seconds the black fire and the blood stay. */
+	public int environmentSeconds = 6;
+
 	public EffectStyle effectStyle = EffectStyle.CURRENT;
 
 	/** Sneak + ability key on Portal or Teleport asks for coordinates. */

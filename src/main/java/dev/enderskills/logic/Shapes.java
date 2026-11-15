@@ -19,6 +19,12 @@ public final class Shapes {
 	public static final int FIRE_RAIN = 5;
 	public static final int AFTERIMAGE = 6;
 	public static final int VIBRATE = 7;
+	/** Black copy of the player at their side (Shadow). */
+	public static final int CLONE = 8;
+	/** Rune rings around the player (Fire Spirit, Black Blessing Flame); height = number of rings, dir.x = 1 for white runes. */
+	public static final int RUNES = 9;
+	/** Reddish look (Bleed switched on). */
+	public static final int RED = 10;
 
 	private Shapes() {
 	}
@@ -30,7 +36,7 @@ public final class Shapes {
 	}
 
 	public static void send(ServerLevel level, int type, Vec3 pos, double radius, double height, Vec3 dir, int color, int ticks, int entity) {
-		if (type != AFTERIMAGE && type != VIBRATE && EsSettings.get().vfxStyle == EsSettings.VfxStyle.ORIGINAL) {
+		if (type < AFTERIMAGE && EsSettings.get().vfxStyle == EsSettings.VfxStyle.ORIGINAL) {
 			return; // the client draws the original models instead
 		}
 		EsNetwork.VfxShape payload = new EsNetwork.VfxShape(type, pos.x, pos.y, pos.z, (float) radius, (float) height,
@@ -45,6 +51,11 @@ public final class Shapes {
 	/** Trail of see-through copies behind a moving player (Dash, Warp, Teleport, Speed Boost). */
 	public static void afterimage(ServerPlayer p, String skill, int ticks) {
 		send((ServerLevel) p.level(), AFTERIMAGE, p.position(), 0, 0, null, color(skill, 0x9A6BFF), ticks, p.getId());
+	}
+
+	/** Effects that stay on a player (ticks 0 = remove): CLONE, RUNES, RED. */
+	public static void onPlayer(ServerPlayer p, int kind, int ticks, int count, boolean white) {
+		send((ServerLevel) p.level(), kind, p.position(), 0, count, new Vec3(white ? 1 : 0, 0, 0), 0, ticks, p.getId());
 	}
 
 	/** Blurred, vibrating copies around a player (Speed Boost, like the Reverse Flash). */

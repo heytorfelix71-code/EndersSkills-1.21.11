@@ -137,6 +137,15 @@ public final class ClientAbilities {
 		countDown(COOLDOWNS);
 		countDown(ACTIVE);
 		SkillData data = data(player);
+		// Swim Speed: faster in water (the water efficiency attribute alone is hard to notice)
+		if (data.owns("swim_speed") && player.isInWater() && !player.getAbilities().flying && !dev.enderskills.dsl.SkillConfigs.disabled("swim_speed")) {
+			double swim = Math.min(1.0, value(data, "swim_speed", "MODIFIER"));
+			if (swim > 0) {
+				double k = 1.0 + swim * 0.1;
+				net.minecraft.world.phys.Vec3 dm = player.getDeltaMovement();
+				player.setDeltaMovement(dm.x * k, player.isSwimming() ? dm.y * k : dm.y, dm.z * k);
+			}
+		}
 		if (data.skills().isEmpty()) {
 			return;
 		}

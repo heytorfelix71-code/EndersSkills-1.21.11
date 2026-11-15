@@ -41,6 +41,8 @@ public final class AttributeEffects {
 		set(player, Attributes.ATTACK_DAMAGE, "damage", modifier(player, "damage"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 		set(player, Attributes.ATTACK_SPEED, "attack_speed", modifier(player, "attack_speed"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 		set(player, Attributes.ATTACK_KNOCKBACK, "knockback", modifier(player, "knockback"), AttributeModifier.Operation.ADD_VALUE);
+		// real movement speed (synced, works with other mods); the camera FOV ignores it
+		set(player, Attributes.MOVEMENT_SPEED, "speed", modifier(player, "speed"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 		if (player.getHealth() > player.getMaxHealth()) {
 			player.setHealth(player.getMaxHealth());
 		}
@@ -53,6 +55,10 @@ public final class AttributeEffects {
 			return;
 		}
 		Identifier id = EnderSkills.id(name);
+		AttributeModifier old = instance.getModifier(id);
+		if (old != null ? old.amount() == value && old.operation() == operation : value == 0.0) {
+			return; // unchanged: no churn (removing max health for a moment would cut the health)
+		}
 		instance.removeModifier(id);
 		if (value != 0.0) {
 			instance.addTransientModifier(new AttributeModifier(id, value, operation));
