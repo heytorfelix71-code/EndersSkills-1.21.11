@@ -234,7 +234,30 @@ public final class ClientAbilities {
 	}
 
 	private static final Tap DASH_TAP = new Tap();
-	private static final Tap WARP_TAP = new Tap();
+	private static boolean warpAiming;
+
+	/** The same spot the server picks for the Warp: the farthest free one along where you look, walls in between do not matter. */
+	private static Vec3 warpSpot(LocalPlayer p, SkillData data) {
+		dev.enderskills.data.EsSettings c = dev.enderskills.data.EsSettings.get();
+		int cap = Math.max(1, Math.min(50, SkillConfigs.maxLevel("warp")));
+		double f = Math.min(1.0, Math.max(0, data.level("warp")) / (double) cap);
+		double dist = Math.max(1.0, c.warpMinBlocks + (c.warpMaxBlocks - c.warpMinBlocks) * f);
+		Vec3 look = p.getViewVector(1.0F).normalize();
+		Vec3 eye = p.getEyePosition();
+		double eyeHeight = p.getEyeHeight();
+		net.minecraft.world.level.Level level = p.level();
+		for (double d = dist; d >= 0.75; d -= 0.25) {
+			Vec3 feet = eye.add(look.scale(d)).subtract(0, eyeHeight, 0);
+			net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(feet);
+			if (feet.y < level.getMinY() || !level.getWorldBorder().isWithinBounds(pos)
+					|| !level.noCollision(p, p.getBoundingBox().move(feet.subtract(p.position())))
+					|| level.getFluidState(pos).is(net.minecraft.tags.FluidTags.LAVA)) {
+				continue;
+			}
+			return feet;
+		}
+		return null;
+	}
 
 	/** How far the dash carries you: from the first to the last level of the ability. */
 	private static double dashDistance(SkillData data) {
@@ -331,10 +354,23 @@ public final class ClientAbilities {
 			COOLDOWNS.put("dash", (int) value(data, "dash", "COOLDOWN"));
 			send("dash", dir.x, dir.z);
 		}
-		if (WARP_TAP.fired(free && warpKey.isDown(), doubleTap) && ready(data, "warp")) {
-			// Warp (right Alt): a short teleport through walls to where you look (the server does it)
-			COOLDOWNS.put("warp", 5);
-			send("warp", 0, 0);
+		// Warp (right Alt): hold to see a shadow where you will land, release to go there through walls (the server does it)
+		boolean warpHeld = warpKey.isDown() && data.owns("warp") && ready(data, "warp");
+		if (warpHeld && free) {
+			warpAiming = true;
+			Vec3 spot = warpSpot(player, data);
+			dev.enderskills.client.ShapeRenderer.warpPreview = spot;
+			if (spot == null) {
+				player.displayClientMessage(net.minecraft.network.chat.Component.translatable("enderskills.warp.blocked"), true);
+			}
+		} else if (warpAiming) {
+			boolean fire = free && !warpKey.isDown() && dev.enderskills.client.ShapeRenderer.warpPreview != null;
+			warpAiming = false;
+			dev.enderskills.client.ShapeRenderer.warpPreview = null;
+			if (fire) {
+				COOLDOWNS.put("warp", 5);
+				send("warp", 0, 0);
+			}
 		}
 		if (dashTicks > 0) {
 			dashTicks--;

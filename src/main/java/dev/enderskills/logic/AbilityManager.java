@@ -176,12 +176,27 @@ public final class AbilityManager {
 
 	// ------------------------------------------------------------------ tick
 
+	/** Players whose Dash is climbing blocks by itself: until when. */
+	private static final Map<java.util.UUID, Integer> DASH_STEP = new java.util.HashMap<>();
+
 	public static void tick(MinecraftServer srv) {
 		server = srv;
 		now = srv.getTickCount();
 		Zones.tick(now);
 		Portals.tick(now);
 		UnstableTravel.tick(srv);
+		if (!DASH_STEP.isEmpty()) {
+			for (Iterator<Map.Entry<java.util.UUID, Integer>> it = DASH_STEP.entrySet().iterator(); it.hasNext();) {
+				Map.Entry<java.util.UUID, Integer> e = it.next();
+				if (e.getValue() <= now) {
+					ServerPlayer dp = srv.getPlayerList().getPlayer(e.getKey());
+					if (dp != null) {
+						AttributeEffects.set(dp, Attributes.STEP_HEIGHT, "dash_step", 0, AttributeModifier.Operation.ADD_VALUE);
+					}
+					it.remove();
+				}
+			}
+		}
 		ShadowMinions.tick(srv, now);
 		DefenseAbilities.tick(now);
 		EarthStructures.tick(now);
@@ -541,7 +556,7 @@ public final class AbilityManager {
 		Vec3 origin = player.position();
 		Vfx.quietly(() -> {
 			if (use0(player, skill, dx, dz, aimAt)) {
-				Fx.cast(player, skill, origin, aimAt != null ? aimAt : aim((ServerLevel) player.level(), player,
+				Fx.cast(player, skill, origin, skill.equals("warp") ? player.position() : aimAt != null ? aimAt : aim((ServerLevel) player.level(), player,
 						Math.min(64, Math.max(4, value(player, skill, "RANGE")))));
 			}
 		});
@@ -612,6 +627,10 @@ public final class AbilityManager {
 		}
 		switch (skill) {
 			case "dash" -> {
+				// the dash climbs blocks by itself while it lasts
+				AttributeEffects.set(player, Attributes.STEP_HEIGHT, "dash_step", Math.max(0, EsSettings.get().dashStepHeight),
+						AttributeModifier.Operation.ADD_VALUE);
+				DASH_STEP.put(player.getUUID(), now + 16);
 				effect(level, player, ParticleTypes.CLOUD, SoundEvents.BREEZE_JUMP);
 				Shapes.afterimage(player, skill, 12);
 			}
@@ -689,7 +708,10 @@ public final class AbilityManager {
 			}
 			case "unstable_portal" -> {
 				Vec3 spot = aim(level, player, value(player, skill, "RANGE"));
-				Zones.add(new Zones.Zone(level, spot, value(player, skill, "SIZE") / 2.0, now + (int) value(player, skill, "DURATION"),
+				int pin = EsSettings.get().unstablePinLevel;
+				boolean pinned = pin > 0 && Progression.data(player).level(skill) >= Math.min(pin, SkillConfigs.maxLevel(skill));
+				Zones.add(new Zones.Zone(level, spot, value(player, skill, "SIZE") / 2.0,
+						pinned ? now + UnstableTravel.PIN : now + (int) value(player, skill, "DURATION"),
 						null, value(player, skill, "DISPLACEMENT")));
 				level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.PORTAL_TRIGGER, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.4F, 1.6F);
 			}

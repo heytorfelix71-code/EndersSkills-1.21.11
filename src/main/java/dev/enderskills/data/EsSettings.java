@@ -166,7 +166,11 @@ public final class EsSettings {
 	public double dashMaxBlocks = 10.0;
 	/** Warp / Distortion (right Alt): a short teleport through walls to where you look, from its first to its last level. */
 	public double warpMinBlocks = 5.0;
-	public double warpMaxBlocks = 8.0;
+	public double warpMaxBlocks = 10.0;
+	/** Extra step height during the Dash, so it climbs blocks by itself (1 = one block more than normal). */
+	public double dashStepHeight = 1.0;
+	/** Unstable Portal stays open until you come back through the way back, from this level on (0 = never). */
+	public int unstablePinLevel = 50;
 	/** Dash and Warp need two quick taps of their key (off = one press). */
 	public boolean dashDoubleTap = true;
 	public double attackSpeedPower = 2.0;
@@ -486,6 +490,11 @@ public final class EsSettings {
 							// 1.20.2: Speed Boost makes you much faster on top of the Speed passive
 							read.speedBoostPower = new EsSettings().speedBoostPower;
 							read.balanceVersion = 8;
+						}
+						if (read.balanceVersion < 9) {
+							// 1.20.3: Warp up to 10 blocks
+							read.warpMaxBlocks = new EsSettings().warpMaxBlocks;
+							read.balanceVersion = 9;
 						}
 						instance = read;
 					}

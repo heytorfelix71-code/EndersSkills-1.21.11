@@ -48,6 +48,8 @@ public final class UnstableTravel {
 	}
 
 	private static final Map<UUID, Job> JOBS = new HashMap<>();
+	/** Length of a portal that stays open until you come back (12 hours of ticks). */
+	public static final int PIN = 20 * 3600 * 12;
 
 	private UnstableTravel() {
 	}
@@ -182,11 +184,26 @@ public final class UnstableTravel {
 			at = spot.add(2, 0, 0);
 		}
 		Zones.Zone[] self = new Zones.Zone[1];
-		int until = server.getTickCount() + 20 * Math.max(5, c.unstableReturnSeconds);
-		self[0] = new Zones.Zone(job.level, at, 1.0, until, job.origin.center(), 0, job.origin.level(), who -> Zones.remove(self[0]));
+		int tick = server.getTickCount();
+		// at the top level both portals stay open until you come back; then the one out here closes, and the first one soon after
+		boolean pinned = job.origin.until() - tick > PIN / 2;
+		int until = pinned ? tick + PIN : tick + 20 * Math.max(5, c.unstableReturnSeconds);
+		self[0] = new Zones.Zone(job.level, at, 1.0, until, job.origin.center(), 0, job.origin.level(), who -> {
+			Zones.remove(self[0]);
+			if (pinned) {
+				Zones.Zone o = job.origin;
+				Zones.remove(o);
+				Zones.add(new Zones.Zone(o.level(), o.center(), o.radius(), server.getTickCount() + 20 * 15, o.exit(), o.displacement(),
+						o.exitLevel(), o.onUse()));
+			}
+		});
 		Zones.add(self[0]);
 		Zones.flash(job.level, at);
-		say(p, "enderskills.unstable.return", Math.max(5, c.unstableReturnSeconds));
+		if (pinned) {
+			say(p, "enderskills.unstable.return_open");
+		} else {
+			say(p, "enderskills.unstable.return", Math.max(5, c.unstableReturnSeconds));
+		}
 	}
 
 	// ---- a safe place to stand in the loaded destination chunk

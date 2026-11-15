@@ -344,6 +344,7 @@ public final class EsConfigScreen {
 				g.option(num("dash_min", def.dashMinBlocks, 1, 1000, () -> c.dashMinBlocks, v -> c.dashMinBlocks = v));
 				g.option(num("dash_max", def.dashMaxBlocks, 1, 1000, () -> c.dashMaxBlocks, v -> c.dashMaxBlocks = v));
 				g.option(bool("dash_double_tap", def.dashDoubleTap, () -> c.dashDoubleTap, v -> c.dashDoubleTap = v));
+				g.option(num("dash_step", def.dashStepHeight, 0, 4, () -> c.dashStepHeight, v -> c.dashStepHeight = v));
 			}
 			case "warp" -> {
 				g.option(num("warp_min", def.warpMinBlocks, 1, 1000, () -> c.warpMinBlocks, v -> c.warpMinBlocks = v));
@@ -351,6 +352,7 @@ public final class EsConfigScreen {
 			}
 			case "unstable_portal" -> {
 				g.option(bool("unstable_far", def.unstableFar, () -> c.unstableFar, v -> c.unstableFar = v));
+				g.option(integer("unstable_pin", def.unstablePinLevel, 0, 50, () -> c.unstablePinLevel, v -> c.unstablePinLevel = v));
 				g.option(num("unstable_min", def.unstableMinDistance, 0, 30_000_000, () -> c.unstableMinDistance, v -> c.unstableMinDistance = v));
 				g.option(num("unstable_max", def.unstableMaxDistance, 1, 30_000_000, () -> c.unstableMaxDistance, v -> c.unstableMaxDistance = v));
 				g.option(bool("unstable_dimension", def.unstableRandomDimension, () -> c.unstableRandomDimension, v -> c.unstableRandomDimension = v));

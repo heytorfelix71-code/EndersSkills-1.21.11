@@ -747,5 +747,10 @@
   "enderskills.config.shader_compat.desc": "With a shader pack on (Iris), effects use Minecraft's own render types so they show up. Auto: only while a shader pack is on. On: always. Off: never.",
   "enderskills.config.shader_compat.auto": "Auto",
   "enderskills.config.shader_compat.on": "On",
-  "enderskills.config.shader_compat.off": "Off"
+  "enderskills.config.shader_compat.off": "Off",
+  "enderskills.config.dash_step": "Dash step height",
+  "enderskills.config.dash_step.desc": "How much higher the Dash climbs by itself (1 = one block more). It climbs blocks while you dash.",
+  "enderskills.config.unstable_pin": "Unstable Portal stays open from level",
+  "enderskills.config.unstable_pin.desc": "From this level on, the Unstable Portal stays open until you come back through the portal at the other end (0 = never). Then that one closes.",
+  "enderskills.unstable.return_open": "The way back is open beside you: it stays until you go back through it"
 }

@@ -870,8 +870,9 @@ public final class OriginalFx {
 			}
 			case "teleport", "warp" -> {
 				if (life < 1) {
-					rift(buffers, m, e.pos.subtract(cam), e.seed, f, color(e.skill, VOID));
-					rift(buffers, m, e.dest.subtract(cam), e.seed ^ 0x5DEECE66DL, f, color(e.skill, VOID));
+					double h = e.skill.equals("warp") ? 3.4 : 2.0;
+					rift(buffers, m, e.pos.subtract(cam), e.seed, f, color(e.skill, VOID), h);
+					rift(buffers, m, e.dest.subtract(cam), e.seed ^ 0x5DEECE66DL, f, color(e.skill, VOID), h);
 				}
 			}
 			case "solar_lance", "final_flash" -> {
@@ -1105,15 +1106,15 @@ public final class OriginalFx {
 	}
 
 	/** Jagged cosmic crack where someone teleported (TeleportRift / WarpRift of the original). */
-	private static void rift(MultiBufferSource buffers, Matrix4f m, Vec3 base, long seed, float alpha, int tint) {
+	private static void rift(MultiBufferSource buffers, Matrix4f m, Vec3 base, long seed, float alpha, int tint, double height) {
 		RandomSource seeded = RandomSource.create(seed);
 		int pts = 10;
 		Vec3[] p = new Vec3[pts];
 		double[] rad = new double[pts];
 		for (int i = 0; i < pts; i++) {
 			double t = i / (double) (pts - 1);
-			p[i] = base.add(seeded.nextGaussian() * 0.35 * Math.sin(t * Math.PI), 0.1 + t * 2.0, seeded.nextGaussian() * 0.35 * Math.sin(t * Math.PI));
-			rad[i] = 0.15 * Math.sin(t * Math.PI) + 0.01;
+			p[i] = base.add(seeded.nextGaussian() * 0.35 * Math.sin(t * Math.PI), 0.1 + t * height, seeded.nextGaussian() * 0.35 * Math.sin(t * Math.PI));
+			rad[i] = 0.15 * (height / 2.0) * Math.sin(t * Math.PI) + 0.01;
 		}
 		FxDraw.tube(buffers.getBuffer(FxDraw.universeDark()), m, p, rad, FxDraw.argb(0xFFFFFF, 0.92F * alpha), 8);
 		double[] glow = new double[pts];

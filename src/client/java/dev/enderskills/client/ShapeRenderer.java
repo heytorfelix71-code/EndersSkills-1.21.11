@@ -47,6 +47,8 @@ final class ShapeRenderer {
 	/** entity -> kind -> [until, count, white] (Shadow clone, rune rings, red look). */
 	private static final Map<Integer, Map<Integer, long[]>> ON_PLAYER = new HashMap<>();
 	private static final RandomSource RANDOM = RandomSource.create();
+	/** Where the Warp would land you right now (held key): drawn as a shadow. */
+	static volatile Vec3 warpPreview;
 	/** Geometry of the frame being drawn (sent to the submit queue at the end). */
 	private static dev.enderskills.client.fx.FxBuffers frame = new dev.enderskills.client.fx.FxBuffers();
 
@@ -146,6 +148,18 @@ final class ShapeRenderer {
 				float fade = Math.min(1F, (float) age / 4F) * Math.min(1F, (1F - life) * 3F);
 				drawShape(glow, buffers, m, s, cam, now, life, Math.max(0F, fade));
 			}
+		}
+		Vec3 warp = warpPreview;
+		if (warp != null && mc.player != null) {
+			// Warp: a shadow where you will land, with a thin crack of light on it
+			VertexConsumer beam = buffers.getBuffer(RenderTypes.lightning());
+			double bx = warp.x - cam.x;
+			double by = warp.y - cam.y;
+			double bz = warp.z - cam.z;
+			float pulse = 0.5F + 0.2F * (float) Math.sin(now * 0.4);
+			cylinder(beam, pose.last().pose(), bx, by - 0.2, bz, bx, by + 2.2, bz, 0.04F, 0.04F, argb(0xC9A0FF, pulse), argb(0xC9A0FF, 0.1F));
+			disc(beam, pose.last().pose(), bx, by + 0.05, bz, 0.2F, 0.7F, (float) (now * 0.15), argb(0x9A4DFF, 0.45F));
+			real(ctx, mc.player, List.of(new double[] {warp.x, warp.y, warp.z, mc.player.yBodyRot}), 0x180830, 0.6F, 0F, cam, partial);
 		}
 		for (Entity ent : mc.level.entitiesForRendering()) {
 			if (ent instanceof dev.enderskills.entity.ShadowEntity shadow && mc.level.getEntity(shadow.ownerEntityId()) instanceof AbstractClientPlayer owner) {

@@ -48,6 +48,9 @@ public final class Fx {
 		}
 		double size = prop(p, skill, "SIZE", prop(p, skill, "RANGE", 3.0));
 		int ticks = (int) Math.min(Integer.MAX_VALUE - 1, Math.max(0, prop(p, skill, "DURATION", 0)));
+		if (ticks == 0 && (skill.equals("warp") || skill.equals("teleport"))) {
+			ticks = 40; // the rift stays open for a moment
+		}
 		if (AbilityManager.isActive(p, skill) && AbilityManager.TOGGLES.contains(skill)) {
 			ticks = Integer.MAX_VALUE;
 		}
