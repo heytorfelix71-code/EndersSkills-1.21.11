@@ -159,6 +159,13 @@ public final class OffenseAbilities {
 		Fx.zone(p, center, radius, Math.max(1, duration));
 	}
 
+	/** Extra radius from the level: nothing at the start, the configured top bonus at the last level (grows with the square). */
+	private static double holeBonus(ServerPlayer p, String skill) {
+		int cap = Math.max(1, Math.min(50, dev.enderskills.dsl.SkillConfigs.maxLevel(skill)));
+		double f = Math.min(1.0, Math.max(0, Progression.data(p).level(skill)) / (double) cap);
+		return Math.max(0.0, Math.min(1000.0, dev.enderskills.data.EsSettings.get().blackHoleTopBonus)) * f * f;
+	}
+
 	/** Ticks of the last Black Hole cast (its cooldown starts when it is gone). */
 	public static int lastHoleTicks;
 
@@ -186,7 +193,7 @@ public final class OffenseAbilities {
 			if (dist < 0.4) {
 				continue;
 			}
-			double f = 0.14 + 0.12 * (1.0 - Math.min(1.0, dist / reach));
+			double f = 0.14 + Math.min(0.5, reach * 0.004) + 0.12 * (1.0 - Math.min(1.0, dist / reach));
 			Vec3 pull = d.scale(1.0 / dist).scale(f);
 			if (x instanceof LivingEntity) {
 				x.setDeltaMovement(x.getDeltaMovement().scale(0.7).add(pull.scale(1.4)));
@@ -198,20 +205,28 @@ public final class OffenseAbilities {
 				x.discard(); // swallowed
 			}
 		}
-		if (age[0] % 20 == 1) {
+		if (age[0] % 10 == 1) {
 			for (LivingEntity e : enemies(p, at, reach)) {
-				hit(p, e, damage * 0.2, 0); // a pulse every second
+				hit(p, e, damage * Math.max(0.0, cfg.blackHoleDamagePerSecond) * 0.5, 0); // continuous damage: twice a second
 			}
 		}
 		if (cfg.destroyEnvironment) {
-			double rb = Math.min(12.0, Math.max(2.0, r * 1.4));
-			for (int i = 0, tries = 0; i < Math.max(0, cfg.blackHoleBlocksPerTick) && tries < 40 && bag.size() < 160; tries++) {
-				Vec3 o = new Vec3((level.getRandom().nextDouble() * 2 - 1) * rb, (level.getRandom().nextDouble() * 2 - 1) * rb,
-						(level.getRandom().nextDouble() * 2 - 1) * rb);
-				if (o.lengthSqr() > rb * rb) {
+			// rips blocks out of the ground inside the pull range (up to the configured radius), more of them the bigger it is
+			double rb = Math.min(Math.max(2.0, cfg.blackHoleMaxBlockRadius), Math.max(2.0, reach));
+			int per = Math.max(0, cfg.blackHoleBlocksPerTick) * Math.max(1, (int) (rb / 8.0));
+			for (int i = 0, tries = 0; i < per && tries < per * 12 && bag.size() < 200; tries++) {
+				double ang = level.getRandom().nextDouble() * Math.PI * 2;
+				double rad = Math.sqrt(level.getRandom().nextDouble()) * rb;
+				int bx = (int) Math.floor(at.x + Math.cos(ang) * rad);
+				int bz = (int) Math.floor(at.z + Math.sin(ang) * rad);
+				if (!level.hasChunk(bx >> 4, bz >> 4)) {
+					continue; // never loads chunks just to tear them
+				}
+				int by = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, bx, bz) - 1 - level.getRandom().nextInt(3);
+				net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(bx, by, bz);
+				if (at.distanceToSqr(bx + 0.5, by + 0.5, bz + 0.5) > rb * rb) {
 					continue;
 				}
-				net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(at.add(o));
 				net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
 				if (state.isAir() || state.getDestroySpeed(level, pos) < 0 || state.getBlock().getExplosionResistance() > 600.0F
 						|| !state.getFluidState().isEmpty() || state.hasBlockEntity()
@@ -404,7 +419,7 @@ public final class OffenseAbilities {
 			case "black_hole" -> {
 				dev.enderskills.data.EsSettings cfgB = dev.enderskills.data.EsSettings.get();
 				Vec3 at = AbilityManager.aim(level, p, v(p, skill, "RANGE")).add(0, 1.0, 0);
-				double r = v(p, skill, "SIZE") * Math.max(0.1, cfgB.blackHoleSize);
+				double r = v(p, skill, "SIZE") * Math.max(0.1, cfgB.blackHoleSize) + holeBonus(p, skill);
 				double reach = r * Math.max(1.0, cfgB.blackHolePullRange); // it pulls and hurts farther than it looks
 				int life = (int) (v(p, skill, "DURATION") * Math.max(0.1, cfgB.blackHoleDuration));
 				int total = (int) Math.max(1, life * Math.max(0.1, cfgB.areaDurationMultiplier));
@@ -422,7 +437,7 @@ public final class OffenseAbilities {
 				List<net.minecraft.world.entity.item.FallingBlockEntity> bag = new ArrayList<>();
 				channel(p, total, 1, () -> blackHoleTick(p, level, at, reach, r, damage, age, bag, age[0] >= total - 2));
 				sound(level, at, SoundEvents.END_PORTAL_SPAWN, 0.6F, 0.5F);
-				later(total, () -> Environment.blast(level, at, Math.min(10.0, reach * 0.8))); // collapses and tears the ground
+				later(total, () -> Environment.blast(level, at, Math.min(16.0, reach * 0.8))); // collapses and tears the ground
 			}
 			// ---------------- Blood
 			case "blood_pool" -> {

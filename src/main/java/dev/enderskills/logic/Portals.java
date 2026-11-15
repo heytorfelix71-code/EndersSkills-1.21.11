@@ -20,30 +20,33 @@ import dev.enderskills.network.EsNetwork;
 
 /**
  * The Portal ability's portals, per player: any number of linked pairs (1st and 2nd use make a pair, 3rd and 4th
- * another...), plus the first portal of the next pair, waiting for its partner. Managed from the portal menu
- * (sneak + ability key): close pairs, move a portal to typed coordinates, or put the waiting portal at coordinates.
+ * another...), plus the first portal of the next pair, waiting for its partner. Each portal of a pair can be in a
+ * different dimension. Managed from the portal menu (sneak + ability key): close pairs, move a portal to typed
+ * coordinates (and a dimension), or make a new pair.
  */
 public final class Portals {
 	static final class Pair {
 		final int id;
-		final ServerLevel level;
+		ServerLevel levelA;
+		ServerLevel levelB;
 		Vec3 a;
 		Vec3 b;
 		final int until;
 		Zones.Zone za;
 		Zones.Zone zb;
 
-		Pair(int id, ServerLevel level, Vec3 a, Vec3 b, int until) {
+		Pair(int id, ServerLevel levelA, Vec3 a, ServerLevel levelB, Vec3 b, int until) {
 			this.id = id;
-			this.level = level;
+			this.levelA = levelA;
 			this.a = a;
+			this.levelB = levelB;
 			this.b = b;
 			this.until = until;
 		}
 
 		void open() {
-			za = new Zones.Zone(level, a, 1.0, until, b, 0);
-			zb = new Zones.Zone(level, b, 1.0, until, a, 0);
+			za = new Zones.Zone(levelA, a, 1.0, until, b, 0, levelB != levelA ? levelB : null, null);
+			zb = new Zones.Zone(levelB, b, 1.0, until, a, 0, levelA != levelB ? levelA : null, null);
 			Zones.add(za);
 			Zones.add(zb);
 		}
@@ -85,7 +88,7 @@ public final class Portals {
 		return m == null ? null : m.waiting;
 	}
 
-	/** The first portal of a new pair (from aiming, or from coordinates typed in the menu). */
+	/** The first portal of a new pair (from aiming). */
 	public static void setWaiting(ServerPlayer p, ServerLevel level, Vec3 at) {
 		Mine m = mine(p);
 		if (m.waiting != null) {
@@ -108,22 +111,22 @@ public final class Portals {
 		}
 		Zones.remove(w.marker());
 		m.waiting = null;
-		pair(p, w.level(), w.at(), second, until);
+		pair(p, w.level(), w.at(), w.level(), second, until);
 	}
 
-	/** A new pair of linked portals right away (portal menu: entrance in front of you, exit at the coordinates). */
-	public static void pair(ServerPlayer p, ServerLevel level, Vec3 a, Vec3 b, int until) {
+	/** A new pair of linked portals right away, each in its own dimension. */
+	public static void pair(ServerPlayer p, ServerLevel levelA, Vec3 a, ServerLevel levelB, Vec3 b, int until) {
 		Mine m = mine(p);
-		Pair pair = new Pair(m.nextId++, level, a, b, until);
+		Pair pair = new Pair(m.nextId++, levelA, a, levelB, b, until);
 		pair.open();
 		m.pairs.add(pair);
 		int max = Math.max(1, EsSettings.get().portalMaxPairs);
 		while (m.pairs.size() > max) {
 			m.pairs.remove(0).shut();
 		}
-		Zones.flash(level, a);
-		Zones.flash(level, b);
-		level.playSound(null, b.x, b.y, b.z, SoundEvents.PORTAL_TRIGGER, SoundSource.PLAYERS, Vfx.vol() * 0.4F, 1.6F);
+		Zones.flash(levelA, a);
+		Zones.flash(levelB, b);
+		levelB.playSound(null, b.x, b.y, b.z, SoundEvents.PORTAL_TRIGGER, SoundSource.PLAYERS, Vfx.vol() * 0.4F, 1.6F);
 		sync(p);
 	}
 
@@ -158,8 +161,11 @@ public final class Portals {
 		sync(p);
 	}
 
-	/** Moves one portal of a pair (which 0 = A, 1 = B) to new coordinates; false when the pair would be too far apart. */
-	public static boolean move(ServerPlayer p, int id, int which, Vec3 to, double range) {
+	/**
+	 * Moves one portal of a pair (which 0 = A, 1 = B) to new coordinates, in any dimension; false when both would stay in
+	 * the same dimension but too far apart.
+	 */
+	public static boolean move(ServerPlayer p, int id, int which, ServerLevel newLevel, Vec3 to, double range) {
 		Mine m = ALL.get(p.getUUID());
 		if (m == null) {
 			return false;
@@ -168,21 +174,24 @@ public final class Portals {
 			if (pair.id != id) {
 				continue;
 			}
-			if (!pair.level.getWorldBorder().isWithinBounds(BlockPos.containing(to))) {
+			if (!newLevel.getWorldBorder().isWithinBounds(BlockPos.containing(to))) {
 				return false;
 			}
+			ServerLevel otherLevel = which == 0 ? pair.levelB : pair.levelA;
 			Vec3 other = which == 0 ? pair.b : pair.a;
-			if (other.distanceTo(to) > range) {
+			if (otherLevel == newLevel && other.distanceTo(to) > range) {
 				return false;
 			}
 			pair.shut();
 			if (which == 0) {
 				pair.a = to;
+				pair.levelA = newLevel;
 			} else {
 				pair.b = to;
+				pair.levelB = newLevel;
 			}
 			pair.open();
-			Zones.flash(pair.level, to);
+			Zones.flash(newLevel, to);
 			sync(p);
 			return true;
 		}
@@ -209,6 +218,10 @@ public final class Portals {
 		Zones.clear();
 	}
 
+	private static String dimId(ServerLevel level) {
+		return level.dimension().identifier().toString();
+	}
+
 	/** Sends the list to the player (shown by the portal menu when it is open). */
 	public static void sync(ServerPlayer p) {
 		if (!ServerPlayNetworking.canSend(p, EsNetwork.PortalList.TYPE)) {
@@ -216,16 +229,22 @@ public final class Portals {
 		}
 		Mine m = ALL.get(p.getUUID());
 		List<double[]> list = new ArrayList<>();
+		List<String[]> pairDims = new ArrayList<>();
 		double[] wait = new double[0];
 		if (m != null) {
 			for (Pair pair : m.pairs) {
 				double left = pair.until == Integer.MAX_VALUE ? -1 : Math.max(0, (pair.until - now) / 20.0);
 				list.add(new double[] {pair.id, pair.a.x, pair.a.y, pair.a.z, pair.b.x, pair.b.y, pair.b.z, left});
+				pairDims.add(new String[] {dimId(pair.levelA), dimId(pair.levelB)});
 			}
 			if (m.waiting != null) {
 				wait = new double[] {m.waiting.at().x, m.waiting.at().y, m.waiting.at().z};
 			}
 		}
-		ServerPlayNetworking.send(p, new EsNetwork.PortalList(list, wait));
+		List<String> dims = new ArrayList<>();
+		for (ServerLevel l : p.level().getServer().getAllLevels()) {
+			dims.add(dimId(l));
+		}
+		ServerPlayNetworking.send(p, new EsNetwork.PortalList(list, wait, dims, pairDims));
 	}
 }

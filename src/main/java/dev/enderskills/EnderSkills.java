@@ -80,6 +80,8 @@ public final class EnderSkills implements ModInitializer {
 				dev.enderskills.logic.Portals.clear());
 		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server ->
 				dev.enderskills.logic.ShadowMinions.clear());
+		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server ->
+				dev.enderskills.logic.UnstableTravel.clear());
 
 		BiomeModifications.addFeature(BiomeSelectors.foundInOverworld(), GenerationStep.Decoration.UNDERGROUND_ORES,
 				ResourceKey.create(Registries.PLACED_FEATURE, id("ender_ore")));

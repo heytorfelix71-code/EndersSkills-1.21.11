@@ -103,9 +103,10 @@ public final class Progression {
 
 	/** Ctrl + click: level up again and again until the XP (or the max level) runs out. */
 	private static void upgradeMany(ServerPlayer player, String skillId, BlockPos pos, boolean ultimate, int amount) {
-		int times = Math.max(1, Math.min(1000, amount));
+		boolean held = amount < 0; // sent again and again while CTRL + left click is held: quiet, one level at a time
+		int times = Math.max(1, Math.min(1000, Math.abs(amount)));
 		for (int i = 0; i < times; i++) {
-			if (!upgrade(player, skillId, pos, ultimate, i > 0)) {
+			if (!upgrade(player, skillId, pos, ultimate, held || i > 0)) {
 				return;
 			}
 		}

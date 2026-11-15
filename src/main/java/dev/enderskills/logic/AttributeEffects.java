@@ -42,10 +42,12 @@ public final class AttributeEffects {
 				AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 		set(player, Attributes.WATER_MOVEMENT_EFFICIENCY, "swim_speed", modifier(player, "swim_speed"), AttributeModifier.Operation.ADD_VALUE);
 		set(player, Attributes.ATTACK_DAMAGE, "damage", modifier(player, "damage"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
-		set(player, Attributes.ATTACK_SPEED, "attack_speed", modifier(player, "attack_speed"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+		set(player, Attributes.ATTACK_SPEED, "attack_speed", modifier(player, "attack_speed") * Math.max(0.0, dev.enderskills.data.EsSettings.get().attackSpeedPower),
+				AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 		set(player, Attributes.ATTACK_KNOCKBACK, "knockback", modifier(player, "knockback"), AttributeModifier.Operation.ADD_VALUE);
 		// real movement speed (synced, works with other mods); the camera FOV ignores it
-		set(player, Attributes.MOVEMENT_SPEED, "speed", modifier(player, "speed"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+		set(player, Attributes.MOVEMENT_SPEED, "speed", modifier(player, "speed") * Math.max(0.0, dev.enderskills.data.EsSettings.get().speedPassivePower),
+				AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 		if (player.getHealth() > player.getMaxHealth()) {
 			player.setHealth(player.getMaxHealth());
 		}
@@ -68,6 +70,64 @@ public final class AttributeEffects {
 		}
 	}
 
+	/** A critical hit you can see, hear and read. */
+	private static void critFeedback(Player attacker, LivingEntity victim) {
+		if (attacker.level() instanceof net.minecraft.server.level.ServerLevel level) {
+			level.sendParticles(net.minecraft.core.particles.ParticleTypes.ENCHANTED_HIT, victim.getX(), victim.getY(0.6), victim.getZ(),
+					14, 0.35, 0.35, 0.35, 0.3);
+			level.playSound(null, victim.blockPosition(), net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_CRIT,
+					net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.0F);
+		}
+		if (attacker instanceof ServerPlayer sp) {
+			sp.displayClientMessage(net.minecraft.network.chat.Component.translatable("enderskills.crit"), true);
+		}
+	}
+
+	private static net.minecraft.network.chat.Component line(String id, String value) {
+		return net.minecraft.network.chat.Component.literal("\n  ").append(net.minecraft.network.chat.Component.translatable("skill.enderskills." + id))
+				.append(net.minecraft.network.chat.Component.literal(": " + value));
+	}
+
+	private static String pct(double v) {
+		return String.format(java.util.Locale.ROOT, "%.0f%%", v * 100.0);
+	}
+
+	/** What the passives really do right now, read from the attributes the game uses (to see that they are applied). */
+	public static void report(ServerPlayer p) {
+		var msg = net.minecraft.network.chat.Component.translatable("enderskills.passives.title");
+		AttributeInstance speed = p.getAttribute(Attributes.MOVEMENT_SPEED);
+		AttributeInstance jump = p.getAttribute(Attributes.JUMP_STRENGTH);
+		AttributeInstance atk = p.getAttribute(Attributes.ATTACK_SPEED);
+		if (modifier(p, "heart_boost") > 0) {
+			msg.append(line("heart_boost", String.format(java.util.Locale.ROOT, "%.0f \u2764", p.getMaxHealth() / 2.0)));
+		}
+		if (speed != null && modifier(p, "speed") > 0) {
+			msg.append(line("speed", "+" + pct(speed.getValue() / speed.getBaseValue() - 1.0)));
+		}
+		if (modifier(p, "swim_speed") > 0) {
+			msg.append(line("swim_speed", pct(p.getAttributeValue(Attributes.WATER_MOVEMENT_EFFICIENCY)) + " (+" + pct(Math.min(1.0, modifier(p, "swim_speed"))
+					* dev.enderskills.data.EsSettings.get().swimSpeedPower) + ")"));
+		}
+		if (jump != null && modifier(p, "jump_height") > 0) {
+			msg.append(line("jump_height", "+" + pct(jump.getValue() / jump.getBaseValue() - 1.0)));
+		}
+		if (atk != null && modifier(p, "attack_speed") > 0) {
+			msg.append(line("attack_speed", String.format(java.util.Locale.ROOT, "%.1f/s", atk.getValue())));
+		}
+		String[][] plain = {{"damage", "damage"}, {"critical_chance", "critical_chance"}, {"stealth_damage", "stealth_damage"},
+				{"armor_penetration", "armor_penetration"}, {"damage_resistance", "damage_resistance"}, {"explosion_resistance", "explosion_resistance"},
+				{"fire_resistance", "fire_resistance"}, {"magic_resistance", "magic_resistance"}, {"fall_resistance", "fall_resistance"},
+				{"knockback_resistance", "knockback_resistance"}, {"ability_power", "ability_power"}};
+		for (String[] e : plain) {
+			double v = modifier(p, e[0]);
+			if (v > 0) {
+				msg.append(line(e[1], e[0].equals("critical_chance") ? pct(v) + " (x" + dev.enderskills.data.EsSettings.get().critMultiplier + ")" : pct(v)));
+			}
+		}
+		EnderSkills.LOGGER.info("Passives of {}: {}", p.getName().getString(), msg.getString().replace('\n', ' '));
+		p.sendSystemMessage(msg);
+	}
+
 	/** Damage taken by a player (resistances) and dealt by a player in melee (stealth, crits, armor penetration). */
 	public static float modifyDamage(LivingEntity victim, DamageSource source, float amount) {
 		if (amount <= 0 || source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
@@ -84,7 +144,8 @@ public final class AttributeEffects {
 			}
 			double crit = modifier(attacker, "critical_chance");
 			if (crit > 0 && attacker.getRandom().nextDouble() < crit) {
-				amount *= 1.5F;
+				amount *= (float) Math.max(1.0, dev.enderskills.data.EsSettings.get().critMultiplier);
+					critFeedback(attacker, victim);
 				if (attacker.level() instanceof net.minecraft.server.level.ServerLevel level) {
 					level.sendParticles(net.minecraft.core.particles.ParticleTypes.CRIT, victim.getX(), victim.getY(0.5), victim.getZ(),
 							8, 0.3, 0.3, 0.3, 0.2);

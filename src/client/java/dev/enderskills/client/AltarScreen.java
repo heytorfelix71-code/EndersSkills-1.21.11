@@ -398,7 +398,13 @@ public class AltarScreen extends Screen {
 			rty += 10;
 		}
 		buttons.add(new Btn(x + 6, by, dw - 12, 18, Component.translatable(data.owns(skill) ? "enderskills.altar.upgrade" : "enderskills.altar.unlock"),
-				status == Status.AVAILABLE, tab.color, () -> send(EsNetwork.AltarAction.UPGRADE, skill, net.minecraft.client.Minecraft.getInstance().hasControlDown() ? 1000 : 0)));
+				status == Status.AVAILABLE, tab.color, () -> {
+					send(EsNetwork.AltarAction.UPGRADE, skill, 0);
+					if (net.minecraft.client.Minecraft.getInstance().hasControlDown()) {
+						holdSkill = skill; // CTRL + hold: keeps leveling up quickly (see tick)
+						holdTicks = 0;
+					}
+				}));
 	}
 
 	private double powerMultiplier(SkillData data, String skill) {
@@ -457,6 +463,29 @@ public class AltarScreen extends Screen {
 							confirmReset = true;
 						}
 					}));
+		}
+	}
+
+	/** CTRL + left click held on the upgrade button: the level goes up again and again, faster the longer it is held. */
+	private String holdSkill;
+	private int holdTicks;
+
+	@Override
+	public void tick() {
+		super.tick();
+		if (holdSkill == null) {
+			return;
+		}
+		if (!minecraft.mouseHandler.isLeftPressed() || !minecraft.hasControlDown() || !holdSkill.equals(selected)) {
+			holdSkill = null;
+			holdTicks = 0;
+			return;
+		}
+		holdTicks++;
+		int every = holdTicks < 10 ? 3 : holdTicks < 30 ? 2 : 1;
+		int levels = holdTicks < 60 ? 1 : holdTicks < 120 ? 2 : holdTicks < 200 ? 4 : 8;
+		if (holdTicks % every == 0) {
+			send(EsNetwork.AltarAction.UPGRADE, holdSkill, -levels); // negative = held (quiet)
 		}
 	}
 

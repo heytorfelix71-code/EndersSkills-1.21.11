@@ -108,7 +108,13 @@ public final class EsConfigScreen {
 						.option(num("take_tariff", def.xpTakeTariff, 0, 1, () -> c.xpTakeTariff, v -> c.xpTakeTariff = v))
 						.build())
 				.group(OptionGroup.createBuilder().name(t("group.endurance"))
-						.option(num("default_endurance", def.defaultEndurance, 1, 1_000_000, () -> c.defaultEndurance, v -> c.defaultEndurance = v))
+						.option(num("default_endurance", def.defaultEndurance, 1, 1.0E18, () -> c.defaultEndurance, v -> c.defaultEndurance = v))
+						.option(bool("infinite_endurance", def.infiniteEndurance, () -> c.infiniteEndurance, v -> c.infiniteEndurance = v))
+						.option(num("passive_speed_power", def.speedPassivePower, 0, 100, () -> c.speedPassivePower, v -> c.speedPassivePower = v))
+						.option(num("passive_swim_power", def.swimSpeedPower, 0, 20, () -> c.swimSpeedPower, v -> c.swimSpeedPower = v))
+						.option(num("passive_attack_power", def.attackSpeedPower, 0, 100, () -> c.attackSpeedPower, v -> c.attackSpeedPower = v))
+						.option(num("crit_multiplier", def.critMultiplier, 1, 100, () -> c.critMultiplier, v -> c.critMultiplier = v))
+						.option(bool("passive_report", def.passiveReport, () -> c.passiveReport, v -> c.passiveReport = v))
 						.option(integer("default_level", def.defaultEnderLevel, 0, 1000, () -> c.defaultEnderLevel, v -> c.defaultEnderLevel = v))
 						.option(bool("token_drops", def.enderTokenDrops, () -> c.enderTokenDrops, v -> c.enderTokenDrops = v))
 						.option(num("token_rate", def.enderTokenDropRate, 0, 1, () -> c.enderTokenDropRate, v -> c.enderTokenDropRate = v))
@@ -322,6 +328,16 @@ public final class EsConfigScreen {
 	private static void extras(OptionGroup.Builder g, EsSettings c, String id) {
 		EsSettings def = new EsSettings();
 		switch (id) {
+			case "unstable_portal" -> {
+				g.option(bool("unstable_far", def.unstableFar, () -> c.unstableFar, v -> c.unstableFar = v));
+				g.option(num("unstable_min", def.unstableMinDistance, 0, 30_000_000, () -> c.unstableMinDistance, v -> c.unstableMinDistance = v));
+				g.option(num("unstable_max", def.unstableMaxDistance, 1, 30_000_000, () -> c.unstableMaxDistance, v -> c.unstableMaxDistance = v));
+				g.option(bool("unstable_dimension", def.unstableRandomDimension, () -> c.unstableRandomDimension, v -> c.unstableRandomDimension = v));
+				g.option(slider("unstable_dimension_chance", def.unstableDimensionChance, 0, 1, () -> c.unstableDimensionChance, v -> c.unstableDimensionChance = v));
+				g.option(num("unstable_return_distance", def.unstableReturnDistance, 0, 30_000_000, () -> c.unstableReturnDistance, v -> c.unstableReturnDistance = v));
+				g.option(integer("unstable_return_seconds", def.unstableReturnSeconds, 5, 86400, () -> c.unstableReturnSeconds, v -> c.unstableReturnSeconds = v));
+				g.option(num("unstable_reach", def.unstableReach, 0.1, 3, () -> c.unstableReach, v -> c.unstableReach = v));
+			}
 			case "portal" -> {
 				g.option(bool("portal_always_open", def.portalAlwaysOpen, () -> c.portalAlwaysOpen, v -> c.portalAlwaysOpen = v));
 				g.option(integer("portal_close_start", def.portalAutoCloseStart, 1, 100000, () -> c.portalAutoCloseStart, v -> c.portalAutoCloseStart = v));
@@ -362,6 +378,9 @@ public final class EsConfigScreen {
 				g.option(slider("black_hole_pull_range", def.blackHolePullRange, 1, 4, () -> c.blackHolePullRange, v -> c.blackHolePullRange = v));
 				g.option(bool("black_hole_cooldown_after", def.blackHoleCooldownAfter, () -> c.blackHoleCooldownAfter, v -> c.blackHoleCooldownAfter = v));
 				g.option(integer("black_hole_blocks", def.blackHoleBlocksPerTick, 0, 30, () -> c.blackHoleBlocksPerTick, v -> c.blackHoleBlocksPerTick = v));
+				g.option(num("black_hole_top_bonus", def.blackHoleTopBonus, 0, 1000, () -> c.blackHoleTopBonus, v -> c.blackHoleTopBonus = v));
+				g.option(num("black_hole_block_radius", def.blackHoleMaxBlockRadius, 2, 1000, () -> c.blackHoleMaxBlockRadius, v -> c.blackHoleMaxBlockRadius = v));
+				g.option(num("black_hole_damage_second", def.blackHoleDamagePerSecond, 0, 100, () -> c.blackHoleDamagePerSecond, v -> c.blackHoleDamagePerSecond = v));
 			}
 			case "blood_pool" -> g.option(slider("blood_pool_size", def.bloodPoolSize, 0.5, 3, () -> c.bloodPoolSize, v -> c.bloodPoolSize = v));
 			case "gloom" -> {
@@ -376,6 +395,8 @@ public final class EsConfigScreen {
 			case "teleport" -> {
 				g.option(num("teleport_range_start", def.teleportRangeStart, 1, 30_000_000, () -> c.teleportRangeStart, v -> c.teleportRangeStart = v));
 				g.option(num("teleport_range_max", def.teleportRangeMax, 1, 30_000_000, () -> c.teleportRangeMax, v -> c.teleportRangeMax = v));
+				g.option(integer("teleport_cooldown_level", def.teleportCooldownStartLevel, 0, 1000, () -> c.teleportCooldownStartLevel, v -> c.teleportCooldownStartLevel = v));
+				g.option(num("teleport_cooldown_top", def.teleportCooldownTopSeconds, 1, 100000, () -> c.teleportCooldownTopSeconds, v -> c.teleportCooldownTopSeconds = v));
 				g.option(bool("teleport_no_sky", def.teleportNoSky, () -> c.teleportNoSky, v -> c.teleportNoSky = v));
 				g.option(bool("teleport_ground", def.teleportGroundOnly, () -> c.teleportGroundOnly, v -> c.teleportGroundOnly = v));
 			}

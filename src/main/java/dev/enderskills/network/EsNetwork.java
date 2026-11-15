@@ -83,8 +83,8 @@ public final class EsNetwork {
 		}
 	}
 
-	/** Client → server: the portal menu (list, close a pair, move a portal, first portal of a pair at coordinates). */
-	public record PortalAction(int action, int id, int which, double x, double y, double z) implements CustomPacketPayload {
+	/** Client → server: the portal menu (list, close a pair, move a portal, new pair); dim = dimension id ("" = the current one). */
+	public record PortalAction(int action, int id, int which, double x, double y, double z, String dim) implements CustomPacketPayload {
 		public static final int LIST = 0;
 		public static final int CLOSE = 1;
 		public static final int MOVE = 2;
@@ -98,6 +98,7 @@ public final class EsNetwork {
 				ByteBufCodecs.DOUBLE, PortalAction::x,
 				ByteBufCodecs.DOUBLE, PortalAction::y,
 				ByteBufCodecs.DOUBLE, PortalAction::z,
+				ByteBufCodecs.STRING_UTF8, PortalAction::dim,
 				PortalAction::new);
 
 		@Override
@@ -106,8 +107,12 @@ public final class EsNetwork {
 		}
 	}
 
-	/** Server → client: the player's portal pairs {id, ax, ay, az, bx, by, bz, seconds left or -1} and the waiting portal {x, y, z}. */
-	public record PortalList(java.util.List<double[]> pairs, double[] waiting) implements CustomPacketPayload {
+	/**
+	 * Server → client: the player's portal pairs {id, ax, ay, az, bx, by, bz, seconds left or -1}, the waiting portal
+	 * {x, y, z}, the dimensions of the server, and the two dimensions of every pair.
+	 */
+	public record PortalList(java.util.List<double[]> pairs, double[] waiting, java.util.List<String> dims,
+			java.util.List<String[]> pairDims) implements CustomPacketPayload {
 		public static final Type<PortalList> TYPE = new Type<>(EnderSkills.id("portal_list"));
 		public static final StreamCodec<RegistryFriendlyByteBuf, PortalList> CODEC = StreamCodec.of((buf, v) -> {
 			buf.writeVarInt(v.pairs().size());
@@ -115,13 +120,33 @@ public final class EsNetwork {
 				writeDoubles(buf, d);
 			}
 			writeDoubles(buf, v.waiting());
+			buf.writeVarInt(v.dims().size());
+			for (String d : v.dims()) {
+				buf.writeUtf(d);
+			}
+			buf.writeVarInt(v.pairDims().size());
+			for (String[] d : v.pairDims()) {
+				buf.writeUtf(d[0]);
+				buf.writeUtf(d[1]);
+			}
 		}, buf -> {
 			int n = Math.min(256, buf.readVarInt());
 			java.util.List<double[]> list = new java.util.ArrayList<>();
 			for (int i = 0; i < n; i++) {
 				list.add(readDoubles(buf));
 			}
-			return new PortalList(list, readDoubles(buf));
+			double[] waiting = readDoubles(buf);
+			int nd = Math.min(64, buf.readVarInt());
+			java.util.List<String> dims = new java.util.ArrayList<>();
+			for (int i = 0; i < nd; i++) {
+				dims.add(buf.readUtf());
+			}
+			int np = Math.min(256, buf.readVarInt());
+			java.util.List<String[]> pairDims = new java.util.ArrayList<>();
+			for (int i = 0; i < np; i++) {
+				pairDims.add(new String[] {buf.readUtf(), buf.readUtf()});
+			}
+			return new PortalList(list, waiting, dims, pairDims);
 		});
 
 		private static void writeDoubles(RegistryFriendlyByteBuf buf, double[] d) {
@@ -243,7 +268,7 @@ public final class EsNetwork {
 		PayloadTypeRegistry.playS2C().register(PortalList.TYPE, PortalList.CODEC);
 		ServerPlayNetworking.registerGlobalReceiver(PortalAction.TYPE, (payload, context) ->
 				dev.enderskills.logic.AbilityManager.portalMenu(context.player(), payload.action(), payload.id(), payload.which(),
-						new net.minecraft.world.phys.Vec3(payload.x(), payload.y(), payload.z())));
+						new net.minecraft.world.phys.Vec3(payload.x(), payload.y(), payload.z()), payload.dim()));
 		ServerPlayNetworking.registerGlobalReceiver(UseAbilityAt.TYPE, (payload, context) ->
 				dev.enderskills.logic.AbilityManager.useAt(context.player(), payload.skill(),
 						new net.minecraft.world.phys.Vec3(payload.x(), payload.y(), payload.z())));

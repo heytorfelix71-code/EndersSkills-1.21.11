@@ -127,6 +127,39 @@ public final class EsSettings {
 	public int portalMaxPairs = 5;
 	/** How close to the middle of a portal you must step to go through it, in blocks. */
 	public double portalReach = 0.75;
+	// ---- Unstable Portal: it throws you ridiculously far, with a way back
+	public boolean unstableFar = true;
+	public double unstableMinDistance = 5000.0;
+	public double unstableMaxDistance = 1_000_000.0;
+	public boolean unstableRandomDimension = true;
+	public double unstableDimensionChance = 0.2;
+	/** A portal back to the original one opens where you land when it is at least this far (or in another dimension). */
+	public double unstableReturnDistance = 1000.0;
+	public int unstableReturnSeconds = 180;
+	/** How close to the middle of an Unstable Portal you must step to be thrown (blocks). */
+	public double unstableReach = 0.5;
+	/** Energy ("mana") never runs out: no costs, no limit. */
+	public boolean infiniteEndurance = false;
+	/** Teleport: from this level on its cooldown goes down to the top value at the last level (0 = off). */
+	/**
+	 * The passives of the altar are weak by design (Speed is +10% at its last level, Attack Speed +80%): these multiply what
+	 * the game really applies. 1 = the original numbers.
+	 */
+	public double speedPassivePower = 6.0;
+	public double swimSpeedPower = 1.0;
+	public double attackSpeedPower = 2.0;
+	/** Damage multiplier of a critical hit (Critical Chance passive). */
+	public double critMultiplier = 2.0;
+	/** Tells you in the chat, once after you join, what your passives really do. */
+	public boolean passiveReport = true;
+	/** Black Hole: extra radius at the top level, in blocks (0 to 1000); it grows with the level. */
+	public double blackHoleTopBonus = 50.0;
+	/** Black Hole: how far from its center it rips blocks out of the ground (with "destroy the environment"). */
+	public double blackHoleMaxBlockRadius = 64.0;
+	/** Black Hole: continuous damage to the mobs inside, as a share of its damage per second. */
+	public double blackHoleDamagePerSecond = 0.4;
+	public int teleportCooldownStartLevel = 40;
+	public double teleportCooldownTopSeconds = 30.0;
 	// ---- Wall and Dome
 	/** From this skill level on, Wall and Dome stay until you use the ability again. */
 	public int earthToggleLevel = 40;

@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -21,7 +22,11 @@ public final class Zones {
 	 * @param exit         where a Portal sends you (null for unstable portals and markers)
 	 * @param displacement how far an Unstable Portal throws you
 	 */
-	public record Zone(ServerLevel level, Vec3 center, double radius, int until, Vec3 exit, double displacement) {
+	public record Zone(ServerLevel level, Vec3 center, double radius, int until, Vec3 exit, double displacement,
+			ServerLevel exitLevel, java.util.function.Consumer<net.minecraft.server.level.ServerPlayer> onUse) {
+		public Zone(ServerLevel level, Vec3 center, double radius, int until, Vec3 exit, double displacement) {
+			this(level, center, radius, until, exit, displacement, null, null);
+		}
 	}
 
 	private static final List<Zone> ZONES = new ArrayList<>();
@@ -48,6 +53,15 @@ public final class Zones {
 
 	/** Entities that are standing inside a portal right now (they go through only when they step in). */
 	private static final java.util.Set<UUID> INSIDE = new java.util.HashSet<>();
+
+	/** Moves a player, to another dimension when needed. */
+	static void sendPlayer(ServerPlayer p, ServerLevel level, Vec3 at) {
+		if (p.level() == level) {
+			p.teleportTo(at.x, at.y, at.z);
+		} else {
+			p.teleportTo(level, at.x, at.y, at.z, java.util.Set.of(), p.getYRot(), p.getXRot(), true);
+		}
+	}
 
 	/** Bright burst so a new portal shows up at once. */
 	public static void flash(ServerLevel level, Vec3 c) {
@@ -82,29 +96,47 @@ public final class Zones {
 			if (z.radius() <= 0) {
 				continue;
 			}
-			// portals: only stepping (almost) into the middle sends you through, not standing a block or two away
-			double reach = z.exit() != null ? Math.max(0.1, dev.enderskills.data.EsSettings.get().portalReach) : z.radius() + 0.4;
-			for (LivingEntity e : z.level().getEntitiesOfClass(LivingEntity.class,
-					new AABB(c.x - reach - 1, c.y - 0.5, c.z - reach - 1, c.x + reach + 1, c.y + 2.5, c.z + reach + 1),
-					x -> x.isAlive() && !x.isSpectator() && Math.hypot(x.getX() - c.x, x.getZ() - c.z) <= reach
-							&& x.getY() >= c.y - 0.5 && x.getY() <= c.y + 2.0)) {
-				UUID id = e.getUUID();
-				insideNow.add(id);
-				if (INSIDE.contains(id) || RECENT.containsKey(id)) {
-					continue; // already standing in a portal: no ping-pong
+				// only stepping (almost) into the middle sends you through, not standing a block or two away
+				dev.enderskills.data.EsSettings cfg = dev.enderskills.data.EsSettings.get();
+				double reach = z.exit() != null ? Math.max(0.1, cfg.portalReach) : Math.max(0.1, cfg.unstableReach);
+				for (LivingEntity e : z.level().getEntitiesOfClass(LivingEntity.class,
+						new AABB(c.x - reach - 1, c.y - 0.5, c.z - reach - 1, c.x + reach + 1, c.y + 2.5, c.z + reach + 1),
+						x -> x.isAlive() && !x.isSpectator() && Math.hypot(x.getX() - c.x, x.getZ() - c.z) <= reach
+								&& x.getY() >= c.y - 0.5 && x.getY() <= c.y + 2.0)) {
+					UUID id = e.getUUID();
+					insideNow.add(id);
+					if (INSIDE.contains(id) || RECENT.containsKey(id) || UnstableTravel.busy(id)) {
+						continue; // already standing in a portal: no ping-pong
+					}
+					if (z.exit() == null && cfg.unstableFar && e instanceof ServerPlayer thrown) {
+						RECENT.put(id, now + 40);
+						flash(z.level(), c);
+						UnstableTravel.start(thrown, z); // far away: a random place (or dimension), with a way back
+						continue;
+					}
+					Vec3 to = z.exit() != null ? z.exit() : randomSpot(z, e);
+					if (to == null) {
+						continue;
+					}
+					ServerLevel target = z.exitLevel() != null ? z.exitLevel() : z.level();
+					if (target != z.level() && !(e instanceof ServerPlayer)) {
+						continue; // only players cross dimensions
+					}
+					RECENT.put(id, now + 4);
+					Vec3 motion = e.getDeltaMovement();
+					if (e instanceof ServerPlayer traveller) {
+						sendPlayer(traveller, target, to);
+					} else {
+						e.teleportTo(to.x, to.y, to.z);
+					}
+					e.setDeltaMovement(motion);
+					e.resetFallDistance();
+					flash(target, to);
+					dev.enderskills.registry.ModEffects.play(target, to, "portal_active");
+					if (z.onUse() != null && e instanceof ServerPlayer used) {
+						z.onUse().accept(used);
+					}
 				}
-				Vec3 to = z.exit() != null ? z.exit() : randomSpot(z, e);
-				if (to == null) {
-					continue;
-				}
-				RECENT.put(id, now + 4);
-				Vec3 motion = e.getDeltaMovement();
-				e.teleportTo(to.x, to.y, to.z);
-				e.setDeltaMovement(motion);
-				e.resetFallDistance();
-				flash(z.level(), to);
-				dev.enderskills.registry.ModEffects.play(z.level(), to, "portal_active");
-			}
 		}
 		INSIDE.clear();
 		INSIDE.addAll(insideNow);

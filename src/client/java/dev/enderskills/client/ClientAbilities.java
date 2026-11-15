@@ -193,6 +193,20 @@ public final class ClientAbilities {
 		}
 	}
 
+	/** 1.2K, 3.4M, 5.6B, 7.8T, 9.1Qa: energy can be as large as you like. */
+	static String compact(double v) {
+		if (v >= 1.0E15) {
+			return "\u221E";
+		}
+		String[] suffix = {"", "K", "M", "B", "T", "Qa"};
+		int i = 0;
+		while (v >= 1000 && i < suffix.length - 1) {
+			v /= 1000;
+			i++;
+		}
+		return i == 0 ? Long.toString(Math.round(v)) : String.format(java.util.Locale.ROOT, "%.1f%s", v, suffix[i]);
+	}
+
 	static void tick(Minecraft client) {
 		LocalPlayer player = client.player;
 		if (player == null || client.isPaused()) {
@@ -201,11 +215,17 @@ public final class ClientAbilities {
 		countDown(COOLDOWNS);
 		countDown(ACTIVE);
 		SkillData data = data(player);
-		// Swim Speed: faster in water (the water efficiency attribute alone is hard to notice)
+		// Swim Speed: the water efficiency attribute (set by the server) plus this push, tuned so the top speed is exactly
+		// (1 + bonus) times the normal one
 		if (data.owns("swim_speed") && player.isInWater() && !player.getAbilities().flying && !dev.enderskills.dsl.SkillConfigs.disabled("swim_speed")) {
-			double swim = Math.min(1.0, value(data, "swim_speed", "MODIFIER"));
-			if (swim > 0) {
-				double k = 1.0 + swim * 0.1;
+			double bonus = Math.max(0.0, Math.min(1.0, value(data, "swim_speed", "MODIFIER")) * dev.enderskills.data.EsSettings.get().swimSpeedPower);
+			net.minecraft.client.Options o = client.options;
+			boolean moving = player.input.getMoveVector().lengthSquared() > 1.0E-4 || o.keyUp.isDown() || o.keyDown.isDown() || o.keyLeft.isDown()
+					|| o.keyRight.isDown() || o.keyJump.isDown();
+			if (bonus > 0 && moving) {
+				double eff = Math.max(0.0, Math.min(1.0, player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.WATER_MOVEMENT_EFFICIENCY)));
+				double f = 0.8 + (0.54600006 - 0.8) * eff; // the water drag of this player
+				double k = (1.0 - (1.0 - f) / (1.0 + bonus)) / f;
 				net.minecraft.world.phys.Vec3 dm = player.getDeltaMovement();
 				player.setDeltaMovement(dm.x * k, player.isSwimming() ? dm.y * k : dm.y, dm.z * k);
 			}
@@ -459,7 +479,7 @@ public final class ClientAbilities {
 		}
 		g.drawString(font, "✦", 4, 4, 0xFF000000 | cfg.hudBarColor, true);
 		Cosmos.bar(g, 13, 5, width - 50, 6, endurance / maxEndurance, cfg.hudBarColor, brighten(cfg.hudBarColor));
-		String e = Math.round(endurance) + "/" + Math.round(maxEndurance);
+		String e = compact(endurance) + "/" + compact(maxEndurance);
 		g.drawString(font, e, width - 4 - font.width(e), 4, 0xFF000000 | cfg.hudTextColor, true);
 		for (int i = 0; i < cells.size(); i++) {
 			cell(g, font, cells.get(i), keys.get(i), 4 + i * 22, 17, cfg);
@@ -471,7 +491,7 @@ public final class ClientAbilities {
 		int w = 90;
 		g.fill(0, 0, w, 7, panelAlpha(cfg));
 		g.fill(1, 1, 1 + Math.round((w - 2) * Math.min(1F, endurance / maxEndurance)), 6, 0xFF000000 | cfg.hudBarColor);
-		g.drawString(font, Math.round(endurance) + "/" + Math.round(maxEndurance), w + 4, 0, 0xFF000000 | cfg.hudTextColor, true);
+		g.drawString(font, compact(endurance) + "/" + compact(maxEndurance), w + 4, 0, 0xFF000000 | cfg.hudTextColor, true);
 		int y = 12;
 		for (int i = 0; i < cells.size(); i++) {
 			String skill = cells.get(i);

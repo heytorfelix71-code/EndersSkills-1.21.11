@@ -68,7 +68,7 @@ public final class Environment {
 		if (!EsSettings.get().destroyEnvironment) {
 			return;
 		}
-		double r = Math.max(1.0, Math.min(10.0, radius));
+		double r = Math.max(1.0, Math.min(16.0, radius));
 		int ri = (int) Math.ceil(r);
 		BlockPos c = BlockPos.containing(center);
 		for (int x = -ri; x <= ri; x++) {

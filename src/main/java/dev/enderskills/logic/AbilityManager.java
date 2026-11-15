@@ -57,6 +57,8 @@ public final class AbilityManager {
 
 	private static final Map<UUID, State> STATES = new HashMap<>();
 	private static final Map<Mob, Integer> FOGGED = new WeakHashMap<>();
+	/** Players that were already told what their passives do (tick when to tell them). */
+	private static final Map<UUID, Integer> REPORT_AT = new HashMap<>();
 	private static int now;
 
 	private AbilityManager() {
@@ -67,6 +69,7 @@ public final class AbilityManager {
 	}
 
 	public static void forget(ServerPlayer player) {
+		REPORT_AT.remove(player.getUUID());
 		State st = STATES.get(player.getUUID());
 		if (st != null) {
 			STATES.remove(player.getUUID()); // portals live in Portals and stay open
@@ -74,6 +77,9 @@ public final class AbilityManager {
 	}
 
 	private static double maxEndurance(ServerPlayer player) {
+		if (EsSettings.get().infiniteEndurance) {
+			return 1.0E15;
+		}
 		MobEffectInstance potion = player.getEffect(dev.enderskills.registry.ModEffects.ENDURANCE);
 		return EsSettings.get().defaultEndurance + AttributeEffects.modifier(player, "endurance")
 				+ (potion == null ? 0 : 10 * (potion.getAmplifier() + 1));
@@ -175,6 +181,7 @@ public final class AbilityManager {
 		now = srv.getTickCount();
 		Zones.tick(now);
 		Portals.tick(now);
+		UnstableTravel.tick(srv);
 		ShadowMinions.tick(srv, now);
 		DefenseAbilities.tick(now);
 		EarthStructures.tick(now);
@@ -197,6 +204,18 @@ public final class AbilityManager {
 			if (phasing(player)) {
 				player.resetFallDistance(); // sinking through blocks never hurts
 			}
+			if (now % 20 == 0) {
+				AttributeEffects.apply(player); // every second (it changes nothing when nothing changed)
+				Integer at = REPORT_AT.get(player.getUUID());
+				if (at == null) {
+					REPORT_AT.put(player.getUUID(), now + 120);
+				} else if (at > 0 && now >= at) {
+					REPORT_AT.put(player.getUUID(), 0);
+					if (EsSettings.get().passiveReport) {
+						AttributeEffects.report(player);
+					}
+				}
+			}
 			if (now % 5 == 0 && active(s, "fog")) {
 				fogPulse(player, now % 10 == 0);
 			}
@@ -209,6 +228,9 @@ public final class AbilityManager {
 				}
 			}
 			double max = maxEndurance(player);
+			if (EsSettings.get().infiniteEndurance) {
+				s.endurance = max; // never runs out
+			}
 			if (s.endurance < 0) {
 				s.endurance = max;
 			}
@@ -374,14 +396,17 @@ public final class AbilityManager {
 			return;
 		}
 		if (skill.equals("portal")) {
-			portalMenu(player, dev.enderskills.network.EsNetwork.PortalAction.WAIT_AT, 0, 0, target);
+			portalMenu(player, dev.enderskills.network.EsNetwork.PortalAction.WAIT_AT, 0, 0, target, "");
 			return;
 		}
 		use(player, skill, 0, 0, target);
 	}
 
-	/** The portal menu (sneak + Portal key): list, close, move a portal, or put the next pair's first portal at coordinates. */
-	public static void portalMenu(ServerPlayer player, int action, int id, int which, Vec3 target) {
+	/**
+	 * The portal menu (sneak + Portal key): list, close, move a portal, or make a pair: the entrance in front of you, the exit
+	 * at the coordinates in the dimension you picked ("" = the one you are in).
+	 */
+	public static void portalMenu(ServerPlayer player, int action, int id, int which, Vec3 target, String dimId) {
 		SkillData data = Progression.data(player);
 		if (!data.owns("portal") || SkillConfigs.disabled("portal") || !player.isAlive()) {
 			return;
@@ -389,6 +414,15 @@ public final class AbilityManager {
 		boolean finite = Double.isFinite(target.x) && Double.isFinite(target.y) && Double.isFinite(target.z)
 				&& Math.abs(target.x) < 3.0E7 && Math.abs(target.z) < 3.0E7 && Math.abs(target.y) < 1.0E5;
 		ServerLevel level = (ServerLevel) player.level();
+		ServerLevel destLevel = level;
+		if (dimId != null && !dimId.isEmpty()) {
+			net.minecraft.resources.Identifier key = net.minecraft.resources.Identifier.tryParse(dimId);
+			destLevel = key == null ? null : level.getServer().getLevel(
+					net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, key));
+			if (destLevel == null) {
+				return;
+			}
+		}
 		switch (action) {
 			case dev.enderskills.network.EsNetwork.PortalAction.CLOSE -> Portals.close(player, id);
 			case dev.enderskills.network.EsNetwork.PortalAction.CANCEL_WAIT -> Portals.cancelWaiting(player);
@@ -397,31 +431,33 @@ public final class AbilityManager {
 					return;
 				}
 				double range = scaled(player, "portal", EsSettings.get().portalRangeStart, EsSettings.get().portalRangeMax);
-				if (!Portals.move(player, id, which, target, range)) {
+				if (!Portals.move(player, id, which, destLevel, target, range)) {
 					tooFar(player, range);
 					Portals.sync(player);
 				}
 			}
 			case dev.enderskills.network.EsNetwork.PortalAction.WAIT_AT -> {
-				if (!finite || !EsSettings.get().coordinateTargeting || !level.getWorldBorder().isWithinBounds(net.minecraft.core.BlockPos.containing(target))) {
+				if (!finite || !EsSettings.get().coordinateTargeting
+						|| !destLevel.getWorldBorder().isWithinBounds(net.minecraft.core.BlockPos.containing(target))) {
 					return;
 				}
-				// both portals at once: the entrance in front of you, the exit at the coordinates
 				State s = state(player);
 				double cost = value(player, "portal", "ENDURANCE");
 				if (s.endurance < cost) {
+					player.displayClientMessage(net.minecraft.network.chat.Component.translatable("enderskills.no_endurance",
+							net.minecraft.network.chat.Component.translatable("skill.enderskills.portal")), true);
 					return;
 				}
 				double range = scaled(player, "portal", EsSettings.get().portalRangeStart, EsSettings.get().portalRangeMax);
 				Vec3 entrance = player.position().add(player.getViewVector(1.0F).multiply(2, 0, 2));
-				if (entrance.distanceTo(target) > range) {
-					tooFar(player, range);
+				if (destLevel == level && entrance.distanceTo(target) > range) {
+					tooFar(player, range); // between dimensions there is no distance limit
 					return;
 				}
 				s.endurance -= cost;
 				s.lastUse = now;
 				s.dirty = true;
-				Portals.pair(player, level, entrance, target, portalLife(player));
+				Portals.pair(player, level, entrance, destLevel, target, portalLife(player));
 			}
 			default -> Portals.sync(player);
 		}
@@ -701,6 +737,16 @@ public final class AbilityManager {
 		}
 		if (skill.equals("hasten")) {
 			cooldown *= Math.max(0.1, EsSettings.get().hastenCooldownFactor);
+		}
+		if (skill.equals("teleport") && EsSettings.get().teleportCooldownStartLevel > 0) {
+			// levels 40 to 50: the cooldown goes down to the configured top value
+			int start = EsSettings.get().teleportCooldownStartLevel;
+			int lv = Progression.data(player).level(skill);
+			int top = Math.max(start + 1, SkillConfigs.maxLevel(skill));
+			double target = Math.min(cooldown, Math.max(1.0, EsSettings.get().teleportCooldownTopSeconds) * 20.0);
+			if (lv >= start) {
+				cooldown += (target - cooldown) * Math.min(1.0, (lv - start) / (double) (top - start));
+			}
 		}
 		if (skill.equals("black_hole") && EsSettings.get().blackHoleCooldownAfter) {
 			cooldown += OffenseAbilities.lastHoleTicks; // the cooldown starts when the hole is gone

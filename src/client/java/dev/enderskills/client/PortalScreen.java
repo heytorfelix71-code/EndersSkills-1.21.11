@@ -17,18 +17,23 @@ import dev.enderskills.network.EsNetwork;
 import dev.enderskills.network.EsNetwork.PortalAction;
 
 /**
- * Portal menu (sneak + Portal key): every open pair with its two portals, close a pair, move a portal to typed
- * coordinates, and put the first portal of a new pair at coordinates (the next use of the ability links a portal to it).
+ * Portal menu (sneak + Portal key): every open pair with its two portals (and their dimensions), close a pair, move a
+ * portal to typed coordinates in any dimension, and make a new pair: entrance in front of you, exit at the coordinates
+ * and dimension you choose.
  */
 public class PortalScreen extends Screen {
 	private static final int ROW = 24;
 
 	private List<double[]> pairs = List.of();
+	private List<String[]> pairDims = List.of();
+	private List<String> dims = List.of();
 	private double[] waiting = new double[0];
 	private EditBox x;
 	private EditBox y;
 	private EditBox z;
-	/** Pair being edited (-1 = the boxes make a new portal), and which of its portals (0 = A, 1 = B). */
+	/** 0 = the dimension you are in; i = dims[i - 1]. */
+	private int dimIndex;
+	/** Pair being edited (-1 = the boxes make a new pair), and which of its portals (0 = A, 1 = B). */
 	private int editId = -1;
 	private int editWhich;
 	private int scroll;
@@ -48,22 +53,33 @@ public class PortalScreen extends Screen {
 	/** Opens the menu and asks the server for the list. */
 	static void open() {
 		Minecraft.getInstance().setScreen(new PortalScreen());
-		send(PortalAction.LIST, 0, 0, 0, 0, 0);
+		send(PortalAction.LIST, 0, 0, 0, 0, 0, "");
 	}
 
 	/** The server's list arrived (after opening and after every change). */
 	public static void receive(EsNetwork.PortalList list) {
 		if (Minecraft.getInstance().screen instanceof PortalScreen s) {
 			s.pairs = list.pairs();
+			s.pairDims = list.pairDims();
+			s.dims = list.dims();
 			s.waiting = list.waiting();
 			s.rebuild();
 		}
 	}
 
-	private static void send(int action, int id, int which, double x, double y, double z) {
+	private static void send(int action, int id, int which, double x, double y, double z, String dim) {
 		if (ClientPlayNetworking.canSend(PortalAction.TYPE)) {
-			ClientPlayNetworking.send(new PortalAction(action, id, which, x, y, z));
+			ClientPlayNetworking.send(new PortalAction(action, id, which, x, y, z, dim));
 		}
+	}
+
+	private String dimId() {
+		return dimIndex <= 0 || dimIndex > dims.size() ? "" : dims.get(dimIndex - 1);
+	}
+
+	private static String shortDim(String id) {
+		int i = id.indexOf(':');
+		return (i >= 0 ? id.substring(i + 1) : id).replace('_', ' ');
 	}
 
 	@Override
@@ -87,18 +103,19 @@ public class PortalScreen extends Screen {
 		int bx = left + panelW - 8 - 170;
 		for (int i = scroll; i < scroll + shown; i++) {
 			double[] p = pairs.get(i);
+			int index = i;
 			int id = (int) p[0];
-			addRenderableWidget(Button.builder(Component.translatable("enderskills.portals.edit_a"), b -> startEdit(id, 0, p[1], p[2], p[3]))
+			addRenderableWidget(Button.builder(Component.translatable("enderskills.portals.edit_a"), b -> startEdit(index, id, 0, p[1], p[2], p[3]))
 					.bounds(bx, rowY, 56, 20).build());
-			addRenderableWidget(Button.builder(Component.translatable("enderskills.portals.edit_b"), b -> startEdit(id, 1, p[4], p[5], p[6]))
+			addRenderableWidget(Button.builder(Component.translatable("enderskills.portals.edit_b"), b -> startEdit(index, id, 1, p[4], p[5], p[6]))
 					.bounds(bx + 58, rowY, 56, 20).build());
-			addRenderableWidget(Button.builder(Component.translatable("enderskills.portals.close"), b -> send(PortalAction.CLOSE, id, 0, 0, 0, 0))
+			addRenderableWidget(Button.builder(Component.translatable("enderskills.portals.close"), b -> send(PortalAction.CLOSE, id, 0, 0, 0, 0, ""))
 					.bounds(bx + 116, rowY, 54, 20).build());
 			rowY += ROW;
 		}
 		waitY = rowsTop + Math.max(1, shown) * ROW + 2;
 		if (waiting.length >= 3) {
-			addRenderableWidget(Button.builder(Component.translatable("enderskills.portals.cancel_wait"), b -> send(PortalAction.CANCEL_WAIT, 0, 0, 0, 0, 0))
+			addRenderableWidget(Button.builder(Component.translatable("enderskills.portals.cancel_wait"), b -> send(PortalAction.CANCEL_WAIT, 0, 0, 0, 0, 0, ""))
 					.bounds(left + panelW - 8 - 80, waitY - 4, 80, 20).build());
 		}
 		bottomTop = waitY + 24;
@@ -112,6 +129,12 @@ public class PortalScreen extends Screen {
 		x.setValue(sx);
 		y.setValue(sy);
 		z.setValue(sz);
+		String dimName = dimIndex <= 0 || dimIndex > dims.size() ? Component.translatable("enderskills.portals.dim_current").getString()
+				: shortDim(dims.get(dimIndex - 1));
+		addRenderableWidget(Button.builder(Component.translatable("enderskills.portals.dim", dimName), b -> {
+			dimIndex = (dimIndex + 1) % (dims.size() + 1);
+			rebuild();
+		}).bounds(Math.max(left + 2, cx - 218), bottomTop + 12, 114, 20).build());
 		boolean editing = editId >= 0;
 		addRenderableWidget(Button.builder(Component.translatable(editing ? "enderskills.portals.move" : "enderskills.portals.create"), b -> act())
 				.bounds(cx - 152, bottomTop + 38, 100, 20).build());
@@ -121,13 +144,17 @@ public class PortalScreen extends Screen {
 				rebuild();
 			}).bounds(cx - 50, bottomTop + 38, 100, 20).build());
 		}
-		addRenderableWidget(Button.builder(Component.translatable("enderskills.portals.close_all"), b -> send(PortalAction.CLOSE, -1, 0, 0, 0, 0))
+		addRenderableWidget(Button.builder(Component.translatable("enderskills.portals.close_all"), b -> send(PortalAction.CLOSE, -1, 0, 0, 0, 0, ""))
 				.bounds(cx + 52, bottomTop + 38, 100, 20).build());
 	}
 
-	private void startEdit(int id, int which, double px, double py, double pz) {
+	private void startEdit(int index, int id, int which, double px, double py, double pz) {
 		editId = id;
 		editWhich = which;
+		if (index >= 0 && index < pairDims.size()) {
+			int at = dims.indexOf(pairDims.get(index)[which]);
+			dimIndex = at < 0 ? 0 : at + 1; // the portal's own dimension
+		}
 		x.setValue(Long.toString((long) Math.floor(px)));
 		y.setValue(Long.toString((long) Math.floor(py)));
 		z.setValue(Long.toString((long) Math.floor(pz)));
@@ -144,10 +171,10 @@ public class PortalScreen extends Screen {
 			double ty = CoordScreen.parse(y.getValue(), p.getY());
 			double tz = CoordScreen.parse(z.getValue(), p.getZ());
 			if (editId >= 0) {
-				send(PortalAction.MOVE, editId, editWhich, Math.floor(tx) + 0.5, ty, Math.floor(tz) + 0.5);
+				send(PortalAction.MOVE, editId, editWhich, Math.floor(tx) + 0.5, ty, Math.floor(tz) + 0.5, dimId());
 				editId = -1;
 			} else {
-				send(PortalAction.WAIT_AT, 0, 0, Math.floor(tx) + 0.5, ty, Math.floor(tz) + 0.5);
+				send(PortalAction.WAIT_AT, 0, 0, Math.floor(tx) + 0.5, ty, Math.floor(tz) + 0.5, dimId());
 			}
 			rebuild();
 		} catch (NumberFormatException e) {
@@ -197,11 +224,13 @@ public class PortalScreen extends Screen {
 		}
 		for (int i = scroll; i < scroll + shown; i++) {
 			double[] p = pairs.get(i);
+			String[] dd = i < pairDims.size() ? pairDims.get(i) : new String[] {"", ""};
 			boolean edA = editId == (int) p[0] && editWhich == 0;
 			boolean edB = editId == (int) p[0] && editWhich == 1;
-			g.drawString(font, "#" + (int) p[0] + "  A: " + pos(p[1], p[2], p[3]) + "   (" + time(p[7]) + ")", left + 10, rowY + 1,
-					edA ? 0xFFFFE070 : 0xFFE0C8FF);
-			g.drawString(font, "      B: " + pos(p[4], p[5], p[6]), left + 10, rowY + 11, edB ? 0xFFFFE070 : 0xFFE0C8FF);
+			g.drawString(font, "#" + (int) p[0] + "  A: " + pos(p[1], p[2], p[3]) + " [" + shortDim(dd[0]) + "]   (" + time(p[7]) + ")",
+					left + 10, rowY + 1, edA ? 0xFFFFE070 : 0xFFE0C8FF);
+			g.drawString(font, "      B: " + pos(p[4], p[5], p[6]) + " [" + shortDim(dd[1]) + "]", left + 10, rowY + 11,
+					edB ? 0xFFFFE070 : 0xFFE0C8FF);
 			rowY += ROW;
 		}
 		if (pairs.size() > shown) {
