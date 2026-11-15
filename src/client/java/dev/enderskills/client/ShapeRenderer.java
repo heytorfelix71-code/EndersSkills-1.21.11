@@ -442,12 +442,29 @@ final class ShapeRenderer {
 			VertexConsumer vc = frame.getBuffer(dev.enderskills.client.fx.FxDraw.additive(white ? "fire_spirit_" : "fire_spirit"));
 			Matrix4f m = new Matrix4f();
 			int count = (int) Math.max(1, Math.min(2, runes[1]));
-			for (int i = 0; i < count; i++) {
-				double y = at.y - cam.y + 0.15 + i * 0.9;
-				double half = 1.25 + i * 0.3;
-				double angle = now * (i % 2 == 0 ? 0.04 : -0.06);
-				dev.enderskills.client.fx.FxDraw.texFlat(vc, m, at.x - cam.x, y, at.z - cam.z, half, angle,
-						dev.enderskills.client.fx.FxDraw.argb(0xFFFFFF, 0.9F), 0F, 1F);
+			int color = dev.enderskills.client.fx.FxDraw.argb(0xFFFFFF, 0.9F);
+			if (firstPerson) {
+				// in first person they stay flat at the feet, so they don't cover the view
+				for (int i = 0; i < count; i++) {
+					dev.enderskills.client.fx.FxDraw.texFlat(vc, m, at.x - cam.x, at.y - cam.y + 0.1 + i * 0.05, at.z - cam.z, 1.25 + i * 0.3,
+							now * (i % 2 == 0 ? 0.04 : -0.06), color, 0F, 1F);
+				}
+			} else {
+				// standing rune circles that spin around the player; the second one (level 40+) crosses the first and turns the other way
+				Vec3 c = at.add(0, p.getBbHeight() * 0.55, 0).subtract(cam);
+				for (int i = 0; i < count; i++) {
+					double dirSign = i == 0 ? 1 : -1;
+					double yaw = now * 0.08 * dirSign + i * Math.PI / 2;
+					double tilt = 0.25 * dirSign;
+					double roll = now * 0.04 * dirSign;
+					double half = 1.05 + i * 0.12;
+					Vec3 n = new Vec3(Math.cos(yaw), 0, Math.sin(yaw));
+					Vec3 u = new Vec3(-Math.sin(yaw), 0, Math.cos(yaw));
+					Vec3 v = new Vec3(0, Math.cos(tilt), 0).add(n.scale(Math.sin(tilt)));
+					Vec3 a = u.scale(Math.cos(roll)).add(v.scale(Math.sin(roll))).scale(half);
+					Vec3 b = v.scale(Math.cos(roll)).subtract(u.scale(Math.sin(roll))).scale(half);
+					dev.enderskills.client.fx.FxDraw.plane(vc, m, c, a, b, color);
+				}
 			}
 		}
 	}

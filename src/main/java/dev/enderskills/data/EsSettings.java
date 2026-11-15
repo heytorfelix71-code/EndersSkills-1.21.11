@@ -186,6 +186,8 @@ public final class EsSettings {
 	public int gloomVolleyLevel = 30;
 	/** Number of Gloom shots at the max level. */
 	public int gloomMaxShots = 5;
+	/** Level from which Fire Spirit / Black Blessing Flame show a second rune circle around the player. */
+	public int secondRuneRingLevel = 40;
 	/** How long the areas of the abilities stay (gas cloud, black hole, blood pool, flaming rain...): 1 = original time. */
 	public double areaDurationMultiplier = 1.5;
 	/** Size of the Gas Cloud (1 = original). */

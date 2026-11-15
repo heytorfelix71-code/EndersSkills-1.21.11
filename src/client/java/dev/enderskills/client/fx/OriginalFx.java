@@ -942,7 +942,7 @@ public final class OriginalFx {
 				FxDraw.texFlat(buffers.getBuffer(FxDraw.alpha("blood")), m, c.x, c.y, c.z, Math.max(1.0, r), e.seed % 7,
 						FxDraw.argb(color(e.skill, 0xFFFFFF), 0.85F * f), 0F, 1F);
 			}
-			case "fire_spirit", "black_blessing_flame", "home_star" -> {
+			case "home_star" -> { // Fire Spirit / Black Blessing Flame: their rune circles spin around the player (ShapeRenderer)
 				Vec3 c = (e.skill.equals("home_star") ? e.to.add(0, 1.5, 0) : follow.add(0, 1, 0)).subtract(cam);
 				String tex = e.skill.equals("black_blessing_flame") ? "fire_spirit_" : "fire_spirit";
 				VertexConsumer vc = e.skill.equals("black_blessing_flame") ? buffers.getBuffer(FxDraw.alpha(tex)) : buffers.getBuffer(FxDraw.additive(tex));

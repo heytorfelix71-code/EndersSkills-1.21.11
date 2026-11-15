@@ -601,5 +601,7 @@
   "enderskills.config.black_hole_duration": "Tempo do buraco negro",
   "enderskills.config.black_hole_duration.desc": "Tempo extra do Buraco Negro, além do tempo das áreas (1 = original).",
   "enderskills.config.blood_pool_size": "Tamanho da poça",
-  "enderskills.config.blood_pool_size.desc": "Tamanho da Poça de Sangue (1 = original); o sangue cobre o chão e acompanha o terreno."
+  "enderskills.config.blood_pool_size.desc": "Tamanho da Poça de Sangue (1 = original); o sangue cobre o chão e acompanha o terreno.",
+  "enderskills.config.second_rune_ring_level": "Nível do segundo círculo",
+  "enderskills.config.second_rune_ring_level.desc": "A partir deste nível, dois círculos de runas giram ao seu redor em vez de um."
 }

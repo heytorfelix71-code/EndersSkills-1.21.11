@@ -331,6 +331,8 @@ public final class EsConfigScreen {
 				g.option(num("speed_boost_power", def.speedBoostPower, 0, 5, () -> c.speedBoostPower, v -> c.speedBoostPower = v));
 				g.option(num("speed_boost_step", def.speedBoostStep, 0, 4, () -> c.speedBoostStep, v -> c.speedBoostStep = v));
 			}
+			case "fire_spirit", "black_blessing_flame" -> g.option(integer("second_rune_ring_level", def.secondRuneRingLevel, 1, 1000,
+					() -> c.secondRuneRingLevel, v -> c.secondRuneRingLevel = v));
 			case "gas_cloud" -> {
 				g.option(slider("gas_cloud_size", def.gasCloudSize, 0.5, 3, () -> c.gasCloudSize, v -> c.gasCloudSize = v));
 				g.option(num("gas_cloud_hold", def.gasCloudHoldSeconds, 0, 30, () -> c.gasCloudHoldSeconds, v -> c.gasCloudHoldSeconds = v));

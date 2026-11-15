@@ -311,9 +311,10 @@ public final class AbilityManager {
 		}
 	}
 
-	/** One rune ring, two at the max level. */
+	/** One rune circle, two from the second-ring level on (40 by default). */
 	static int runeRings(ServerPlayer player, String skill) {
-		return Progression.data(player).level(skill) >= SkillConfigs.maxLevel(skill) ? 2 : 1;
+		int from = Math.max(1, Math.min(EsSettings.get().secondRuneRingLevel, SkillConfigs.maxLevel(skill)));
+		return Progression.data(player).level(skill) >= from ? 2 : 1;
 	}
 
 	/** From the toggle level on (50 by default) Fog stays until used again or until the time limit. */

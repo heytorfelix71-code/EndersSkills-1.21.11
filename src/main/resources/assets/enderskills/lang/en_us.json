@@ -601,5 +601,7 @@
   "enderskills.config.black_hole_duration": "Black Hole time",
   "enderskills.config.black_hole_duration.desc": "Extra time of the Black Hole, on top of the area time (1 = original).",
   "enderskills.config.blood_pool_size": "Pool size",
-  "enderskills.config.blood_pool_size.desc": "Size of the Blood Pool (1 = original); the blood covers the ground and follows it."
+  "enderskills.config.blood_pool_size.desc": "Size of the Blood Pool (1 = original); the blood covers the ground and follows it.",
+  "enderskills.config.second_rune_ring_level": "Second circle level",
+  "enderskills.config.second_rune_ring_level.desc": "From this level on, two rune circles spin around you instead of one."
 }
