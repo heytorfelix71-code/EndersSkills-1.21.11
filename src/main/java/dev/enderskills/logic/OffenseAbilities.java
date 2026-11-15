@@ -102,11 +102,15 @@ public final class OffenseAbilities {
 	}
 
 	private static void sound(ServerLevel level, Vec3 at, SoundEvent sound, float volume, float pitch) {
-		level.playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, volume, pitch);
+		level.playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * volume, pitch);
 	}
 
 	private static void burst(ServerLevel level, Vec3 at, ParticleOptions particle, int count, double spread) {
-		level.sendParticles(particle, at.x, at.y + 0.5, at.z, count, spread, spread / 2, spread, 0.05);
+		level.sendParticles(particle, at.x, at.y + 0.5, at.z, Vfx.n(count + count / 2), spread, spread / 2, spread, 0.05);
+		level.sendParticles(Vfx.halo(particle), at.x, at.y + 0.5, at.z, Vfx.n(count / 2 + 2), spread + 0.2, spread / 2 + 0.1, spread + 0.2, 0.01);
+		if (spread >= 0.6) {
+			Vfx.shockwave(level, at, Math.max(1.5, spread * 2), particle);
+		}
 	}
 
 	/** Light skills: Glowing; hitting an already glowing target makes it burst (original "Glowing" effect). */
@@ -167,10 +171,7 @@ public final class OffenseAbilities {
 			end = wall.getLocation();
 		}
 		double len = from.distanceTo(end);
-		for (double d = 0; d < len; d += 0.6) {
-			Vec3 at = from.add(dir.scale(d));
-			level.sendParticles(particle, at.x, at.y, at.z, 1, width / 4, width / 4, width / 4, 0);
-		}
+		Vfx.beam(level, from, from.add(dir.scale(len)), particle, width);
 		List<LivingEntity> found = new ArrayList<>();
 		final Vec3 e2 = end;
 		for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, new AABB(from, e2).inflate(width), x -> enemy(p, x))) {
@@ -693,7 +694,8 @@ public final class OffenseAbilities {
 		ZONES.removeIf(z -> z.until() <= now || !z.owner().isAlive());
 		for (Zone z : List.copyOf(ZONES)) {
 			if (now % 4 == 0) {
-				z.level().sendParticles(z.particle(), z.center().x, z.center().y + 0.3, z.center().z, 6, z.radius() / 2, 0.2, z.radius() / 2, 0.01);
+				z.level().sendParticles(z.particle(), z.center().x, z.center().y + 0.3, z.center().z, Vfx.n(8), z.radius() / 2, 0.2, z.radius() / 2, 0.01);
+				Vfx.ring(z.level(), z.center(), z.radius(), Vfx.halo(z.particle()), (int) (z.radius() * 8 + 6));
 			}
 			if (now % z.every() == 0) {
 				for (LivingEntity e : enemies(z.owner(), z.center().add(0, 0.5, 0), z.radius() + 0.5)) {
@@ -724,7 +726,7 @@ public final class OffenseAbilities {
 		}
 		for (double d = 0; d < b.speed; d += 0.5) {
 			Vec3 at = b.pos.add(b.dir.scale(d));
-			b.level.sendParticles(b.particle, at.x, at.y, at.z, 1, b.radius / 4, b.radius / 4, b.radius / 4, 0);
+			Vfx.glow(b.level, at, b.particle, b.radius / 4);
 		}
 		b.left -= b.pos.distanceTo(end);
 		b.pos = end;

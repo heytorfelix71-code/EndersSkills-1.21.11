@@ -87,6 +87,7 @@ public final class EsConfigScreen {
 				.group(OptionGroup.createBuilder().name(t("group.costs"))
 						.option(num("cost_multiplier", def.globalCostMultiplier, 0, 1000, () -> c.globalCostMultiplier, v -> c.globalCostMultiplier = v))
 						.option(num("cost_increment", def.costIncrement, 0, 100, () -> c.costIncrement, v -> c.costIncrement = v))
+						.option(bool("creative_free", def.creativeFree, () -> c.creativeFree, v -> c.creativeFree = v))
 						.option(bool("one_tree", def.oneTreePerClass, () -> c.oneTreePerClass, v -> c.oneTreePerClass = v))
 						.option(integer("max_resets", def.maxResetUnlocks, 0, 1000, () -> c.maxResetUnlocks, v -> c.maxResetUnlocks = v))
 						.option(num("retry_return", def.retryXpReturn, 0, 1, () -> c.retryXpReturn, v -> c.retryXpReturn = v))
@@ -105,8 +106,28 @@ public final class EsConfigScreen {
 						.build())
 				.build();
 
+		ConfigCategory.Builder sounds = ConfigCategory.createBuilder().name(t("category.sounds"))
+				.group(OptionGroup.createBuilder().name(t("group.global"))
+						.option(slider("sound_volume", def.soundVolume, 0, 2, () -> c.soundVolume, v -> c.soundVolume = v))
+						.option(bool("extra_sounds", def.extraSounds, () -> c.extraSounds, v -> c.extraSounds = v))
+						.option(slider("vfx_density", def.vfxDensity, 0.1, 4, () -> c.vfxDensity, v -> c.vfxDensity = v))
+						.build());
+		for (Skills.Page page : Skills.PAGES) {
+			OptionGroup.Builder group = OptionGroup.createBuilder().collapsed(true)
+					.name(Component.translatable("enderskills.tab." + page.tab().id).withColor(page.tab().color)
+							.append(" · ").append(Component.translatable("enderskills.page." + page.element())));
+			for (String id : page.abilities()) {
+				group.option(Option.<Double>createBuilder().name(Component.translatable("skill.enderskills." + id))
+						.description(d("skill_volume"))
+						.binding(1.0, () -> c.skillVolume.getOrDefault(id, 1.0), v -> c.skillVolume.put(id, v))
+						.controller(o -> dev.isxander.yacl3.api.controller.DoubleSliderControllerBuilder.create(o).range(0.0, 2.0).step(0.05))
+						.build());
+			}
+			sounds.group(group.build());
+		}
+
 		return YetAnotherConfigLib.createBuilder().title(t("title"))
-				.category(power.build()).category(portal).category(hud).category(rules)
+				.category(power.build()).category(portal).category(sounds.build()).category(hud).category(rules)
 				.save(EsSettings::save)
 				.build().generateScreen(parent);
 	}
@@ -114,6 +135,11 @@ public final class EsConfigScreen {
 	private static Option<Double> num(String key, double def, double min, double max, Supplier<Double> get, Consumer<Double> set) {
 		return Option.<Double>createBuilder().name(t(key)).description(d(key)).binding(def, get, set)
 				.controller(o -> DoubleFieldControllerBuilder.create(o).range(min, max)).build();
+	}
+
+	private static Option<Double> slider(String key, double def, double min, double max, Supplier<Double> get, Consumer<Double> set) {
+		return Option.<Double>createBuilder().name(t(key)).description(d(key)).binding(def, get, set)
+				.controller(o -> dev.isxander.yacl3.api.controller.DoubleSliderControllerBuilder.create(o).range(min, max).step(0.05)).build();
 	}
 
 	private static Option<Integer> integer(String key, int def, int min, int max, Supplier<Integer> get, Consumer<Integer> set) {

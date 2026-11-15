@@ -34,7 +34,7 @@ public final class Progression {
 			.copyOnDeath()
 			.syncWith(SkillData.STREAM_CODEC, AttachmentSyncPredicate.targetOnly()));
 
-	private record Session(BlockPos pos, boolean ultimate) {
+	private record Session(BlockPos pos, boolean ultimate, boolean book) {
 	}
 
 	private static final Map<UUID, Session> SESSIONS = new HashMap<>();
@@ -55,15 +55,38 @@ public final class Progression {
 	}
 
 	public static void openAltar(ServerPlayer player, BlockPos pos, boolean ultimate) {
-		SESSIONS.put(player.getUUID(), new Session(pos.immutable(), ultimate));
+		SESSIONS.put(player.getUUID(), new Session(pos.immutable(), ultimate, false));
 		int crystals = AltarBlock.crystals(player.level(), pos);
 		float power = (float) SkillTree.altarPower(crystals, ultimate);
 		data(player); // make sure the data exists (and is synced) before the screen opens
 		ServerPlayNetworking.send(player, new EsNetwork.OpenAltar(pos, power, ultimate, crystals));
 	}
 
+	/** Opens the skill screen from the Ender Book (power -1 = book mode). */
+	public static void openBook(ServerPlayer player) {
+		SESSIONS.put(player.getUUID(), new Session(player.blockPosition(), false, true));
+		data(player);
+		ServerPlayNetworking.send(player, new EsNetwork.OpenAltar(player.blockPosition(), -1.0F, false, 0));
+	}
+
+	/** Creative mode with the "free in creative" option. */
+	public static boolean creativeFree(ServerPlayer player) {
+		return EsSettings.get().creativeFree && player.isCreative();
+	}
+
 	public static void handle(ServerPlayer player, EsNetwork.AltarAction action) {
 		Session session = SESSIONS.get(player.getUUID());
+		if (session != null && session.book()) {
+			// the Ender Book: read everything and use the XP storage anywhere; unlocking needs an altar
+			if (action.action() == EsNetwork.AltarAction.STORE_XP) {
+				storeXp(player, action.amount());
+			} else if (action.action() == EsNetwork.AltarAction.TAKE_XP) {
+				takeXp(player, action.amount());
+			} else if (action.action() == EsNetwork.AltarAction.UPGRADE && creativeFree(player)) {
+				upgrade(player, action.skill(), player.blockPosition(), true);
+			}
+			return;
+		}
 		if (session == null || player.distanceToSqr(session.pos().getCenter()) > 64.0
 				|| !(player.level().getBlockState(session.pos()).getBlock() instanceof AltarBlock altar)) {
 			return;
@@ -85,16 +108,20 @@ public final class Progression {
 		}
 		SkillData data = data(player);
 		double power = SkillTree.altarPower(AltarBlock.crystals(player.level(), pos), ultimate);
+		boolean free = creativeFree(player);
 		String blocked = SkillTree.blocked(data, skillId, power, ultimate);
+		if (free && blocked != null && !blocked.equals("max")) {
+			blocked = null;
+		}
 		if (blocked != null) {
 			fail(player, "enderskills.altar.blocked." + blocked);
 			return;
 		}
-		if (data.enderLevel() < SkillTree.levelsNeeded(data, skillId)) {
+		if (!free && data.enderLevel() < SkillTree.levelsNeeded(data, skillId)) {
 			fail(player, "enderskills.altar.blocked.levels");
 			return;
 		}
-		int cost = SkillTree.xpCost(data, skillId);
+		int cost = free ? 0 : SkillTree.xpCost(data, skillId);
 		if (data.storedXp() + XpUtil.total(player) < cost) {
 			fail(player, "enderskills.altar.blocked.xp");
 			return;
@@ -109,7 +136,7 @@ public final class Progression {
 				.withSpent(data.xpSpent() + cost);
 		set(player, next);
 		player.level().playSound(null, pos, owned ? SoundEvents.PLAYER_LEVELUP : SoundEvents.ENCHANTMENT_TABLE_USE,
-				SoundSource.PLAYERS, 0.8F, 1.0F);
+				SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 1.0F);
 	}
 
 	private static void storeXp(ServerPlayer player, int amount) {

@@ -50,6 +50,7 @@ public final class ModContent {
 					.noLootTable().setId(ResourceKey.create(Registries.BLOCK, EnderSkills.id("earth")))));
 
 	public static final Item TOKEN = item("token", TokenItem::new, new Item.Properties().rarity(Rarity.UNCOMMON));
+	public static final Item BOOK = item("book", dev.enderskills.item.BookItem::new, new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON));
 	public static final Item ENDER_DUST = item("ender_dust", Item::new, new Item.Properties());
 	public static final Item CRYSTAL_MATRIX = item("crystal_matrix", Item::new, new Item.Properties().rarity(Rarity.RARE).stacksTo(16));
 

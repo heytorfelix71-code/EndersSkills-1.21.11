@@ -85,9 +85,13 @@ public final class DefenseAbilities {
 	}
 
 	private static void fx(ServerLevel level, Vec3 at, SimpleParticleType particle, int count, double spread, SoundEvent sound, float pitch) {
-		level.sendParticles(particle, at.x, at.y + 1.0, at.z, count, spread, 0.6, spread, 0.05);
+		level.sendParticles(particle, at.x, at.y + 1.0, at.z, Vfx.n(count + count / 2), spread, 0.6, spread, 0.05);
+		level.sendParticles(Vfx.halo(particle), at.x, at.y + 1.0, at.z, Vfx.n(count / 2 + 2), spread + 0.2, 0.7, spread + 0.2, 0.01);
+		if (spread >= 1.0) {
+			Vfx.shockwave(level, at, spread * 2, particle);
+		}
 		if (sound != null) {
-			level.playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, 0.8F, pitch);
+			level.playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, pitch);
 		}
 	}
 
@@ -175,7 +179,7 @@ public final class DefenseAbilities {
 					INVINCIBLE.put(e, new Timed(p, until, 0));
 					fx(level, e.position(), ParticleTypes.TOTEM_OF_UNDYING, 20, 0.4, null, 1);
 				}
-				level.playSound(null, p.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.0F, 1.3F);
+				level.playSound(null, p.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 1.0F, 1.3F);
 			}
 			// ---------------- Earth
 			case "taunt" -> {
@@ -187,7 +191,7 @@ public final class DefenseAbilities {
 						fx(level, e.position(), ParticleTypes.ANGRY_VILLAGER, 3, 0.3, null, 1);
 					}
 				}
-				level.playSound(null, p.blockPosition(), SoundEvents.RAVAGER_ROAR, SoundSource.PLAYERS, 0.8F, 1.2F);
+				level.playSound(null, p.blockPosition(), SoundEvents.RAVAGER_ROAR, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 1.2F);
 			}
 			case "wall" -> {
 				Vec3 look = p.getViewVector(1.0F);
@@ -201,7 +205,7 @@ public final class DefenseAbilities {
 					BlockPos column = BlockPos.containing(base.getX() + side.x * w + 0.5, base.getY(), base.getZ() + side.z * w + 0.5);
 					raise(level, p, column, height, duration, v(p, skill, "FORCE"));
 				}
-				level.playSound(null, base, SoundEvents.STONE_PLACE, SoundSource.PLAYERS, 1.0F, 0.6F);
+				level.playSound(null, base, SoundEvents.STONE_PLACE, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 1.0F, 0.6F);
 			}
 			case "dome" -> {
 				int r = (int) Math.round(v(p, skill, "WIDTH"));
@@ -221,7 +225,7 @@ public final class DefenseAbilities {
 						}
 					}
 				}
-				level.playSound(null, c, SoundEvents.STONE_PLACE, SoundSource.PLAYERS, 1.0F, 0.5F);
+				level.playSound(null, c, SoundEvents.STONE_PLACE, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 1.0F, 0.5F);
 			}
 			case "thorny" -> {
 				AbilityManager.setActive(p, skill, (int) v(p, skill, "DURATION"));
@@ -291,7 +295,7 @@ public final class DefenseAbilities {
 					return false;
 				}
 				AbilityManager.addEndurance(p, gained);
-				level.playSound(null, p.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.8F, 0.6F);
+				level.playSound(null, p.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 0.6F);
 			}
 			case "energize" -> {
 				LivingEntity t = AbilityManager.lookTarget(p, v(p, skill, "RANGE"));
@@ -313,7 +317,7 @@ public final class DefenseAbilities {
 				Vec3 at = AbilityManager.aim(level, p, v(p, skill, "RANGE"));
 				RINGS.add(new Ring(level, at, v(p, skill, "RING_RANGE"), now + (int) v(p, skill, "RING_DURATION"), p,
 						v(p, skill, "DOT"), (int) v(p, skill, "DOT_DURATION")));
-				level.playSound(null, at.x, at.y, at.z, SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 1.0F, 0.8F);
+				level.playSound(null, at.x, at.y, at.z, SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 1.0F, 0.8F);
 			}
 			case "overheat" -> {
 				AbilityManager.setActive(p, skill, (int) v(p, skill, "DURATION"));
@@ -405,7 +409,7 @@ public final class DefenseAbilities {
 						line(level, p.getEyePosition(), t.getEyePosition(), ParticleTypes.FLAME);
 						AbilityManager.damage(p, t, (float) (v(p, skill, "DAMAGE") * AbilityManager.power(p)));
 						t.igniteForSeconds(2);
-						level.playSound(null, t.blockPosition(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.5F, 1.4F);
+						level.playSound(null, t.blockPosition(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.5F, 1.4F);
 					}
 				}
 			}
@@ -415,11 +419,7 @@ public final class DefenseAbilities {
 	}
 
 	private static void line(ServerLevel level, Vec3 from, Vec3 to, SimpleParticleType particle) {
-		int steps = (int) Math.max(2, from.distanceTo(to) * 2);
-		for (int i = 0; i <= steps; i++) {
-			Vec3 at = from.lerp(to, i / (double) steps);
-			level.sendParticles(particle, at.x, at.y, at.z, 1, 0, 0, 0, 0);
-		}
+		Vfx.beam(level, from, to, particle, 0.3);
 	}
 
 	// ------------------------------------------------------------------ tick
@@ -499,7 +499,7 @@ public final class DefenseAbilities {
 					line(level, orb, best.getEyePosition(), ParticleTypes.ELECTRIC_SPARK);
 					AbilityManager.damage(p, best, (float) (v(p, "voltaic_sentinel", "DAMAGE") * AbilityManager.power(p)));
 					slow(best, 40);
-					level.playSound(null, best.blockPosition(), SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 0.3F, 2.0F);
+					level.playSound(null, best.blockPosition(), SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.3F, 2.0F);
 				}
 			}
 		}
@@ -563,7 +563,7 @@ public final class DefenseAbilities {
 					level.sendParticles(ParticleTypes.FLAME, ally.getX(), ally.getY(0.5), ally.getZ(), 30,
 							v(p, "home_star", "PULSE_RANGE") / 2, 0.3, v(p, "home_star", "PULSE_RANGE") / 2, 0.02);
 				}
-				level.playSound(null, p.blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 0.6F, 0.6F);
+				level.playSound(null, p.blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.6F, 0.6F);
 			}
 		}
 	}

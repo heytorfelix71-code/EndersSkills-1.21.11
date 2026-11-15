@@ -109,6 +109,29 @@ public final class EsSettings {
 	/** Teleport always lands on the ground (never in the air). */
 	public boolean teleportGroundOnly = true;
 
+	// ---- sounds and visual effects
+	/** Master volume of every Ender Skills sound (1 = full). */
+	public double soundVolume = 0.5;
+	/** Play the extra Minecraft sounds of the abilities (not only the original Ender Skills sounds). */
+	public boolean extraSounds = true;
+	/** Volume of each skill's original sound (1 = normal), on top of the master volume. */
+	public java.util.Map<String, Double> skillVolume = defaultVolumes();
+	/** Amount of particles in the visual effects (1 = normal, 2 = double...). */
+	public double vfxDensity = 1.0;
+
+	private static java.util.Map<String, Double> defaultVolumes() {
+		java.util.Map<String, Double> m = new java.util.LinkedHashMap<>();
+		for (dev.enderskills.skill.Skills.Skill s : dev.enderskills.skill.Skills.all()) {
+			if (s.isAbility()) {
+				m.put(s.id(), 1.0);
+			}
+		}
+		return m;
+	}
+
+	/** In creative mode every skill can be unlocked and upgraded for free, without the tree rules. */
+	public boolean creativeFree = false;
+
 	// ---- HUD (colors are RGB)
 	/** Colored frame on the screen while you have an Ender Skills status effect. */
 	public boolean statusOverlay = true;

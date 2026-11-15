@@ -68,6 +68,12 @@ public class CoordScreen extends Screen {
 	}
 
 	@Override
+	public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+		Cosmos.background(g, width, height);
+		Cosmos.panel(g, width / 2 - 112, height / 2 - 44, 224, 100, 0x9A4DFF);
+	}
+
+	@Override
 	public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
 		super.render(g, mouseX, mouseY, partialTick);
 		g.drawCenteredString(font, Component.translatable("skill.enderskills." + skill).append(" - ").append(title), width / 2, height / 2 - 34, 0xFFE0C8FF);

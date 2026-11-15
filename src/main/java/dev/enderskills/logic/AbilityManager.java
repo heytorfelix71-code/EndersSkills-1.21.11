@@ -131,7 +131,7 @@ public final class AbilityManager {
 		s.activeUntil.remove("portal");
 		s.cooldownUntil.put("portal", now + 40);
 		s.dirty = true;
-		player.level().playSound(null, player.blockPosition(), SoundEvents.PORTAL_TRAVEL, SoundSource.PLAYERS, 0.3F, 1.8F);
+		player.level().playSound(null, player.blockPosition(), SoundEvents.PORTAL_TRAVEL, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.3F, 1.8F);
 	}
 
 	/** Passive on-hit abilities: owned, off cooldown and enough endurance; pays and starts the cooldown. */
@@ -285,7 +285,7 @@ public final class AbilityManager {
 			State s = state(player);
 			s.portalZones.forEach(Zones::remove);
 			s.portalZones = java.util.List.of();
-			player.level().playSound(null, player.blockPosition(), SoundEvents.PORTAL_TRAVEL, SoundSource.PLAYERS, 0.3F, 1.8F);
+			player.level().playSound(null, player.blockPosition(), SoundEvents.PORTAL_TRAVEL, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.3F, 1.8F);
 		}
 		if (skill.equals("speed_boost")) {
 			AttributeEffects.set(player, Attributes.MOVEMENT_SPEED, "speed_boost", 0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
@@ -349,14 +349,14 @@ public final class AbilityManager {
 	private static boolean moveTo(ServerLevel level, ServerPlayer player, Vec3 spot) {
 		Vec3 base = player.position();
 		level.sendParticles(ParticleTypes.PORTAL, base.x, base.y + 1, base.z, 30, 0.3, 0.6, 0.3, 0.3);
-		level.playSound(null, player.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.8F, 1.0F);
+		level.playSound(null, player.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 1.0F);
 		if (player.isPassenger()) {
 			player.stopRiding();
 		}
 		player.teleportTo(spot.x, spot.y, spot.z);
 		player.resetFallDistance();
 		level.sendParticles(ParticleTypes.PORTAL, spot.x, spot.y + 1, spot.z, 30, 0.3, 0.6, 0.3, 0.3);
-		level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.8F, 1.0F);
+		level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 1.0F);
 		return true;
 	}
 
@@ -467,14 +467,14 @@ public final class AbilityManager {
 						FOGGED.put(mob, now + duration);
 					}
 					level.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, target.getX(), target.getY(0.6), target.getZ(), 30, 0.5, 0.6, 0.5, 0.01);
-					level.playSound(null, target.blockPosition(), SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, 0.8F, 0.6F);
+					level.playSound(null, target.blockPosition(), SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 0.6F);
 				}
 			}
 			case "unstable_portal" -> {
 				Vec3 spot = aim(level, player, value(player, skill, "RANGE"));
 				Zones.add(new Zones.Zone(level, spot, value(player, skill, "SIZE") / 2.0, now + (int) value(player, skill, "DURATION"),
 						null, value(player, skill, "DISPLACEMENT")));
-				level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.PORTAL_TRIGGER, SoundSource.PLAYERS, 0.4F, 1.6F);
+				level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.PORTAL_TRIGGER, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.4F, 1.6F);
 			}
 			case "portal" -> {
 				EsSettings cfg = EsSettings.get();
@@ -493,7 +493,7 @@ public final class AbilityManager {
 					s.lastUse = now;
 					s.dirty = true;
 					Zones.add(new Zones.Zone(level, spot, 0.0, now + 1200, null, 0));
-					level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.PORTAL_AMBIENT, SoundSource.PLAYERS, 0.5F, 1.4F);
+					level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.PORTAL_AMBIENT, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.5F, 1.4F);
 					return; // the exit is placed with the next use
 				}
 				double range = scaled(player, skill, cfg.portalRangeStart, cfg.portalRangeMax);
@@ -510,7 +510,7 @@ public final class AbilityManager {
 				s.activeUntil.put(skill, life);
 				s.portalEntrance = null;
 				cost = 0;
-				level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.PORTAL_TRIGGER, SoundSource.PLAYERS, 0.4F, 1.6F);
+				level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.PORTAL_TRIGGER, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.4F, 1.6F);
 			}
 			default -> {
 				if (TOGGLES.contains(skill)) {
@@ -551,8 +551,10 @@ public final class AbilityManager {
 	}
 
 	private static void effect(ServerLevel level, ServerPlayer player, net.minecraft.core.particles.SimpleParticleType particle, SoundEvent sound) {
-		level.sendParticles(particle, player.getX(), player.getY(0.3), player.getZ(), 14, 0.3, 0.3, 0.3, 0.02);
-		level.playSound(null, player.blockPosition(), sound, SoundSource.PLAYERS, 0.7F, 1.2F);
+		level.sendParticles(particle, player.getX(), player.getY(0.3), player.getZ(), Vfx.n(20), 0.3, 0.3, 0.3, 0.02);
+		Vfx.ring(level, player.position(), 1.2, Vfx.halo(particle), 18);
+		Vfx.spiral(level, player.position(), 0.7, particle);
+		level.playSound(null, player.blockPosition(), sound, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.7F, 1.2F);
 	}
 
 	/** Point the player aims at (a block, or the end of the range). */
@@ -584,14 +586,14 @@ public final class AbilityManager {
 				}
 				if (level.noCollision(player, box)) {
 					level.sendParticles(ParticleTypes.PORTAL, base.x, base.y + 1, base.z, 30, 0.3, 0.6, 0.3, 0.3);
-					level.playSound(null, player.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.8F, 1.0F);
+					level.playSound(null, player.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 1.0F);
 					if (player.isPassenger()) {
 						player.stopRiding();
 					}
 					player.teleportTo(spot.x, spot.y, spot.z);
 					player.resetFallDistance();
 					level.sendParticles(ParticleTypes.PORTAL, spot.x, spot.y + 1, spot.z, 30, 0.3, 0.6, 0.3, 0.3);
-					level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.8F, 1.0F);
+					level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 1.0F);
 					return true;
 				}
 			}
@@ -630,7 +632,7 @@ public final class AbilityManager {
 		}
 		level.sendParticles(ParticleTypes.EXPLOSION, player.getX(), player.getY() + 0.2, player.getZ(), 6, range / 2, 0.1, range / 2, 0);
 		level.sendParticles(ParticleTypes.CLOUD, player.getX(), player.getY() + 0.2, player.getZ(), 40, range / 2, 0.1, range / 2, 0.05);
-		level.playSound(null, player.blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 0.8F, 0.8F);
+		level.playSound(null, player.blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 0.8F);
 	}
 
 	/** Stun (until the status effects phase: can't move and hits for almost nothing). */

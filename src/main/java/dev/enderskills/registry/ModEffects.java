@@ -161,6 +161,7 @@ public final class ModEffects {
 
 	/** Original sound of the mod for a skill name (with the original file names), if there is one. */
 	public static boolean play(ServerLevel level, Vec3 at, String skill) {
+		String id = skill;
 		String name = switch (skill) {
 			case "animated_stone_golem" -> "animated_stone";
 			case "barrage_wisps" -> "barrage_whisps_cast";
@@ -193,7 +194,12 @@ public final class ModEffects {
 		if (sound == null) {
 			return false;
 		}
-		level.playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, 1.0F, 1.0F);
+		dev.enderskills.data.EsSettings cfg = dev.enderskills.data.EsSettings.get();
+		float volume = (float) (cfg.soundVolume * cfg.skillVolume.getOrDefault(id, 1.0));
+		if (volume <= 0) {
+			return true;
+		}
+		level.playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, volume, 1.0F);
 		return true;
 	}
 }

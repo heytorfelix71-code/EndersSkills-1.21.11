@@ -50,7 +50,15 @@ public final class Zones {
 			if (now % 4 == 0) {
 				double r = Math.max(0.5, z.radius());
 				z.level().sendParticles(z.exit() == null && z.radius() > 0 ? ParticleTypes.REVERSE_PORTAL : ParticleTypes.PORTAL,
-						c.x, c.y + 1.0, c.z, 12, r / 2, 0.7, r / 2, 0.2);
+						c.x, c.y + 1.0, c.z, Vfx.n(16), r / 2, 0.7, r / 2, 0.2);
+				if (z.radius() > 0) {
+					for (int i = 0; i < 12; i++) { // standing portal ring
+						double a = Math.PI * 2 * i / 12 + now * 0.08;
+						z.level().sendParticles(ParticleTypes.END_ROD, c.x + Math.cos(a) * r, c.y + 1.0 + Math.sin(a) * 1.0, c.z, 1, 0, 0, 0, 0);
+						z.level().sendParticles(new net.minecraft.core.particles.DustParticleOptions(0x9A4DFF, 1.2F),
+								c.x + Math.cos(a) * r * 0.9, c.y + 1.0 + Math.sin(a) * 0.9, c.z, 1, 0, 0, 0, 0);
+					}
+				}
 			}
 			if (z.radius() <= 0) {
 				continue;

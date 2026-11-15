@@ -272,36 +272,72 @@ public final class ClientAbilities {
 			return;
 		}
 		Font font = client.font;
+		List<String> cells = new java.util.ArrayList<>(Abilities.slots(data));
+		java.util.List<String> keys = new java.util.ArrayList<>();
+		for (int i = 0; i < cells.size() && i < SLOT_KEYS.length; i++) {
+			keys.add(SLOT_KEYS[i].getTranslatedKeyMessage().getString());
+		}
+		while (cells.size() > keys.size()) {
+			cells.remove(cells.size() - 1);
+		}
+		for (String special : new String[] {"dash", "warp", "smash", "hover", "extra_jump"}) {
+			if (data.owns(special)) {
+				cells.add(special);
+				keys.add("");
+			}
+		}
 		int x = cfg.hudX;
 		int y = cfg.hudY;
-		int w = 90;
-		g.fill(x, y, x + w, y + 7, 0xA0000000);
-		g.fill(x + 1, y + 1, x + 1 + Math.round((w - 2) * Math.min(1F, endurance / maxEndurance)), y + 6, 0xFF000000 | cfg.hudBarColor);
-		g.drawString(font, Component.translatable("enderskills.hud.endurance", Math.round(endurance), Math.round(maxEndurance)),
-				x + w + 4, y, 0xFF000000 | cfg.hudTextColor, true);
-		y += 12;
-		List<String> slots = Abilities.slots(data);
-		for (int i = 0; i < slots.size() && i < SLOT_KEYS.length; i++) {
-			y = row(g, font, slots.get(i), SLOT_KEYS[i].getTranslatedKeyMessage().getString(), x, y);
-		}
-		for (String special : new String[] {"dash", "warp", "smash", "hover"}) {
-			if (data.owns(special) && (COOLDOWNS.containsKey(special) || ACTIVE.containsKey(special))) {
-				y = row(g, font, special, "", x, y);
-			}
+		int width = Math.max(110, cells.size() * 22 + 6);
+		Cosmos.chip(g, x, y, width, 46, 0xB00A0614, 0x60000000 | cfg.hudBarColor);
+		g.drawString(font, "✦", x + 4, y + 4, 0xFF000000 | cfg.hudBarColor, true);
+		Cosmos.bar(g, x + 13, y + 5, width - 50, 6, endurance / maxEndurance, cfg.hudBarColor, brighten(cfg.hudBarColor));
+		String e = Math.round(endurance) + "/" + Math.round(maxEndurance);
+		g.drawString(font, e, x + width - 4 - font.width(e), y + 4, 0xFF000000 | cfg.hudTextColor, true);
+		for (int i = 0; i < cells.size(); i++) {
+			cell(g, font, cells.get(i), keys.get(i), x + 4 + i * 22, y + 17, cfg);
 		}
 	}
 
-	private static int row(GuiGraphics g, Font font, String skill, String key, int x, int y) {
-		dev.enderskills.data.EsSettings cfg = dev.enderskills.data.EsSettings.get();
+	private static int brighten(int rgb) {
+		int r = Math.min(255, (rgb >> 16 & 0xFF) + 90);
+		int g = Math.min(255, (rgb >> 8 & 0xFF) + 90);
+		int b = Math.min(255, (rgb & 0xFF) + 90);
+		return r << 16 | g << 8 | b;
+	}
+
+	private static final Map<String, Integer> COOLDOWN_MAX = new HashMap<>();
+
+	private static void cell(GuiGraphics g, Font font, String skill, String key, int x, int y, dev.enderskills.data.EsSettings cfg) {
 		int cooldown = COOLDOWNS.getOrDefault(skill, 0);
 		int active = ACTIVE.getOrDefault(skill, 0);
-		g.fill(x, y, x + 18, y + 18, active > 0 ? 0xC0205030 : 0xA0000000);
-		g.blit(RenderPipelines.GUI_TEXTURED, EnderSkills.id("textures/skill/" + skill + ".png"), x + 1, y + 1, 0.0F, 0.0F,
-				16, 16, 32, 32, 32, 32, cooldown > 0 ? 0xFF606060 : 0xFFFFFFFF);
-		String text = cooldown > 0 ? (cooldown + 19) / 20 + "s"
-				: active > 1_000_000 ? "ON  " + key : active > 0 ? "▶ " + (active + 19) / 20 + "s" : key;
-		g.drawString(font, text, x + 22, y + 5, cooldown > 0 ? 0xFF000000 | cfg.hudCooldownColor
-				: active > 0 ? 0xFF000000 | cfg.hudActiveColor : 0xFF000000 | cfg.hudReadyColor, true);
-		return y + 20;
+		if (cooldown > COOLDOWN_MAX.getOrDefault(skill, 0)) {
+			COOLDOWN_MAX.put(skill, cooldown);
+		}
+		if (cooldown <= 0) {
+			COOLDOWN_MAX.remove(skill);
+		}
+		int border = active > 0 ? 0xFF000000 | cfg.hudActiveColor : cooldown > 0 ? 0x80000000 | cfg.hudCooldownColor : 0x90FFFFFF;
+		if (active > 0) {
+			float pulse = 0.5F + 0.5F * (float) Math.sin(System.currentTimeMillis() / 150.0);
+			Cosmos.chip(g, x - 1, y - 1, 22, 22, ((int) (40 + 60 * pulse) << 24) | cfg.hudActiveColor, 0);
+		}
+		Cosmos.chip(g, x, y, 20, 20, 0xC0000000, border);
+		g.blit(RenderPipelines.GUI_TEXTURED, EnderSkills.id("textures/skill/" + skill + ".png"), x + 2, y + 2, 0.0F, 0.0F,
+				16, 16, 32, 32, 32, 32, cooldown > 0 ? 0xFF707070 : 0xFFFFFFFF);
+		if (cooldown > 0) { // dark sweep that shrinks as the cooldown ends
+			int max = Math.max(cooldown, COOLDOWN_MAX.getOrDefault(skill, cooldown));
+			int hgt = Math.round(16F * cooldown / max);
+			g.fill(x + 2, y + 18 - hgt, x + 18, y + 18, 0xA0000000);
+			String s = Integer.toString((cooldown + 19) / 20);
+			g.drawString(font, s, x + 10 - font.width(s) / 2, y + 6, 0xFF000000 | cfg.hudCooldownColor, true);
+		} else if (active > 0 && active < 1_000_000) {
+			String s = Integer.toString((active + 19) / 20);
+			g.drawString(font, s, x + 10 - font.width(s) / 2, y + 6, 0xFF000000 | cfg.hudActiveColor, true);
+		}
+		if (!key.isEmpty()) {
+			String k = key.length() > 2 ? key.substring(0, 2) : key;
+			g.drawString(font, k, x + 1, y + 21, 0xFF000000 | cfg.hudReadyColor, false);
+		}
 	}
 }

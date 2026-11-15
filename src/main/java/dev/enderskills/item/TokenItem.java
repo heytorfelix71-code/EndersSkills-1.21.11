@@ -28,7 +28,7 @@ public class TokenItem extends Item {
 				stack.shrink(count);
 			}
 			level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.EXPERIENCE_ORB_PICKUP,
-					SoundSource.PLAYERS, 1.0F, (level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.35F + 0.9F);
+					SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 1.0F, (level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.35F + 0.9F);
 		}
 		return InteractionResult.SUCCESS;
 	}

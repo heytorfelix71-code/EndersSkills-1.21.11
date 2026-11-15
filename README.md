@@ -36,3 +36,11 @@ Commands (operators): `/enderskills level <n> [player]`, `/enderskills reset [pl
 - Teleport never lands in the air (option).
 - Animated status effects (particles on the entity and a colored pulsing frame on your screen).
 - Commands: `/enderskills ability|attribute add <players> <skill|all> [level <n|max>]`, `... level <players> <skill|all> <n|max>`, `... remove <players> <skill|all>`, `/enderskills enderlevel|reset|refill|list|reload`.
+
+## 1.3.0
+- Ender Book (book + Ender Dust): opens your skills anywhere and the XP storage; unlocking needs an altar (or creative with "everything free").
+- New altar/book screen over an animated End sky: classes and trees on the left, glowing tree, details with real stats (current → next level), power multiplier and costs.
+- New HUD: endurance bar and a row of ability cells with cooldown sweep and key letters.
+- Sound settings: master volume, extra Minecraft sounds on/off, volume per ability; effects density.
+- Prettier effects: glowing halos, rings, shock waves and forked lightning (bright particles bloom with shader packs).
+- Option: in creative, everything is free (off by default).
