@@ -36,7 +36,10 @@ public final class AttributeEffects {
 		set(player, Attributes.MAX_HEALTH, "heart_boost", modifier(player, "heart_boost"), AttributeModifier.Operation.ADD_VALUE);
 		set(player, Attributes.KNOCKBACK_RESISTANCE, "knockback_resistance", modifier(player, "knockback_resistance"),
 				AttributeModifier.Operation.ADD_VALUE);
-		set(player, Attributes.JUMP_STRENGTH, "jump_height", modifier(player, "jump_height"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+		// Jump Height is in extra blocks (level 50 = +3.75): turned into jump strength (a 1.25 block jump needs the base strength)
+		double extra = Math.max(0.0, modifier(player, "jump_height"));
+		set(player, Attributes.JUMP_STRENGTH, "jump_height", extra <= 0 ? 0.0 : Math.sqrt((1.25 + extra) / 1.25) - 1.0,
+				AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 		set(player, Attributes.WATER_MOVEMENT_EFFICIENCY, "swim_speed", modifier(player, "swim_speed"), AttributeModifier.Operation.ADD_VALUE);
 		set(player, Attributes.ATTACK_DAMAGE, "damage", modifier(player, "damage"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 		set(player, Attributes.ATTACK_SPEED, "attack_speed", modifier(player, "attack_speed"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);

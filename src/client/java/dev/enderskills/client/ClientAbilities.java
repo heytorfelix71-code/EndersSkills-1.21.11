@@ -69,6 +69,7 @@ public final class ClientAbilities {
 	private static int dashTicks;
 	private static Vec3 dashVelocity = Vec3.ZERO;
 	private static boolean jumpWasDown;
+	private static int airTicks;
 	private static int jumpsUsed;
 	private static boolean hovering;
 	private static boolean smashing;
@@ -221,16 +222,22 @@ public final class ClientAbilities {
 		if (player.onGround()) {
 			jumpsUsed = 0;
 			smashing = false;
+			airTicks = 0;
+		} else if (airborne) {
+			airTicks++;
 		}
 		boolean jumpDown = free && client.options.keyJump.isDown();
 		if (!jumpDown || !airborne) {
 			hovering = false;
 		}
-		if (airborne && jumpDown && !jumpWasDown) {
+		// airTicks > 2: the press that made the normal jump from the ground is not an Extra Jump (it used to replace
+		// the normal jump and its Jump Height bonus)
+		if (airborne && airTicks > 2 && jumpDown && !jumpWasDown) {
 			if (ready(data, "extra_jump") && jumpsUsed < (int) value(data, "extra_jump", "JUMPS")) {
 				jumpsUsed++;
 				Vec3 v = player.getDeltaMovement();
-				player.setDeltaMovement(v.x, 0.55, v.z);
+				double strength = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.JUMP_STRENGTH);
+				player.setDeltaMovement(v.x, 0.55 * Math.max(1.0, strength / 0.42), v.z);
 				player.resetFallDistance();
 				send("extra_jump", 0, 0);
 			} else if (data.owns("hover") && (ACTIVE.containsKey("hover") || ready(data, "hover"))) {
