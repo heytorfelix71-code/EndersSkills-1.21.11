@@ -143,7 +143,7 @@ public final class ClientAbilities {
 
 	/**
 	 * Speed Boost: the walk is pushed on the client (movement is the client's), so it always works with any other mod.
-	 * The push keeps the top speed at (1 + SPEED x setting) times the normal one (level 50 = about 2x): fast but controllable.
+	 * The top speed becomes (1 + SPEED x setting) times what you already have, Speed passive included, so the two add up.
 	 */
 	private static void speedBoost(LocalPlayer player, SkillData data) {
 		if (!ACTIVE.containsKey("speed_boost") || player.getAbilities().flying || player.isPassenger() || player.isInWater()

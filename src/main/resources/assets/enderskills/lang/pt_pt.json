@@ -585,7 +585,7 @@
   "enderskills.config.open": "Abrir ›",
   "enderskills.config.category.passives": "Passivas",
   "enderskills.config.speed_boost_power": "Força da velocidade",
-  "enderskills.config.speed_boost_power.desc": "Multiplica o bônus do Impulso de Velocidade: 1 = normal (nível 50 é cerca de 2x mais rápido), 0,5 = metade, 2 = o dobro.",
+  "enderskills.config.speed_boost_power.desc": "Multiplica o bónus do Impulso de Velocidade em cima da velocidade que já tens (passiva Velocidade incluída): 1 = o bónus da habilidade (nível 50 = +100%), 2,5 = predefinido (+250%), 0,5 = metade.",
   "enderskills.config.gloom_volley_level": "Rajada a partir do nível",
   "enderskills.config.gloom_volley_level.desc": "A partir deste nível a Melancolia dispara vários tiros de uma vez, cada um em um mob diferente à sua frente.",
   "enderskills.config.gloom_max_shots": "Tiros no nível máximo",

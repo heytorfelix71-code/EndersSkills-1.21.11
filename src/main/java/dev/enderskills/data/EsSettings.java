@@ -264,8 +264,11 @@ public final class EsSettings {
 	public int fogMaxSeconds = 60;
 	/** Extra step height while Speed Boost is on (1.4 = walks up 2 blocks). */
 	public double speedBoostStep = 1.4;
-	/** Strength of Speed Boost: 1 = the skill's speed (level 50 = about 2x as fast), 0.5 = half the bonus. */
-	public double speedBoostPower = 1.0;
+	/**
+	 * Strength of Speed Boost. It multiplies the speed you already have (Speed passive included): at 1 the skill's own bonus
+	 * (level 50 = +100%) goes on top of it; at 2.5 (default) level 50 = +250%. 0.5 = half the bonus.
+	 */
+	public double speedBoostPower = 2.5;
 	/** Gloom becomes a volley of shots (each at another mob) from this level on. */
 	public int gloomVolleyLevel = 30;
 	/** Number of Gloom shots at the max level. */
@@ -478,6 +481,11 @@ public final class EsSettings {
 							read.blackHoleBlocksPerTick = fresh.blackHoleBlocksPerTick;
 							read.blackHoleMaxBlockRadius = fresh.blackHoleMaxBlockRadius;
 							read.balanceVersion = 7;
+						}
+						if (read.balanceVersion < 8) {
+							// 1.20.2: Speed Boost makes you much faster on top of the Speed passive
+							read.speedBoostPower = new EsSettings().speedBoostPower;
+							read.balanceVersion = 8;
 						}
 						instance = read;
 					}

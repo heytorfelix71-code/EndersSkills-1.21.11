@@ -585,7 +585,7 @@
   "enderskills.config.open": "Open ›",
   "enderskills.config.category.passives": "Passives",
   "enderskills.config.speed_boost_power": "Speed strength",
-  "enderskills.config.speed_boost_power.desc": "Multiplies the Speed Boost bonus: 1 = normal (level 50 is about twice as fast), 0.5 = half, 2 = double.",
+  "enderskills.config.speed_boost_power.desc": "Multiplies the Speed Boost bonus on top of the speed you already have (Speed passive included): 1 = the skill's own bonus (level 50 = +100%), 2.5 = default (+250%), 0.5 = half.",
   "enderskills.config.gloom_volley_level": "Volley from level",
   "enderskills.config.gloom_volley_level.desc": "From this level Gloom fires several shots at once, each at another mob in front of you.",
   "enderskills.config.gloom_max_shots": "Shots at max level",
