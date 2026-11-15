@@ -702,6 +702,9 @@ public final class AbilityManager {
 		if (skill.equals("hasten")) {
 			cooldown *= Math.max(0.1, EsSettings.get().hastenCooldownFactor);
 		}
+		if (skill.equals("black_hole") && EsSettings.get().blackHoleCooldownAfter) {
+			cooldown += OffenseAbilities.lastHoleTicks; // the cooldown starts when the hole is gone
+		}
 		if (skill.equals("portal")) {
 			cooldown = 0;
 		}
@@ -900,6 +903,25 @@ public final class AbilityManager {
 			}
 		}
 		return false;
+	}
+
+	/** Takes energy for things that stay around (the fighting shadows); false when it ran out. No regeneration while it drains. */
+	public static boolean drain(ServerPlayer p, double amount) {
+		State s = state(p);
+		if (s.endurance < 0) {
+			s.endurance = maxEndurance(p);
+		}
+		s.endurance = Math.max(0, s.endurance - amount);
+		s.lastUse = now;
+		s.dirty = true;
+		return s.endurance > 0;
+	}
+
+	/** Energy left, from 0 to 1. */
+	public static double enduranceFraction(ServerPlayer p) {
+		State s = state(p);
+		double max = maxEndurance(p);
+		return max <= 0 ? 0 : (s.endurance < 0 ? 1.0 : s.endurance / max);
 	}
 
 	/** Walking through walls (Hasten at its top level) is on for this player. */

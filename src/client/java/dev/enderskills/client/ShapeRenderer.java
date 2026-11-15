@@ -498,12 +498,14 @@ final class ShapeRenderer {
 			living.xRot = shadow.getXRot(partial);
 			living.walkAnimationPos = shadow.walkAnimation.position(partial);
 			living.walkAnimationSpeed = shadow.walkAnimation.speed(partial);
-			living.pose = net.minecraft.world.entity.Pose.STANDING;
-			living.isInWater = false;
+			// swims and sinks like the owner: the swimming pose and its lean come from the shadow itself
+			living.pose = shadow.getPose() == net.minecraft.world.entity.Pose.SWIMMING ? net.minecraft.world.entity.Pose.SWIMMING
+					: net.minecraft.world.entity.Pose.STANDING;
+			living.isInWater = shadow.isInWater();
 		}
 		if (state instanceof net.minecraft.client.renderer.entity.state.HumanoidRenderState humanoid) {
 			humanoid.isCrouching = false;
-			humanoid.swimAmount = 0F;
+			humanoid.swimAmount = shadow.getSwimAmount(partial);
 		}
 		if (state instanceof net.minecraft.client.renderer.entity.state.ArmedEntityRenderState armed) {
 			armed.attackTime = shadow.getAttackAnim(partial);

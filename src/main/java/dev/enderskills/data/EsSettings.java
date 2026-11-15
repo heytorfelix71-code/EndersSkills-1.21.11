@@ -126,7 +126,7 @@ public final class EsSettings {
 	/** How many pairs of portals can be open at once; a new pair past this closes the oldest. */
 	public int portalMaxPairs = 5;
 	/** How close to the middle of a portal you must step to go through it, in blocks. */
-	public double portalReach = 0.5;
+	public double portalReach = 0.75;
 	// ---- Wall and Dome
 	/** From this skill level on, Wall and Dome stay until you use the ability again. */
 	public int earthToggleLevel = 40;
@@ -169,6 +169,8 @@ public final class EsSettings {
 	public boolean invisibilityMobsForget = true;
 	/** While someone is invisible, no particle shows around them (potion swirls, steps, ability effects...). */
 	public boolean invisibilityHidesParticles = true;
+	/** Abilities also hurt passive and neutral mobs (off = like the original: only hostile mobs, or ones already aggressive). */
+	public boolean damagePassiveMobs = false;
 	/** From this Invisibility level on, taking damage no longer breaks it (0 = never breaks). */
 	public int invisibilityUnbreakableLevel = 50;
 	/** Hasten: from this level on, using it resets the cooldown of every other ability (0 = never). */
@@ -208,6 +210,10 @@ public final class EsSettings {
 	public int secondRuneRingLevel = 40;
 	/** Shadow: from this level, shadows of you walk around and fight hostile mobs near you (2 at first). */
 	public int shadowMinionLevel = 20;
+	/** Shadow: energy per second for each fighting shadow (they are gone when your energy runs out). */
+	public double shadowMinionDrain = 0.05;
+	/** Shadow: at the top level the upkeep is multiplied by this (0.5 = half). */
+	public double shadowMinionTopFactor = 0.5;
 	/** Shadow: how many fighting shadows at the top level (one more every few levels until then; up to 100). */
 	public int shadowMinionMax = 5;
 	/** Shadow: damage of each hit of a shadow (times your ability power). */
@@ -221,9 +227,15 @@ public final class EsSettings {
 	/** Seconds the Gas Cloud holds a mob in place (it is also blinded). */
 	public double gasCloudHoldSeconds = 3.0;
 	/** Size and pull area of the Black Hole (1 = original). */
-	public double blackHoleSize = 1.6;
+	public double blackHoleSize = 2.2;
 	/** Extra time of the Black Hole, on top of the area time (1 = original). */
-	public double blackHoleDuration = 2.0;
+	public double blackHoleDuration = 3.0;
+	/** Black Hole: how far it pulls and hurts, as a multiple of its size (the drawing keeps its size). */
+	public double blackHolePullRange = 1.6;
+	/** Black Hole: its cooldown starts when the hole is gone (instead of when you cast it). */
+	public boolean blackHoleCooldownAfter = true;
+	/** Black Hole with "destroy the environment": blocks torn out of the ground and swallowed, per tick. */
+	public int blackHoleBlocksPerTick = 3;
 	/** Size of the Blood Pool (1 = original); the blood follows the ground. */
 	public double bloodPoolSize = 1.4;
 
@@ -361,6 +373,14 @@ public final class EsSettings {
 							read.playerDamageMultiplier = fresh.playerDamageMultiplier;
 							read.bossDamageMultiplier = fresh.bossDamageMultiplier;
 							read.balanceVersion = 2;
+						}
+						if (read.balanceVersion < 3) {
+							// 1.18.0: a bigger and longer Black Hole, and a slightly wider portal
+							EsSettings fresh = new EsSettings();
+							read.blackHoleSize = fresh.blackHoleSize;
+							read.blackHoleDuration = fresh.blackHoleDuration;
+							read.portalReach = fresh.portalReach;
+							read.balanceVersion = 3;
 						}
 						instance = read;
 					}

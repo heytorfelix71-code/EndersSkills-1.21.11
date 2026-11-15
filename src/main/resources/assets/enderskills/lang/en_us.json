@@ -650,5 +650,18 @@
   "key.enderskills.portal_menu": "Portals: open the menu",
   "key.enderskills.shadow_menu": "Shadows: choose how many",
   "enderskills.no_endurance": "Not enough energy for %s",
-  "enderskills.hasten.refill": "Hasten: every cooldown reset!"
+  "enderskills.hasten.refill": "Hasten: every cooldown reset!",
+  "enderskills.config.shadow_minion_drain": "Shadow upkeep (energy/s each)",
+  "enderskills.config.shadow_minion_drain.desc": "Energy per second that each fighting shadow costs. They cannot die: they are gone only when your energy runs out.",
+  "enderskills.config.shadow_minion_top_factor": "Upkeep at the top level (x)",
+  "enderskills.config.shadow_minion_top_factor.desc": "At the top Shadow level the upkeep is multiplied by this (0.5 = half).",
+  "enderskills.config.black_hole_pull_range": "Pull and damage range (x)",
+  "enderskills.config.black_hole_pull_range.desc": "How far the Black Hole pulls and hurts, as a multiple of its drawn size (1 = only inside it).",
+  "enderskills.config.black_hole_cooldown_after": "Cooldown starts when it ends",
+  "enderskills.config.black_hole_cooldown_after.desc": "The Black Hole's cooldown only starts when the hole is gone (instead of when you cast it).",
+  "enderskills.config.black_hole_blocks": "Blocks pulled per tick",
+  "enderskills.config.black_hole_blocks.desc": "With \"destroy the environment\" on, the Black Hole rips this many blocks per tick out of the ground and swallows them: a crater.",
+  "enderskills.config.damage_passive": "Abilities hurt passive and neutral mobs",
+  "enderskills.config.damage_passive.desc": "Off (like the original): abilities only hurt hostile mobs, or passive/neutral ones that are already aggressive. On: they hurt every mob that is not your ally.",
+  "enderskills.shadows.exhausted": "The shadows are gone: no energy left"
 }

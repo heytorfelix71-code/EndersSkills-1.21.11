@@ -75,9 +75,24 @@ public final class DefenseAbilities {
 				|| (e instanceof IronGolem g && GOLEMS.stream().anyMatch(x -> x.golem() == g));
 	}
 
+	/**
+	 * Passive and neutral mobs are only a target when the setting allows it, or when they are already hostile (angry at
+	 * someone, or with a target): the original behavior.
+	 */
+	public static boolean worthHitting(ServerPlayer caster, LivingEntity e) {
+		if (dev.enderskills.data.EsSettings.get().damagePassiveMobs || e instanceof net.minecraft.world.entity.monster.Enemy) {
+			return true;
+		}
+		if (e instanceof net.minecraft.world.entity.NeutralMob n && n.isAngry()) {
+			return true;
+		}
+		return e instanceof net.minecraft.world.entity.Mob m && m.getTarget() != null;
+	}
+
 	private static List<LivingEntity> around(ServerPlayer p, Vec3 center, double range, boolean allies) {
 		return p.level().getEntitiesOfClass(LivingEntity.class, new AABB(center, center).inflate(range),
-				e -> e.isAlive() && !e.isSpectator() && e.distanceToSqr(center) <= range * range && isAlly(p, e) == allies);
+				e -> e.isAlive() && !e.isSpectator() && e.distanceToSqr(center) <= range * range && isAlly(p, e) == allies
+						&& (allies || worthHitting(p, e)));
 	}
 
 	private static double v(ServerPlayer p, String skill, String property) {

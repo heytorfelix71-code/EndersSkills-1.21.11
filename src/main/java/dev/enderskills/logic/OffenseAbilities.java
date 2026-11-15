@@ -74,7 +74,7 @@ public final class OffenseAbilities {
 	}
 
 	private static boolean enemy(ServerPlayer p, LivingEntity e) {
-		return e.isAlive() && !e.isSpectator() && !DefenseAbilities.isAlly(p, e);
+		return e.isAlive() && !e.isSpectator() && !DefenseAbilities.isAlly(p, e) && DefenseAbilities.worthHitting(p, e);
 	}
 
 	private static List<LivingEntity> enemies(ServerPlayer p, Vec3 center, double radius) {
@@ -157,6 +157,87 @@ public final class OffenseAbilities {
 		duration = (int) Math.max(1, duration * Math.max(0.1, dev.enderskills.data.EsSettings.get().areaDurationMultiplier));
 		ZONES.add(new Zone(p, (ServerLevel) p.level(), center, radius, now + Math.max(1, duration), Math.max(1, every), particle, action, Vfx.skill));
 		Fx.zone(p, center, radius, Math.max(1, duration));
+	}
+
+	/** Ticks of the last Black Hole cast (its cooldown starts when it is gone). */
+	public static int lastHoleTicks;
+
+	private static boolean pullable(ServerPlayer p, net.minecraft.world.entity.Entity x) {
+		if (x instanceof net.minecraft.world.entity.player.Player || x instanceof net.minecraft.world.entity.decoration.ArmorStand
+				|| x instanceof dev.enderskills.entity.ShadowEntity) {
+			return false;
+		}
+		if (x instanceof LivingEntity) {
+			return !DefenseAbilities.isAlly(p, x);
+		}
+		return x instanceof net.minecraft.world.entity.item.ItemEntity || x instanceof net.minecraft.world.entity.ExperienceOrb
+				|| x instanceof net.minecraft.world.entity.projectile.Projectile;
+	}
+
+	/** One tick of a Black Hole: pulls everything around it, hurts the mobs once a second, tears blocks out of the ground. */
+	private static void blackHoleTick(ServerPlayer p, ServerLevel level, Vec3 at, double reach, double r, double damage, int[] age,
+			List<net.minecraft.world.entity.item.FallingBlockEntity> bag, boolean last) {
+		age[0]++;
+		dev.enderskills.data.EsSettings cfg = dev.enderskills.data.EsSettings.get();
+		for (net.minecraft.world.entity.Entity x : level.getEntities((net.minecraft.world.entity.Entity) null, new AABB(at, at).inflate(reach),
+				x -> x != p && x.isAlive() && !x.isSpectator() && x.distanceToSqr(at) <= reach * reach && pullable(p, x))) {
+			Vec3 d = at.subtract(x.position().add(0, x.getBbHeight() * 0.5, 0));
+			double dist = d.length();
+			if (dist < 0.4) {
+				continue;
+			}
+			double f = 0.14 + 0.12 * (1.0 - Math.min(1.0, dist / reach));
+			Vec3 pull = d.scale(1.0 / dist).scale(f);
+			if (x instanceof LivingEntity) {
+				x.setDeltaMovement(x.getDeltaMovement().scale(0.7).add(pull.scale(1.4)));
+			} else {
+				x.setDeltaMovement(x.getDeltaMovement().scale(0.8).add(pull));
+			}
+			x.hurtMarked = true;
+			if (x instanceof net.minecraft.world.entity.projectile.Projectile && dist < 1.0) {
+				x.discard(); // swallowed
+			}
+		}
+		if (age[0] % 20 == 1) {
+			for (LivingEntity e : enemies(p, at, reach)) {
+				hit(p, e, damage * 0.2, 0); // a pulse every second
+			}
+		}
+		if (cfg.destroyEnvironment) {
+			double rb = Math.min(12.0, Math.max(2.0, r * 1.4));
+			for (int i = 0, tries = 0; i < Math.max(0, cfg.blackHoleBlocksPerTick) && tries < 40 && bag.size() < 160; tries++) {
+				Vec3 o = new Vec3((level.getRandom().nextDouble() * 2 - 1) * rb, (level.getRandom().nextDouble() * 2 - 1) * rb,
+						(level.getRandom().nextDouble() * 2 - 1) * rb);
+				if (o.lengthSqr() > rb * rb) {
+					continue;
+				}
+				net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(at.add(o));
+				net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
+				if (state.isAir() || state.getDestroySpeed(level, pos) < 0 || state.getBlock().getExplosionResistance() > 600.0F
+						|| !state.getFluidState().isEmpty() || state.hasBlockEntity()
+						|| state.getBlock() instanceof dev.enderskills.block.AltarBlock) {
+					continue;
+				}
+				net.minecraft.world.entity.item.FallingBlockEntity fb = net.minecraft.world.entity.item.FallingBlockEntity.fall(level, pos, state);
+				fb.disableDrop();
+				fb.setNoGravity(true);
+				fb.noPhysics = true;
+				bag.add(fb);
+				i++;
+			}
+		}
+		for (java.util.Iterator<net.minecraft.world.entity.item.FallingBlockEntity> it = bag.iterator(); it.hasNext();) {
+			net.minecraft.world.entity.item.FallingBlockEntity fb = it.next();
+			Vec3 d = at.subtract(fb.position());
+			double dist = d.length();
+			if (!fb.isAlive() || last || dist < 1.3 || fb.tickCount > 200) {
+				fb.discard(); // swallowed by the hole: the ground stays torn (a crater)
+				it.remove();
+				continue;
+			}
+			fb.setDeltaMovement(d.scale(1.0 / dist).scale(Math.min(0.5, 0.2 + dist * 0.02)));
+			fb.hurtMarked = true;
+		}
 	}
 
 	private static void later(int ticks, Runnable run) {
@@ -321,24 +402,27 @@ public final class OffenseAbilities {
 				sound(level, at, SoundEvents.SCULK_SHRIEKER_SHRIEK, 0.6F, 0.8F);
 			}
 			case "black_hole" -> {
+				dev.enderskills.data.EsSettings cfgB = dev.enderskills.data.EsSettings.get();
 				Vec3 at = AbilityManager.aim(level, p, v(p, skill, "RANGE")).add(0, 1.0, 0);
-				double r = v(p, skill, "SIZE") * Math.max(0.1, dev.enderskills.data.EsSettings.get().blackHoleSize);
-				int life = (int) (v(p, skill, "DURATION") * Math.max(0.1, dev.enderskills.data.EsSettings.get().blackHoleDuration));
-				int total = (int) Math.max(1, life * Math.max(0.1, dev.enderskills.data.EsSettings.get().areaDurationMultiplier));
+				double r = v(p, skill, "SIZE") * Math.max(0.1, cfgB.blackHoleSize);
+				double reach = r * Math.max(1.0, cfgB.blackHolePullRange); // it pulls and hurts farther than it looks
+				int life = (int) (v(p, skill, "DURATION") * Math.max(0.1, cfgB.blackHoleDuration));
+				int total = (int) Math.max(1, life * Math.max(0.1, cfgB.areaDurationMultiplier));
+				lastHoleTicks = total;
 				Shapes.send(level, Shapes.BLACK_HOLE, at, Math.max(0.8, r * 0.3), r, null, Shapes.color(skill, 0x8A3CFF), total, -1);
-				for (LivingEntity e : enemies(p, at, r)) {
+				for (LivingEntity e : enemies(p, at, reach)) {
 					hit(p, e, v(p, skill, "DAMAGE"), 0);
 					dot(p, e, v(p, skill, "DOT"), 0, v(p, skill, "DOT_DURATION"));
 				}
-				zone(p, at, r, life, 1, ParticleTypes.REVERSE_PORTAL, e -> {
-					Vec3 d = at.subtract(e.position());
-					if (d.lengthSqr() > 0.5) {
-						e.setDeltaMovement(e.getDeltaMovement().scale(0.6).add(d.normalize().scale(0.18)));
-						e.hurtMarked = true;
-					}
+				zone(p, at, r, life, 20, ParticleTypes.REVERSE_PORTAL, e -> {
 				});
+				// every tick: pulls everything around (mobs, items, xp, arrows) and, with "destroy the environment", rips blocks out of the ground
+				double damage = v(p, skill, "DAMAGE");
+				int[] age = {0};
+				List<net.minecraft.world.entity.item.FallingBlockEntity> bag = new ArrayList<>();
+				channel(p, total, 1, () -> blackHoleTick(p, level, at, reach, r, damage, age, bag, age[0] >= total - 2));
 				sound(level, at, SoundEvents.END_PORTAL_SPAWN, 0.6F, 0.5F);
-				later(total, () -> Environment.blast(level, at, r * 0.8)); // collapses and tears the ground
+				later(total, () -> Environment.blast(level, at, Math.min(10.0, reach * 0.8))); // collapses and tears the ground
 			}
 			// ---------------- Blood
 			case "blood_pool" -> {

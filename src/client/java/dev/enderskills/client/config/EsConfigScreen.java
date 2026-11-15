@@ -84,6 +84,7 @@ public final class EsConfigScreen {
 				.option(bool("invis_mobs_forget", def.invisibilityMobsForget, () -> c.invisibilityMobsForget, v -> c.invisibilityMobsForget = v))
 				.option(bool("invis_particles", def.invisibilityHidesParticles, () -> c.invisibilityHidesParticles, v -> c.invisibilityHidesParticles = v))
 				.option(integer("invis_unbreakable", def.invisibilityUnbreakableLevel, 0, 1000, () -> c.invisibilityUnbreakableLevel, v -> c.invisibilityUnbreakableLevel = v))
+				.option(bool("damage_passive", def.damagePassiveMobs, () -> c.damagePassiveMobs, v -> c.damagePassiveMobs = v))
 				.option(bool("status_overlay", def.statusOverlay, () -> c.statusOverlay, v -> c.statusOverlay = v))
 				.option(bool("hud_visible", def.hudVisible, () -> c.hudVisible, v -> c.hudVisible = v))
 				.option(integer("hud_x", def.hudX, 0, 4000, () -> c.hudX, v -> c.hudX = v))
@@ -341,6 +342,8 @@ public final class EsConfigScreen {
 				g.option(integer("shadow_minion_max", def.shadowMinionMax, 0, 100, () -> c.shadowMinionMax, v -> c.shadowMinionMax = v));
 				g.option(num("shadow_minion_damage", def.shadowMinionDamage, 0, 1000, () -> c.shadowMinionDamage, v -> c.shadowMinionDamage = v));
 				g.option(num("shadow_minion_range", def.shadowMinionRange, 4, 64, () -> c.shadowMinionRange, v -> c.shadowMinionRange = v));
+				g.option(num("shadow_minion_drain", def.shadowMinionDrain, 0, 100, () -> c.shadowMinionDrain, v -> c.shadowMinionDrain = v));
+				g.option(num("shadow_minion_top_factor", def.shadowMinionTopFactor, 0, 1, () -> c.shadowMinionTopFactor, v -> c.shadowMinionTopFactor = v));
 			}
 			case "fire_spirit", "black_blessing_flame" -> g.option(integer("second_rune_ring_level", def.secondRuneRingLevel, 1, 1000,
 					() -> c.secondRuneRingLevel, v -> c.secondRuneRingLevel = v));
@@ -355,7 +358,10 @@ public final class EsConfigScreen {
 			}
 			case "black_hole" -> {
 				g.option(slider("black_hole_size", def.blackHoleSize, 0.5, 4, () -> c.blackHoleSize, v -> c.blackHoleSize = v));
-				g.option(slider("black_hole_duration", def.blackHoleDuration, 0.5, 6, () -> c.blackHoleDuration, v -> c.blackHoleDuration = v));
+				g.option(slider("black_hole_duration", def.blackHoleDuration, 0.5, 8, () -> c.blackHoleDuration, v -> c.blackHoleDuration = v));
+				g.option(slider("black_hole_pull_range", def.blackHolePullRange, 1, 4, () -> c.blackHolePullRange, v -> c.blackHolePullRange = v));
+				g.option(bool("black_hole_cooldown_after", def.blackHoleCooldownAfter, () -> c.blackHoleCooldownAfter, v -> c.blackHoleCooldownAfter = v));
+				g.option(integer("black_hole_blocks", def.blackHoleBlocksPerTick, 0, 30, () -> c.blackHoleBlocksPerTick, v -> c.blackHoleBlocksPerTick = v));
 			}
 			case "blood_pool" -> g.option(slider("blood_pool_size", def.bloodPoolSize, 0.5, 3, () -> c.bloodPoolSize, v -> c.bloodPoolSize = v));
 			case "gloom" -> {

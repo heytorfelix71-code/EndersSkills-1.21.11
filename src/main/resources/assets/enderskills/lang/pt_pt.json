@@ -650,5 +650,18 @@
   "key.enderskills.portal_menu": "Portais: abrir o menu",
   "key.enderskills.shadow_menu": "Sombras: escolher quantas",
   "enderskills.no_endurance": "Sem energia para %s",
-  "enderskills.hasten.refill": "Apressar: todas as recargas zeradas!"
+  "enderskills.hasten.refill": "Apressar: todas as recargas zeradas!",
+  "enderskills.config.shadow_minion_drain": "Gasto das sombras (energia/s cada)",
+  "enderskills.config.shadow_minion_drain.desc": "Energia por segundo que cada sombra lutadora gasta. Elas não morrem: só somem quando a sua energia acaba.",
+  "enderskills.config.shadow_minion_top_factor": "Gasto no nível máximo (x)",
+  "enderskills.config.shadow_minion_top_factor.desc": "No nível máximo da Sombra o gasto é multiplicado por isso (0,5 = metade).",
+  "enderskills.config.black_hole_pull_range": "Alcance de puxar e dar dano (x)",
+  "enderskills.config.black_hole_pull_range.desc": "Até onde o Buraco Negro puxa e dá dano, como múltiplo do tamanho desenhado (1 = só dentro dele).",
+  "enderskills.config.black_hole_cooldown_after": "Recarga começa quando ele acaba",
+  "enderskills.config.black_hole_cooldown_after.desc": "A recarga do Buraco Negro só começa quando ele some (em vez de quando você o lança).",
+  "enderskills.config.black_hole_blocks": "Blocos puxados por tick",
+  "enderskills.config.black_hole_blocks.desc": "Com \"destruir o ambiente\" ligado, o Buraco Negro arranca tantos blocos por tick do chão e os engole: uma cratera.",
+  "enderskills.config.damage_passive": "Habilidades dão dano em mobs pacíficos e neutros",
+  "enderskills.config.damage_passive.desc": "Desligado (como o original): as habilidades só dão dano em mobs hostis, ou pacíficos/neutros que já estejam agressivos. Ligado: dão dano em todo mob que não seja seu aliado.",
+  "enderskills.shadows.exhausted": "As sombras sumiram: a tua energia acabou"
 }
