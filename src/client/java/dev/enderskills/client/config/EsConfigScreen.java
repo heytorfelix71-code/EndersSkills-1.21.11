@@ -330,6 +330,10 @@ public final class EsConfigScreen {
 				g.option(num("speed_boost_power", def.speedBoostPower, 0, 5, () -> c.speedBoostPower, v -> c.speedBoostPower = v));
 				g.option(num("speed_boost_step", def.speedBoostStep, 0, 4, () -> c.speedBoostStep, v -> c.speedBoostStep = v));
 			}
+			case "gloom" -> {
+				g.option(integer("gloom_volley_level", def.gloomVolleyLevel, 0, 1000, () -> c.gloomVolleyLevel, v -> c.gloomVolleyLevel = v));
+				g.option(integer("gloom_max_shots", def.gloomMaxShots, 2, 20, () -> c.gloomMaxShots, v -> c.gloomMaxShots = v));
+			}
 			case "fog" -> {
 				g.option(num("fog_radius", def.fogRadius, 1, 64, () -> c.fogRadius, v -> c.fogRadius = v));
 				g.option(integer("fog_toggle_level", def.fogToggleLevel, 0, 1000, () -> c.fogToggleLevel, v -> c.fogToggleLevel = v));

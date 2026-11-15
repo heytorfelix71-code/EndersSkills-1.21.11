@@ -182,6 +182,10 @@ public final class EsSettings {
 	public double speedBoostStep = 1.4;
 	/** Strength of Speed Boost: 1 = the skill's speed (level 50 = about 2x as fast), 0.5 = half the bonus. */
 	public double speedBoostPower = 1.0;
+	/** Gloom becomes a volley of shots (each at another mob) from this level on. */
+	public int gloomVolleyLevel = 30;
+	/** Number of Gloom shots at the max level. */
+	public int gloomMaxShots = 5;
 
 	/** Passive abilities (Shadow, Bleed, Life Steal, Fire Spirit): switched with a key, always on, or always on with a single tree. */
 	public enum PassiveMode { BUTTON, ALWAYS, SINGLE_TREE }

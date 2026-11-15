@@ -238,14 +238,34 @@ public final class OffenseAbilities {
 		switch (skill) {
 			// ---------------- Void
 			case "gloom" -> {
-				Bolt b = bolt(p, v(p, skill, "RANGE"));
-				b.speed = 3.0;
-				b.particle = ParticleTypes.SQUID_INK;
-				b.onHit = (e, at) -> {
-					hit(p, e, v(p, skill, "DAMAGE"), 0);
-					dot(p, e, v(p, skill, "DOT"), 0, v(p, skill, "DOT_DURATION"));
-					AbilityManager.status(e, null, MobEffects.DARKNESS, 60, 0);
-				};
+				// from level 30 on it becomes a volley: one shot more every few levels, each aimed at another mob in front
+				dev.enderskills.data.EsSettings cfgG = dev.enderskills.data.EsSettings.get();
+				int lvl = Progression.data(p).level(skill);
+				int shots = 1;
+				if (lvl >= cfgG.gloomVolleyLevel) {
+					int span = Math.max(1, Math.min(50, dev.enderskills.dsl.SkillConfigs.maxLevel(skill)) - cfgG.gloomVolleyLevel);
+					shots = 2 + (int) Math.round((cfgG.gloomMaxShots - 2) * Math.min(1.0, (lvl - cfgG.gloomVolleyLevel) / (double) span));
+				}
+				List<LivingEntity> targets = new ArrayList<>(cone(p, v(p, skill, "RANGE"), 0.6));
+				targets.sort((a, c) -> Double.compare(a.distanceToSqr(p), c.distanceToSqr(p)));
+				for (int i = 0; i < shots; i++) {
+					Vec3 dir = look;
+					LivingEntity target = i < targets.size() ? targets.get(i) : null;
+					if (target != null) {
+						dir = target.getEyePosition().subtract(p.getEyePosition()).normalize();
+					} else if (i > 0) {
+						dir = look.yRot((float) Math.toRadians((i % 2 == 0 ? 1 : -1) * 7.0 * ((i + 1) / 2))).normalize();
+					}
+					Bolt b = bolt(p, dir, v(p, skill, "RANGE"));
+					b.speed = 3.0;
+					b.homing = target;
+					b.particle = ParticleTypes.SQUID_INK;
+					b.onHit = (e, at) -> {
+						hit(p, e, v(p, skill, "DAMAGE"), 0);
+						dot(p, e, v(p, skill, "DOT"), 0, v(p, skill, "DOT_DURATION"));
+						AbilityManager.status(e, null, MobEffects.DARKNESS, 60, 0);
+					};
+				}
 				sound(level, p.position(), SoundEvents.WARDEN_SONIC_CHARGE, 0.5F, 1.8F);
 			}
 			case "shadow_jab" -> {
@@ -706,7 +726,9 @@ public final class OffenseAbilities {
 			}
 			if (b.homing != null && b.homing.isAlive()) {
 				b.dir = b.homing.getEyePosition().subtract(b.pos).normalize();
-				b.speed = 1.0;
+				if (!b.skill.equals("gloom")) {
+					b.speed = 1.0; // Gloom shots stay fast, like a shot
+				}
 			}
 			if (!step(b)) {
 				Fx.boltEnd(b.level, b.skill, b, b.pos);
