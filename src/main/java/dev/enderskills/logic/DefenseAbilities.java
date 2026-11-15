@@ -193,39 +193,11 @@ public final class DefenseAbilities {
 				}
 				level.playSound(null, p.blockPosition(), SoundEvents.RAVAGER_ROAR, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 1.2F);
 			}
-			case "wall" -> {
-				Vec3 look = p.getViewVector(1.0F);
-				Vec3 at = AbilityManager.aim(level, p, v(p, skill, "RANGE"));
-				Vec3 side = new Vec3(-look.z, 0, look.x).normalize();
-				int width = (int) v(p, skill, "WIDTH");
-				int height = (int) v(p, skill, "HEIGHT");
-				int duration = (int) v(p, skill, "DURATION");
-				BlockPos base = BlockPos.containing(at.x, Math.floor(at.y), at.z);
-				for (int w = -width / 2; w <= width / 2; w++) {
-					BlockPos column = BlockPos.containing(base.getX() + side.x * w + 0.5, base.getY(), base.getZ() + side.z * w + 0.5);
-					raise(level, p, column, height, duration, v(p, skill, "FORCE"));
+			case "wall", "dome" -> {
+				if (!EarthStructures.build(p, skill)) {
+					return false;
 				}
-				level.playSound(null, base, SoundEvents.STONE_PLACE, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 1.0F, 0.6F);
-			}
-			case "dome" -> {
-				int r = (int) Math.round(v(p, skill, "WIDTH"));
-				int height = (int) v(p, skill, "HEIGHT");
-				int duration = (int) v(p, skill, "DURATION");
-				BlockPos c = p.blockPosition();
-				for (int x = -r; x <= r; x++) {
-					for (int z = -r; z <= r; z++) {
-						double d = Math.sqrt(x * x + z * z);
-						if (d > r + 0.5) {
-							continue;
-						}
-						if (d >= r - 0.5) {
-							raise(level, p, c.offset(x, 0, z), height, duration, v(p, skill, "FORCE"));
-						} else {
-							place(level, c.offset(x, height, z), duration);
-						}
-					}
-				}
-				level.playSound(null, c, SoundEvents.STONE_PLACE, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 1.0F, 0.5F);
+				level.playSound(null, p.blockPosition(), SoundEvents.STONE_PLACE, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 1.0F, 0.6F);
 			}
 			case "thorny" -> {
 				AbilityManager.setActive(p, skill, (int) v(p, skill, "DURATION"));

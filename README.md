@@ -55,3 +55,9 @@ Commands (operators): `/enderskills level <n> [player]`, `/enderskills reset [pl
 - Status effects option: Original (Minecraft's blindness, darkness, poison, slowness...), Both, Current (the mod's own, default).
 - Portals appear at once, are easier to enter, and you go through only when you step in (no bouncing back).
 - Teleport: original Ender Skills sound; option "never into the sky" (on by default).
+
+## 1.6.0
+- Wall and Dome rebuilt: made of the ground's own blocks, small blocks in the way (slabs, carpets, grass...) are put back afterwards, broken wall blocks drop nothing, everything is restored when the server stops.
+- Wall has side walls (1-2 blocks) folded towards you; Dome can have a roof.
+- From level 40 (configurable) both switch on/off with the ability key.
+- New settings category "Wall & Dome": width, height, thickness, side walls, distance, dome radius/height/roof, ground copy, fallback block.

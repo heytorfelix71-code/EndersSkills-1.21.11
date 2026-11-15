@@ -104,6 +104,29 @@ public final class EsSettings {
 	/** Seconds before portals close by themselves at level 0 and just below the top level. */
 	public int portalAutoCloseStart = 30;
 	public int portalAutoCloseEnd = 60;
+	// ---- Wall and Dome
+	/** From this skill level on, Wall and Dome stay until you use the ability again. */
+	public int earthToggleLevel = 40;
+	/** Wall width in blocks (0 = from the skill config). */
+	public int wallWidth = 0;
+	/** Wall height in blocks (0 = from the skill config). */
+	public int wallHeight = 0;
+	public int wallThickness = 1;
+	/** Side walls folded towards you at both ends of the Wall, in blocks (0 = none). */
+	public int wallWings = 2;
+	/** Distance of the Wall in front of you (0 = automatic). */
+	public double wallDistance = 3.0;
+	/** Dome radius and height (0 = from the skill config). */
+	public int domeRadius = 0;
+	public int domeHeight = 0;
+	public boolean domeRoof = true;
+	/** Build with the block found on the ground (dirt, stone, cobblestone...). */
+	public boolean earthCopyGround = true;
+	/** Block used when the ground can't be copied (sand, gravel, chests...) or copying is off. */
+	public String earthFallbackBlock = "minecraft:cobbled_deepslate";
+	/** Remove slabs, carpets, grass, flowers... in the way and put them back afterwards. */
+	public boolean earthReplaceSmall = true;
+
 	/** Teleport only when you aim at a block (never into the sky). */
 	public boolean teleportNoSky = true;
 

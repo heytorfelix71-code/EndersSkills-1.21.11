@@ -121,6 +121,23 @@ public final class EsConfigScreen {
 						.build())
 				.build();
 
+		ConfigCategory earth = ConfigCategory.createBuilder().name(t("category.earth"))
+				.option(integer("earth_toggle_level", def.earthToggleLevel, 0, 1000, () -> c.earthToggleLevel, v -> c.earthToggleLevel = v))
+				.option(integer("wall_width", def.wallWidth, 0, 64, () -> c.wallWidth, v -> c.wallWidth = v))
+				.option(integer("wall_height", def.wallHeight, 0, 64, () -> c.wallHeight, v -> c.wallHeight = v))
+				.option(integer("wall_thickness", def.wallThickness, 1, 8, () -> c.wallThickness, v -> c.wallThickness = v))
+				.option(integer("wall_wings", def.wallWings, 0, 16, () -> c.wallWings, v -> c.wallWings = v))
+				.option(num("wall_distance", def.wallDistance, 0, 32, () -> c.wallDistance, v -> c.wallDistance = v))
+				.option(integer("dome_radius", def.domeRadius, 0, 32, () -> c.domeRadius, v -> c.domeRadius = v))
+				.option(integer("dome_height", def.domeHeight, 0, 64, () -> c.domeHeight, v -> c.domeHeight = v))
+				.option(bool("dome_roof", def.domeRoof, () -> c.domeRoof, v -> c.domeRoof = v))
+				.option(bool("earth_copy_ground", def.earthCopyGround, () -> c.earthCopyGround, v -> c.earthCopyGround = v))
+				.option(bool("earth_replace_small", def.earthReplaceSmall, () -> c.earthReplaceSmall, v -> c.earthReplaceSmall = v))
+				.option(Option.<String>createBuilder().name(t("earth_fallback")).description(d("earth_fallback"))
+						.binding(def.earthFallbackBlock, () -> c.earthFallbackBlock, v -> c.earthFallbackBlock = v)
+						.controller(dev.isxander.yacl3.api.controller.StringControllerBuilder::create).build())
+				.build();
+
 		ConfigCategory.Builder sounds = ConfigCategory.createBuilder().name(t("category.sounds"))
 				.group(OptionGroup.createBuilder().name(t("group.global"))
 						.option(slider("sound_volume", def.soundVolume, 0, 2, () -> c.soundVolume, v -> c.soundVolume = v))
@@ -147,7 +164,7 @@ public final class EsConfigScreen {
 		}
 
 		return YetAnotherConfigLib.createBuilder().title(t("title"))
-				.category(power.build()).category(portal).category(sounds.build()).category(hud).category(rules)
+				.category(power.build()).category(portal).category(earth).category(sounds.build()).category(hud).category(rules)
 				.save(EsSettings::save)
 				.build().generateScreen(parent);
 	}

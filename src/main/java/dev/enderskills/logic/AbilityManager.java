@@ -181,6 +181,7 @@ public final class AbilityManager {
 		now = srv.getTickCount();
 		Zones.tick(now);
 		DefenseAbilities.tick(now);
+		EarthStructures.tick(now);
 		OffenseAbilities.tick(now);
 		if (now % 5 == 0) {
 			for (Iterator<Map.Entry<Mob, Integer>> it = FOGGED.entrySet().iterator(); it.hasNext();) {
@@ -384,6 +385,13 @@ public final class AbilityManager {
 		}
 		double cost = value(player, skill, "ENDURANCE");
 		boolean secondPortal = skill.equals("portal") && s.portalEntrance != null;
+		if ((skill.equals("wall") || skill.equals("dome")) && EarthStructures.has(player, skill) && EarthStructures.toggleMode(player, skill)) {
+			EarthStructures.remove(player, skill); // toggle mode: the second use takes the wall down
+			s.activeUntil.remove(skill);
+			s.cooldownUntil.put(skill, now + 20);
+			s.dirty = true;
+			return;
+		}
 		if (TOGGLES.contains(skill) && active(s, skill)) {
 			switchOff(player, s, skill);
 			return;

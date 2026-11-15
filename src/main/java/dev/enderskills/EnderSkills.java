@@ -72,6 +72,11 @@ public final class EnderSkills implements ModInitializer {
 		net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) ->
 				dev.enderskills.logic.AbilityManager.onDeath(entity));
 
+		net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents.BEFORE.register((world, player, pos, state, blockEntity) ->
+				dev.enderskills.logic.EarthStructures.onBreak(world, pos));
+		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server ->
+				dev.enderskills.logic.EarthStructures.restoreAll());
+
 		BiomeModifications.addFeature(BiomeSelectors.foundInOverworld(), GenerationStep.Decoration.UNDERGROUND_ORES,
 				ResourceKey.create(Registries.PLACED_FEATURE, id("ender_ore")));
 
