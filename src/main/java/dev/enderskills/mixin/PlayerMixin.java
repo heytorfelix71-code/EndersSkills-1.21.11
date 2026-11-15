@@ -11,8 +11,9 @@ import dev.enderskills.logic.SpeedHooks;
 
 @Mixin(Player.class)
 public abstract class PlayerMixin {
-	@Inject(method = "getSpeed", at = @At("RETURN"), cancellable = true)
-	private void enderskills$speed(CallbackInfoReturnable<Float> cir) {
-		cir.setReturnValue(SpeedHooks.modify((Player) (Object) this, cir.getReturnValueF()));
+	/** Chains with other mods changing the speed (Monk Mod...) instead of overriding them. */
+	@com.llamalad7.mixinextras.injector.ModifyReturnValue(method = "getSpeed", at = @At("RETURN"))
+	private float enderskills$speed(float speed) {
+		return SpeedHooks.modify((Player) (Object) this, speed);
 	}
 }
