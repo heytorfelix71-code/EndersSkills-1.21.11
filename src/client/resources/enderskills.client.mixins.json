@@ -8,7 +8,8 @@
     "RenderTypeAccessor",
     "AbstractClientPlayerMixin",
     "ParticleAccessor",
-    "ParticleEngineMixin"
+    "ParticleEngineMixin",
+    "KeyMappingMixin"
   ],
   "injectors": {
     "defaultRequire": 1

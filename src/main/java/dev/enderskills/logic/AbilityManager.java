@@ -194,6 +194,9 @@ public final class AbilityManager {
 			if (active(s, "invisibility") && EsSettings.get().invisibilityMobsForget) {
 				unseen(player);
 			}
+			if (phasing(player)) {
+				player.resetFallDistance(); // sinking through blocks never hurts
+			}
 			if (now % 5 == 0 && active(s, "fog")) {
 				fogPulse(player, now % 10 == 0);
 			}
@@ -353,6 +356,9 @@ public final class AbilityManager {
 	/** A timed ability ran out. */
 	private static void end(ServerPlayer player, String skill) {
 		dev.enderskills.registry.ModEffects.stop((ServerLevel) player.level(), player.position(), skill);
+		if (skill.equals("hasten")) {
+			rescueFromBlocks(player);
+		}
 		if (skill.equals("speed_boost")) {
 			AttributeEffects.set(player, Attributes.MOVEMENT_SPEED, "speed_boost", 0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 			AttributeEffects.set(player, Attributes.STEP_HEIGHT, "speed_boost_step", 0, AttributeModifier.Operation.ADD_VALUE);
@@ -551,6 +557,8 @@ public final class AbilityManager {
 			return false;
 		}
 		if (!secondPortal && s.endurance < cost) {
+			player.displayClientMessage(net.minecraft.network.chat.Component.translatable("enderskills.no_endurance",
+					net.minecraft.network.chat.Component.translatable("skill.enderskills." + skill)), true);
 			return false;
 		}
 		Vec3 eye = player.getEyePosition();
@@ -617,6 +625,12 @@ public final class AbilityManager {
 				s.activeUntil.put(skill, now + (int) value(player, skill, "DURATION"));
 				effect(level, player, ParticleTypes.ENCHANT, SoundEvents.BEACON_ACTIVATE);
 				Shapes.vibrate(player, skill, (int) value(player, skill, "DURATION"));
+				// top level: it is a refill, every other cooldown is reset
+				int refill = EsSettings.get().hastenRefillLevel;
+				if (refill > 0 && Progression.data(player).level(skill) >= Math.min(refill, SkillConfigs.maxLevel(skill))) {
+					s.cooldownUntil.clear();
+					player.displayClientMessage(net.minecraft.network.chat.Component.translatable("enderskills.hasten.refill"), true);
+				}
 			}
 			case "invisibility" -> {
 				int duration = (int) value(player, skill, "DURATION");
@@ -684,6 +698,9 @@ public final class AbilityManager {
 		}
 		if (active(s, "hasten") && !skill.equals("hasten")) {
 			cooldown *= 1.0 - Math.min(0.95, value(player, "hasten", "REDUCTION"));
+		}
+		if (skill.equals("hasten")) {
+			cooldown *= Math.max(0.1, EsSettings.get().hastenCooldownFactor);
 		}
 		if (skill.equals("portal")) {
 			cooldown = 0;
@@ -883,6 +900,27 @@ public final class AbilityManager {
 			}
 		}
 		return false;
+	}
+
+	/** Walking through walls (Hasten at its top level) is on for this player. */
+	public static boolean phasing(ServerPlayer p) {
+		int need = EsSettings.get().hastenPhaseLevel;
+		return need > 0 && isActive(p, "hasten") && Progression.data(p).level("hasten") >= Math.min(need, SkillConfigs.maxLevel("hasten"));
+	}
+
+	/** The ability ended while you were inside blocks: you are put on the first free spot above. */
+	private static void rescueFromBlocks(ServerPlayer p) {
+		ServerLevel level = (ServerLevel) p.level();
+		if (level.noCollision(p, p.getBoundingBox())) {
+			return;
+		}
+		for (int up = 1; up <= 96; up++) {
+			if (level.noCollision(p, p.getBoundingBox().move(0, up, 0))) {
+				p.teleportTo(p.getX(), p.getY() + up, p.getZ());
+				p.resetFallDistance();
+				return;
+			}
+		}
 	}
 
 	/** Called after a player took damage: Invisibility breaks. */

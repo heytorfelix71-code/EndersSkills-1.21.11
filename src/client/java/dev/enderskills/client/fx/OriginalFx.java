@@ -365,6 +365,12 @@ public final class OriginalFx {
 	private static void hit(ClientLevel level, Fx e) {
 		Vec3 c = e.pos;
 		double h = Math.max(0.5, e.radius);
+		if (ELECTRIC.contains(e.skill)) { // the bolt that hits a mob
+			int col = color(e.skill, 0x9FEFFF);
+			for (int i = 0; i < 2; i++) {
+				bolt(c.add(g() * 0.8, 8, g() * 0.8), c.add(0, Math.max(0.5, h * 0.5), 0), col, 5);
+			}
+		}
 		switch (e.skill) {
 			case "bleed", "blood_pool" -> {
 				for (int i = 0; i < n(e.skill, 3); i++) {
@@ -496,39 +502,94 @@ public final class OriginalFx {
 		float r = Math.max(1.5F, Math.min(8F, e.radius));
 		switch (e.skill) {
 			case "shocking_aura" -> {
-				for (int i = 0; i < n(e.skill, 2); i++) {
-					arc(mid, around(c, r), col, 3);
+				for (int i = 0; i < n(e.skill, 3); i++) {
+					bolt(mid, around(c, r), col, 3);
+				}
+				if (e.age % 4 == 0) {
+					strike(c, r, col);
+				}
+				if (e.age % 5 == 0) {
+					chain(mid, r, col);
 				}
 			}
 			case "electric_pulse" -> {
-				if (e.age < 8) {
-					for (int i = 0; i < n(e.skill, 4); i++) {
-						arc(mid, around(c, r * Math.min(1.0, e.age / 6.0 + 0.3)), col, 4);
+				if (e.age < 10) {
+					for (int i = 0; i < n(e.skill, 8); i++) {
+						bolt(mid, around(c, r * Math.min(1.0, e.age / 6.0 + 0.3)), col, 4);
 					}
+					if (e.age % 2 == 0) {
+						strike(c, r, col);
+					}
+				}
+				if (e.age == 0 || e.age == 4) {
+					chain(mid, r, col);
 				}
 			}
 			case "magnetic_pull" -> {
-				for (int i = 0; i < n(e.skill, 2); i++) {
-					arc(around(c, r), mid, col, 3);
+				for (int i = 0; i < n(e.skill, 3); i++) {
+					bolt(around(c, r), mid, col, 3);
+				}
+				if (e.age % 6 == 0) {
+					strike(c, 0.5, col);
 				}
 			}
 			case "power_drain" -> {
 				if (e.age % 2 == 0) {
-					arc(e.to.add(0, 1, 0), mid, col, 3);
+					bolt(e.to.add(0, 1, 0), mid, col, 3);
+					bolt(e.to.add(0, 1.5, 0), mid.add(0, 0.4, 0), col, 3);
 				}
 			}
 			case "energize" -> {
-				if (e.age < 30 && e.age % 2 == 0) {
-					arc(c.add(0, 0.1, 0), c.add((R.nextDouble() - 0.5) * 1.2, 2.0, (R.nextDouble() - 0.5) * 1.2), col, 3);
+				if (e.age < 40 && e.age % 2 == 0) {
+					bolt(c.add(0, 0.1, 0), c.add((R.nextDouble() - 0.5) * 1.6, 2.2, (R.nextDouble() - 0.5) * 1.6), col, 3);
+					if (e.age % 6 == 0) {
+						strike(c, 1.5, col);
+					}
 				}
 			}
 			case "voltaic_sentinel" -> {
-				if (e.age % 3 == 0) {
-					Vec3 at = e.to.add(0, 1.2, 0);
-					arc(at, around(e.to, 3), col, 3);
+				if (e.age % 2 == 0) {
+					bolt(e.to.add(0, 1.2, 0), around(e.to, 3), col, 3);
+				}
+				if (e.age % 8 == 0) {
+					strike(e.to, 3, col);
 				}
 			}
 			default -> {
+			}
+		}
+	}
+
+	/** A bolt with a couple of forks. */
+	private static void bolt(Vec3 a, Vec3 b, int col, int life) {
+		arc(a, b, col, life);
+		for (int i = 0; i < 2; i++) {
+			if (R.nextInt(3) == 0) {
+				continue;
+			}
+			Vec3 p = a.lerp(b, 0.2 + R.nextDouble() * 0.6);
+			arc(p, p.add(g() * 0.9, g() * 0.7, g() * 0.9), col, life);
+		}
+	}
+
+	/** A bolt from the sky onto the ground around a spot. */
+	private static void strike(Vec3 c, double r, int col) {
+		Vec3 ground = around(c, r);
+		bolt(ground.add((R.nextDouble() - 0.5) * 2, 9 + R.nextDouble() * 3, (R.nextDouble() - 0.5) * 2), ground, col, 4);
+	}
+
+	/** Arcs jumping from the middle to the mobs around. */
+	private static void chain(Vec3 mid, double r, int col) {
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.level == null) {
+			return;
+		}
+		int count = 0;
+		for (Entity en : mc.level.getEntities((Entity) null, new net.minecraft.world.phys.AABB(mid, mid).inflate(r),
+				x -> x instanceof net.minecraft.world.entity.LivingEntity && x != mc.player && x.isAlive())) {
+			bolt(mid, en.position().add(0, en.getBbHeight() * 0.6, 0), col, 4);
+			if (++count >= 5) {
+				break;
 			}
 		}
 	}

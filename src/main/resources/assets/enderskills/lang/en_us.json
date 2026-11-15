@@ -640,5 +640,15 @@
   "enderskills.config.invis_unbreakable": "Invisible: damage doesn't break it from level",
   "enderskills.config.invis_unbreakable.desc": "From this Invisibility level on, taking damage no longer breaks it (0 = it never breaks).",
   "enderskills.config.portal_reach": "Portal reach (blocks)",
-  "enderskills.config.portal_reach.desc": "How close to the middle of a portal you must step to go through it (0.5 = half a block)."
+  "enderskills.config.portal_reach.desc": "How close to the middle of a portal you must step to go through it (0.5 = half a block).",
+  "enderskills.config.hasten_refill_level": "Refill from level",
+  "enderskills.config.hasten_refill_level.desc": "From this Hasten level on, using it resets the cooldown of every other ability (0 = never).",
+  "enderskills.config.hasten_cooldown_factor": "Own cooldown (x)",
+  "enderskills.config.hasten_cooldown_factor.desc": "Multiplies the cooldown of Hasten itself (0.8 = 20% shorter, 1 = unchanged).",
+  "enderskills.config.hasten_phase_level": "Through walls from level",
+  "enderskills.config.hasten_phase_level.desc": "From this Hasten level on you walk through walls while it lasts; holding Shift you sink through blocks, Jump takes you back up. No fall or suffocation damage (0 = never).",
+  "key.enderskills.portal_menu": "Portals: open the menu",
+  "key.enderskills.shadow_menu": "Shadows: choose how many",
+  "enderskills.no_endurance": "Not enough energy for %s",
+  "enderskills.hasten.refill": "Hasten: every cooldown reset!"
 }

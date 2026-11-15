@@ -171,6 +171,12 @@ public final class EsSettings {
 	public boolean invisibilityHidesParticles = true;
 	/** From this Invisibility level on, taking damage no longer breaks it (0 = never breaks). */
 	public int invisibilityUnbreakableLevel = 50;
+	/** Hasten: from this level on, using it resets the cooldown of every other ability (0 = never). */
+	public int hastenRefillLevel = 50;
+	/** Hasten: its own cooldown is multiplied by this (1 = unchanged). */
+	public double hastenCooldownFactor = 0.8;
+	/** Hasten: from this level on, you walk through walls and, holding Shift, sink through blocks without damage (0 = never). */
+	public int hastenPhaseLevel = 50;
 
 	/** Teleport only when you aim at a block (never into the sky). */
 	public boolean teleportNoSky = true;

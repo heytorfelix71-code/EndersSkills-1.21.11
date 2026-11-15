@@ -640,5 +640,15 @@
   "enderskills.config.invis_unbreakable": "Invisível: dano não quebra a partir do nível",
   "enderskills.config.invis_unbreakable.desc": "A partir deste nível da Invisibilidade, levar dano não quebra mais ela (0 = nunca quebra).",
   "enderskills.config.portal_reach": "Alcance do portal (blocos)",
-  "enderskills.config.portal_reach.desc": "O quanto você precisa chegar perto do meio do portal para atravessar (0,5 = meio bloco)."
+  "enderskills.config.portal_reach.desc": "O quanto você precisa chegar perto do meio do portal para atravessar (0,5 = meio bloco).",
+  "enderskills.config.hasten_refill_level": "Recarga total a partir do nível",
+  "enderskills.config.hasten_refill_level.desc": "A partir deste nível do Apressar, usá-lo zera a recarga de todas as outras habilidades (0 = nunca).",
+  "enderskills.config.hasten_cooldown_factor": "Recarga dele mesmo (x)",
+  "enderskills.config.hasten_cooldown_factor.desc": "Multiplica a recarga do próprio Apressar (0,8 = 20% menor, 1 = igual).",
+  "enderskills.config.hasten_phase_level": "Atravessar paredes a partir do nível",
+  "enderskills.config.hasten_phase_level.desc": "A partir deste nível do Apressar você atravessa paredes enquanto ele dura; segurando Shift você desce pelos blocos, Pular sobe de volta. Sem dano de queda nem de sufocamento (0 = nunca).",
+  "key.enderskills.portal_menu": "Portais: abrir o menu",
+  "key.enderskills.shadow_menu": "Sombras: escolher quantas",
+  "enderskills.no_endurance": "Sem energia para %s",
+  "enderskills.hasten.refill": "Apressar: todas as recargas zeradas!"
 }

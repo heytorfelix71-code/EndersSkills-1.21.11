@@ -344,6 +344,11 @@ public final class EsConfigScreen {
 			}
 			case "fire_spirit", "black_blessing_flame" -> g.option(integer("second_rune_ring_level", def.secondRuneRingLevel, 1, 1000,
 					() -> c.secondRuneRingLevel, v -> c.secondRuneRingLevel = v));
+			case "hasten" -> {
+				g.option(integer("hasten_refill_level", def.hastenRefillLevel, 0, 1000, () -> c.hastenRefillLevel, v -> c.hastenRefillLevel = v));
+				g.option(num("hasten_cooldown_factor", def.hastenCooldownFactor, 0.1, 2, () -> c.hastenCooldownFactor, v -> c.hastenCooldownFactor = v));
+				g.option(integer("hasten_phase_level", def.hastenPhaseLevel, 0, 1000, () -> c.hastenPhaseLevel, v -> c.hastenPhaseLevel = v));
+			}
 			case "gas_cloud" -> {
 				g.option(slider("gas_cloud_size", def.gasCloudSize, 0.5, 3, () -> c.gasCloudSize, v -> c.gasCloudSize = v));
 				g.option(num("gas_cloud_hold", def.gasCloudHoldSeconds, 0, 30, () -> c.gasCloudHoldSeconds, v -> c.gasCloudHoldSeconds = v));

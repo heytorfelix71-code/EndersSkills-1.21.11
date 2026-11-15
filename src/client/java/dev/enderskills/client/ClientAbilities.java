@@ -22,6 +22,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import dev.enderskills.EnderSkills;
 import dev.enderskills.data.SkillData;
 import dev.enderskills.dsl.SkillConfigs;
+import dev.enderskills.logic.PhaseHooks;
 import dev.enderskills.logic.Progression;
 import dev.enderskills.network.EsNetwork;
 import dev.enderskills.skill.Abilities;
@@ -35,6 +36,8 @@ public final class ClientAbilities {
 			InputConstants.KEY_B, InputConstants.KEY_N, InputConstants.KEY_M, InputConstants.UNKNOWN.getValue(),
 			InputConstants.UNKNOWN.getValue(), InputConstants.UNKNOWN.getValue()};
 	private static KeyMapping dashKey;
+	private static KeyMapping portalMenuKey;
+	private static KeyMapping shadowMenuKey;
 	private static KeyMapping prevGroup;
 	private static KeyMapping nextGroup;
 	/** Ability group (tree) shown in the HUD and used by the ability keys. */
@@ -88,6 +91,11 @@ public final class ClientAbilities {
 				InputConstants.KEY_RIGHT, CATEGORY));
 		dashKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.enderskills.dash", InputConstants.Type.KEYSYM,
 				InputConstants.KEY_LALT, CATEGORY));
+		// the menus have a key of their own too (no Shift needed), unbound until you pick one
+		portalMenuKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.enderskills.portal_menu", InputConstants.Type.KEYSYM,
+				InputConstants.UNKNOWN.getValue(), CATEGORY));
+		shadowMenuKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.enderskills.shadow_menu", InputConstants.Type.KEYSYM,
+				InputConstants.UNKNOWN.getValue(), CATEGORY));
 	}
 
 	static void apply(EsNetwork.AbilitySync sync) {
@@ -140,7 +148,8 @@ public final class ClientAbilities {
 			return;
 		}
 		net.minecraft.world.phys.Vec2 move = player.input.getMoveVector();
-		if (move.lengthSquared() < 1.0E-4) {
+		net.minecraft.client.Options o = Minecraft.getInstance().options;
+		if (move.lengthSquared() < 1.0E-4 && !(o.keyUp.isDown() || o.keyDown.isDown() || o.keyLeft.isDown() || o.keyRight.isDown())) {
 			return;
 		}
 		double bonus = Math.max(0.0, value(data, "speed_boost", "SPEED") * dev.enderskills.data.EsSettings.get().speedBoostPower);
@@ -155,6 +164,33 @@ public final class ClientAbilities {
 		double k = (1.0 - (1.0 - friction) / (1.0 + bonus)) / friction;
 		Vec3 dm = player.getDeltaMovement();
 		player.setDeltaMovement(dm.x * k, dm.y, dm.z * k);
+	}
+
+	/**
+	 * Hasten at its top level: through walls (and, holding Shift, down through blocks; Jump goes back up). The player
+	 * has "no physics" only while holding Shift or at / inside a block, so you still stand on the ground otherwise.
+	 */
+	private static void phase(Minecraft client, LocalPlayer player, SkillData data, boolean free) {
+		PhaseHooks.clientPlayerId = player.getId();
+		int need = dev.enderskills.data.EsSettings.get().hastenPhaseLevel;
+		boolean can = free && need > 0 && ACTIVE.containsKey("hasten") && !player.getAbilities().flying
+				&& data.level("hasten") >= Math.min(need, SkillConfigs.maxLevel("hasten"));
+		if (!can) {
+			PhaseHooks.clientPhasing = false;
+			return;
+		}
+		boolean down = client.options.keyShift.isDown();
+		boolean up = client.options.keyJump.isDown();
+		net.minecraft.world.phys.AABB box = player.getBoundingBox();
+		boolean inside = !player.level().noCollision(player, box);
+		boolean near = !player.level().noCollision(player, box.inflate(0.3, 0, 0.3).move(0, 0.1, 0));
+		boolean noclip = down || inside || near;
+		PhaseHooks.clientPhasing = noclip;
+		player.resetFallDistance();
+		if (noclip) {
+			Vec3 v = player.getDeltaMovement();
+			player.setDeltaMovement(v.x, down ? -0.35 : (up ? 0.35 : 0.0), v.z);
+		}
 	}
 
 	static void tick(Minecraft client) {
@@ -198,10 +234,11 @@ public final class ClientAbilities {
 		List<String> slots = groupSkills(data);
 		for (int i = 0; i < SLOT_KEYS.length; i++) {
 			while (SLOT_KEYS[i].consumeClick()) {
+				boolean shiftAtPress = ShiftOnPress.take(SLOT_KEYS[i]);
 				if (free && i < slots.size()) {
 					String skill = slots.get(i);
 					// the Shift key itself (also with "toggle sneak", where the sneak key isn't "down"), or the sneak key
-					boolean sneak = client.hasShiftDown() || client.options.keyShift.isDown();
+					boolean sneak = shiftAtPress || client.hasShiftDown() || client.options.keyShift.isDown();
 					if (sneak && skill.equals("shadow")) {
 						client.setScreen(new ShadowCountScreen()); // how many fighting shadows
 					} else if (sneak && skill.equals("portal")) {
@@ -213,6 +250,17 @@ public final class ClientAbilities {
 						send(skill, 0, 0);
 					}
 				}
+			}
+		}
+
+		while (portalMenuKey.consumeClick()) {
+			if (free && data.owns("portal")) {
+				PortalScreen.open();
+			}
+		}
+		while (shadowMenuKey.consumeClick()) {
+			if (free && data.owns("shadow")) {
+				client.setScreen(new ShadowCountScreen());
 			}
 		}
 
@@ -284,6 +332,7 @@ public final class ClientAbilities {
 		jumpWasDown = jumpDown;
 		dev.enderskills.client.fx.OriginalFx.localHovering = hovering && ACTIVE.containsKey("hover");
 		speedBoost(player, data);
+		phase(client, player, data, free);
 		if (hovering && ACTIVE.containsKey("hover")) {
 			Vec3 v = player.getDeltaMovement();
 			if (v.y < 0) {
