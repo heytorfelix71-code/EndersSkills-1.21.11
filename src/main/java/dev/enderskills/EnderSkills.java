@@ -45,6 +45,7 @@ public final class EnderSkills implements ModInitializer {
 		EsSettings.load();
 		SkillConfigs.load();
 		ModContent.init();
+		dev.enderskills.registry.ModEffects.init();
 		Progression.init();
 		EsNetwork.init();
 

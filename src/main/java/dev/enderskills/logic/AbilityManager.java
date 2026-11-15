@@ -72,7 +72,9 @@ public final class AbilityManager {
 	}
 
 	private static double maxEndurance(ServerPlayer player) {
-		return EsSettings.get().defaultEndurance + AttributeEffects.modifier(player, "endurance");
+		MobEffectInstance potion = player.getEffect(dev.enderskills.registry.ModEffects.ENDURANCE);
+		return EsSettings.get().defaultEndurance + AttributeEffects.modifier(player, "endurance")
+				+ (potion == null ? 0 : 10 * (potion.getAmplifier() + 1));
 	}
 
 	private static boolean active(State s, String skill) {
@@ -94,7 +96,8 @@ public final class AbilityManager {
 	/** Strength multiplier of abilities: Ability Power attribute + Power Boost. */
 	public static double power(ServerPlayer player) {
 		return 1.0 + AttributeEffects.modifier(player, "ability_power") + DefenseAbilities.boost(player)
-				+ (isActive(player, "sacrifice") ? value(player, "sacrifice", "POWER") : 0.0);
+				+ (isActive(player, "sacrifice") ? value(player, "sacrifice", "POWER") : 0.0)
+				+ (player.hasEffect(dev.enderskills.registry.ModEffects.ABILITY_POWER) ? 0.25 * (player.getEffect(dev.enderskills.registry.ModEffects.ABILITY_POWER).getAmplifier() + 1) : 0.0);
 	}
 
 	/** Passive on-hit abilities: owned, off cooldown and enough endurance; pays and starts the cooldown. */
@@ -111,6 +114,7 @@ public final class AbilityManager {
 		s.lastUse = now;
 		s.cooldownUntil.put(skill, now + (int) value(player, skill, "COOLDOWN"));
 		s.dirty = true;
+		ModEffectsHook.sound(player, skill);
 		return true;
 	}
 
@@ -160,6 +164,10 @@ public final class AbilityManager {
 			}
 			int delay = (int) SkillConfigs.value("endurance", "DELAY", 0);
 			int regen = Math.max(1, (int) SkillConfigs.value("endurance", "REGEN", 0));
+			MobEffectInstance fast = player.getEffect(dev.enderskills.registry.ModEffects.ENDURANCE_REGEN);
+			if (fast != null) {
+				regen = Math.max(1, regen / (fast.getAmplifier() + 2));
+			}
 			if (s.endurance < max && now - s.lastUse >= delay && now % regen == 0) {
 				s.endurance = Math.min(max, s.endurance + 1);
 			}
@@ -355,6 +363,7 @@ public final class AbilityManager {
 			default -> {
 				if (TOGGLES.contains(skill)) {
 					s.activeUntil.put(skill, Integer.MAX_VALUE);
+					ModEffectsHook.sound(player, skill);
 					s.endurance -= cost;
 					s.lastUse = now;
 					s.dirty = true;
@@ -368,9 +377,14 @@ public final class AbilityManager {
 		}
 		s.endurance -= cost;
 		s.lastUse = now;
+		ModEffectsHook.sound(player, skill);
 		double cooldown = value(player, skill, "COOLDOWN");
 		if (skill.equals("heal_other") && cooldown < 20) {
 			cooldown = value(player, "heal_self", "COOLDOWN"); // the original config has percentages here
+		}
+		MobEffectInstance quick = player.getEffect(dev.enderskills.registry.ModEffects.COOLDOWN);
+		if (quick != null) {
+			cooldown *= Math.max(0.1, 1.0 - 0.15 * (quick.getAmplifier() + 1));
 		}
 		if (active(s, "hasten") && !skill.equals("hasten")) {
 			cooldown *= 1.0 - Math.min(0.95, value(player, "hasten", "REDUCTION"));
@@ -459,8 +473,10 @@ public final class AbilityManager {
 
 	/** Stun (until the status effects phase: can't move and hits for almost nothing). */
 	public static void stun(LivingEntity target, int ticks) {
-		target.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, ticks, 10, false, true, true));
-		target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, ticks, 10, false, false, true));
+		target.addEffect(new MobEffectInstance(dev.enderskills.registry.ModEffects.STUNNED, ticks, 0, false, true, true));
+		if (target instanceof Mob mob) {
+			mob.getNavigation().stop();
+		}
 	}
 
 	/** Damage dealt by an ability. */

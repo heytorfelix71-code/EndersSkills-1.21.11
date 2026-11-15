@@ -86,7 +86,14 @@ public final class OffenseAbilities {
 		AbilityManager.damage(p, t, (float) ((damage + truePercent * t.getMaxHealth()) * AbilityManager.power(p)));
 	}
 
+	private static void bleed(LivingEntity t, double ticks) {
+		t.addEffect(new MobEffectInstance(dev.enderskills.registry.ModEffects.BLEEDING, (int) Math.max(20, ticks), 0, false, true, true));
+	}
+
 	private static void dot(ServerPlayer p, LivingEntity t, double dot, double truePercent, double ticks) {
+		if (truePercent > 0) {
+			t.addEffect(new MobEffectInstance(dev.enderskills.registry.ModEffects.BLACK_FLAME, (int) Math.max(20, ticks), 0, false, true, true));
+		}
 		DefenseAbilities.dot(p, t, (dot + truePercent * t.getMaxHealth()) * AbilityManager.power(p), (int) ticks);
 	}
 
@@ -184,6 +191,7 @@ public final class OffenseAbilities {
 		}
 		if (AbilityManager.tryPassive(p, "bleed")) {
 			dot(p, target, v(p, "bleed", "DOT"), 0, v(p, "bleed", "DOT_DURATION"));
+			bleed(target, v(p, "bleed", "DOT_DURATION"));
 			burst((ServerLevel) p.level(), target.position(), ParticleTypes.DAMAGE_INDICATOR, 6, 0.3);
 		}
 		if (AbilityManager.tryPassive(p, "life_steal")) {
@@ -259,7 +267,7 @@ public final class OffenseAbilities {
 			case "grasp" -> {
 				Vec3 at = AbilityManager.aim(level, p, v(p, skill, "RANGE"));
 				zone(p, at, v(p, skill, "SIZE") / 2, (int) v(p, skill, "DURATION"), 10, ParticleTypes.SCULK_SOUL, e -> {
-					e.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 15, 10, false, false, true));
+					e.addEffect(new MobEffectInstance(dev.enderskills.registry.ModEffects.ROOTED, 15, 0, false, true, true));
 					e.setDeltaMovement(0, Math.min(0, e.getDeltaMovement().y), 0);
 					if (now % 20 == 0) {
 						dot(p, e, v(p, skill, "DOT"), 0, v(p, skill, "DOT_DURATION"));
@@ -287,7 +295,10 @@ public final class OffenseAbilities {
 			case "blood_pool" -> {
 				Vec3 at = AbilityManager.aim(level, p, 8);
 				zone(p, at, v(p, skill, "POOL_RANGE") / 2, (int) v(p, skill, "POOL_DURATION"), 20, ParticleTypes.DAMAGE_INDICATOR,
-						e -> dot(p, e, v(p, skill, "DOT") / Math.max(1, v(p, skill, "DOT_DURATION") / 20), 0, 20));
+						e -> {
+							dot(p, e, v(p, skill, "DOT") / Math.max(1, v(p, skill, "DOT_DURATION") / 20), 0, 20);
+							bleed(e, 30);
+						});
 				sound(level, at, SoundEvents.HONEY_BLOCK_SLIDE, 1.0F, 0.6F);
 			}
 			case "contaminate" -> {
@@ -296,6 +307,7 @@ public final class OffenseAbilities {
 				b.onHit = (e, at) -> {
 					hit(p, e, v(p, skill, "DAMAGE"), 0);
 					dot(p, e, v(p, skill, "DOT"), 0, v(p, skill, "DURATION"));
+					bleed(e, v(p, skill, "DURATION"));
 				};
 				sound(level, p.position(), SoundEvents.LLAMA_SPIT, 1.0F, 0.8F);
 			}

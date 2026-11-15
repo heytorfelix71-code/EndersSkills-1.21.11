@@ -20,6 +20,6 @@ Textures, skill values (`.cfg`) and texts come from the original mod under the M
 | 2 | Ability system (keys Z X C B N M, endurance, cooldowns, HUD), the 12 Mobility abilities, Better Hurt Timer (per-damage-type timers) | done (0.2.0) |
 | 3 | The 24 Defense abilities (Light, Earth, Electric, Fire) | done (0.3.0) |
 | 4 | The 36 Offense abilities (Void, Blood, Wind, Fire, Light, Black Flame) | done (0.4.0) |
-| 5 | Status effects, potions, sounds, visual effects | next |
+| 5 | Status effects (Stunned, Electrified, Rooted, Bleeding, Black Flame), 4 potions with brewing, the 105 original sounds | done (1.0.0) |
 
 Commands (operators): `/enderskills level <n> [player]`, `/enderskills reset [player]`, `/enderskills reload`.

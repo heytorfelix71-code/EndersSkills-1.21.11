@@ -347,7 +347,7 @@ public final class DefenseAbilities {
 	private static final Map<LivingEntity, Timed> HEALS = new WeakHashMap<>();
 
 	private static void slow(LivingEntity e, int ticks) {
-		e.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, ticks, 2, false, true, true));
+		e.addEffect(new MobEffectInstance(dev.enderskills.registry.ModEffects.ELECTRIFIED, ticks, 0, false, true, true));
 	}
 
 	private static void raise(ServerLevel level, ServerPlayer p, BlockPos column, int height, int duration, double force) {
