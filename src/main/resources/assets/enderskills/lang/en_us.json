@@ -573,5 +573,15 @@
   "enderskills.config.player_damage_multiplier": "Damage against players",
   "enderskills.config.player_damage_multiplier.desc": "Multiplies ability damage on other players, for fair PvP (0.4 = 40%).",
   "enderskills.config.boss_damage_multiplier": "Damage against bosses",
-  "enderskills.config.boss_damage_multiplier.desc": "Multiplies ability damage on bosses: Wither, Ender Dragon, Warden (0.6 = 60%)."
+  "enderskills.config.boss_damage_multiplier.desc": "Multiplies ability damage on bosses: Wither, Ender Dragon, Warden (0.6 = 60%).",
+  "enderskills.config.sound_style": "Ability sounds",
+  "enderskills.config.sound_style.desc": "Original: the Ender Skills sounds. Minecraft: the Minecraft sounds of the first port versions (quieter). Both: all of them. Each ability can also choose its own (in its group).",
+  "enderskills.config.sound_style.original": "Original",
+  "enderskills.config.sound_style.minecraft": "Minecraft",
+  "enderskills.config.sound_style.both": "Both",
+  "enderskills.config.sound_style.default": "General setting",
+  "enderskills.config.skill_sound_style": "Sound",
+  "enderskills.config.skill_sound_style.desc": "Sound of this ability: the general setting, Original, Minecraft or both. The Electric tree starts with Minecraft.",
+  "enderskills.config.open": "Open ›",
+  "enderskills.config.category.passives": "Passives"
 }

@@ -162,7 +162,44 @@ public final class ModEffects {
 	/** Original sound of the mod for a skill name (with the original file names), if there is one. */
 	public static boolean play(ServerLevel level, Vec3 at, String skill) {
 		String id = skill;
-		String name = switch (skill) {
+		if (dev.enderskills.data.EsSettings.get().soundFor(skill) == dev.enderskills.data.EsSettings.SoundStyle.MINECRAFT) {
+			return true; // this ability uses the Minecraft sounds
+		}
+		SoundEvent sound = SOUNDS.get(soundName(skill));
+		if (sound == null) {
+			return false;
+		}
+		dev.enderskills.data.EsSettings cfg = dev.enderskills.data.EsSettings.get();
+		float volume = (float) (cfg.soundVolume * cfg.skillVolume.getOrDefault(id, 1.0));
+		if (volume <= 0) {
+			return true;
+		}
+		level.playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, volume, 1.0F);
+		return true;
+	}
+
+	/** The ability has an original Ender Skills sound. */
+	public static boolean hasSound(String skill) {
+		return SOUNDS.containsKey(soundName(skill));
+	}
+
+	/** Stops the (long, looping) original sound of an ability for the players around, when it ends or is switched off. */
+	public static void stop(ServerLevel level, Vec3 at, String skill) {
+		SoundEvent sound = SOUNDS.get(soundName(skill));
+		if (sound == null) {
+			return;
+		}
+		net.minecraft.network.protocol.game.ClientboundStopSoundPacket packet =
+				new net.minecraft.network.protocol.game.ClientboundStopSoundPacket(sound.location(), SoundSource.PLAYERS);
+		for (net.minecraft.server.level.ServerPlayer p : level.players()) {
+			if (p.distanceToSqr(at) < 96 * 96) {
+				p.connection.send(packet);
+			}
+		}
+	}
+
+	private static String soundName(String skill) {
+		return switch (skill) {
 			case "animated_stone_golem" -> "animated_stone";
 			case "barrage_wisps" -> "barrage_whisps_cast";
 			case "black_hole" -> "blackhole";
@@ -190,16 +227,5 @@ public final class ModEffects {
 			case "black_flame_ball", "black_raging_flame_ball", "black_volley_flame", "black_scouring_flame", "black_flare_flame" -> "fireball";
 			default -> skill;
 		};
-		SoundEvent sound = SOUNDS.get(name);
-		if (sound == null) {
-			return false;
-		}
-		dev.enderskills.data.EsSettings cfg = dev.enderskills.data.EsSettings.get();
-		float volume = (float) (cfg.soundVolume * cfg.skillVolume.getOrDefault(id, 1.0));
-		if (volume <= 0) {
-			return true;
-		}
-		level.playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, volume, 1.0F);
-		return true;
 	}
 }

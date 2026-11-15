@@ -139,6 +139,11 @@ public final class EsConfigScreen {
 								.controller(o -> dev.isxander.yacl3.api.controller.EnumControllerBuilder.create(o).enumClass(EsSettings.VfxStyle.class)
 										.formatValue(v -> t("vfx_style." + v.name().toLowerCase())))
 								.build())
+						.option(Option.<EsSettings.SoundStyle>createBuilder().name(t("sound_style")).description(d("sound_style"))
+								.binding(def.soundStyle, () -> c.soundStyle, v -> c.soundStyle = v)
+								.controller(o -> dev.isxander.yacl3.api.controller.EnumControllerBuilder.create(o).enumClass(EsSettings.SoundStyle.class)
+										.formatValue(v -> t("sound_style." + v.name().toLowerCase())))
+								.build())
 						.option(bool("vfx_shapes", def.vfxShapes, () -> c.vfxShapes, v -> c.vfxShapes = v))
 						.option(bool("vfx_trails", def.vfxTrails, () -> c.vfxTrails, v -> c.vfxTrails = v))
 						.option(bool("vfx_vibrate", def.vfxVibrate, () -> c.vfxVibrate, v -> c.vfxVibrate = v))
@@ -160,15 +165,62 @@ public final class EsConfigScreen {
 		YetAnotherConfigLib.Builder builder = YetAnotherConfigLib.createBuilder().title(t("title"))
 				.category(power.build()).category(sounds.build()).category(hud).category(rules)
 				.save(EsSettings::save);
+		// Defense / Mobility / Offense: one button per element (Earth, Wind, Void...) opening its abilities;
+		// Passives: the attributes (damage, swim speed, critical chance...) of every class
 		for (Skills.Tab tab : Skills.Tab.values()) {
-			skillCategories(c, tab).forEach(builder::category);
+			builder.category(tabCategory(c, tab));
 		}
+		builder.category(passivesCategory(c));
 		return builder.build().generateScreen(parent);
+	}
+
+	private static ConfigCategory tabCategory(EsSettings c, Skills.Tab tab) {
+		ConfigCategory.Builder cat = ConfigCategory.createBuilder().name(Component.translatable("enderskills.tab." + tab.id));
+		for (Skills.Page page : Skills.pages(tab)) {
+			String key = "enderskills.page." + page.element();
+			net.minecraft.network.chat.MutableComponent list = Component.empty();
+			for (String id : page.abilities()) {
+				if (!list.getSiblings().isEmpty()) {
+					list.append("\n");
+				}
+				list.append(Component.literal("• ").append(Component.translatable("skill.enderskills." + id)));
+			}
+			cat.option(dev.isxander.yacl3.api.ButtonOption.createBuilder()
+					.name(Component.translatable(key).withColor(tab.color))
+					.description(OptionDescription.of(list))
+					.text(t("open"))
+					.action((screen, option) -> net.minecraft.client.Minecraft.getInstance().setScreen(elementScreen(screen, c, tab, key)))
+					.build());
+		}
+		return cat.build();
+	}
+
+	/** The abilities of one element, each in its own folding group. */
+	private static Screen elementScreen(Screen parent, EsSettings c, Skills.Tab tab, String key) {
+		YetAnotherConfigLib.Builder b = YetAnotherConfigLib.createBuilder()
+				.title(Component.translatable("enderskills.tab." + tab.id).append(" · ").append(Component.translatable(key)))
+				.save(EsSettings::save);
+		skillCategories(c, tab, key).forEach(b::category);
+		return b.build().generateScreen(parent);
+	}
+
+	private static ConfigCategory passivesCategory(EsSettings c) {
+		ConfigCategory.Builder cat = ConfigCategory.createBuilder().name(t("category.passives"));
+		for (Skills.Tab tab : Skills.Tab.values()) {
+			for (ConfigCategory built : skillCategories(c, tab, "enderskills.altar.attributes")) {
+				for (OptionGroup group : built.groups()) {
+					if (!group.isRoot()) {
+						cat.group(group);
+					}
+				}
+			}
+		}
+		return cat.build();
 	}
 
 	/** Every skill of a class: on/off, max level and each property at level 0 and at the max level. */
 	/** One tab per element of the class (e.g. "Mobility · Wind"), each with one folding group per ability. */
-	private static java.util.List<ConfigCategory> skillCategories(EsSettings c, Skills.Tab tab) {
+	private static java.util.List<ConfigCategory> skillCategories(EsSettings c, Skills.Tab tab, String only) {
 		java.util.List<ConfigCategory> out = new java.util.ArrayList<>();
 		ConfigCategory.Builder cat = null;
 		String current = null;
@@ -180,6 +232,9 @@ public final class EsConfigScreen {
 		}
 		for (String id : Skills.ATTRIBUTES.get(tab)) {
 			entries.add(new String[] {id, "enderskills.altar.attributes"});
+		}
+		if (only != null) {
+			entries.removeIf(e -> !e[1].equals(only));
 		}
 		for (String[] e : entries) {
 			String id = e[0];
@@ -210,7 +265,20 @@ public final class EsConfigScreen {
 							c.skillMaxLevel.put(id, v);
 						}
 					}).controller(o -> IntegerFieldControllerBuilder.create(o).range(0, 1000)).build());
+			EsSettings def0 = new EsSettings();
 			extras(g, c, id);
+			g.option(Option.<String>createBuilder().name(t("skill_sound_style")).description(d("skill_sound_style"))
+					.binding(def0.skillSoundStyle.getOrDefault(id, "DEFAULT"), () -> c.skillSoundStyle.getOrDefault(id, "DEFAULT"), v -> {
+						if (v.equals("DEFAULT")) {
+							c.skillSoundStyle.remove(id);
+						} else {
+							c.skillSoundStyle.put(id, v);
+						}
+					})
+					.controller(o -> dev.isxander.yacl3.api.controller.CyclingListControllerBuilder.create(o)
+							.values("DEFAULT", "ORIGINAL", "MINECRAFT", "BOTH")
+							.formatValue(v -> t("sound_style." + v.toLowerCase())))
+					.build());
 			g.option(Option.<Double>createBuilder().name(t("skill_particles")).description(d("skill_particles"))
 					.binding(1.0, () -> c.skillParticles.getOrDefault(id, 1.0), v -> {
 						if (Math.abs(v - 1.0) < 1.0E-6) {

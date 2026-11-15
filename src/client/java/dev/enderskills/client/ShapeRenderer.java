@@ -47,6 +47,8 @@ final class ShapeRenderer {
 	/** entity -> kind -> [until, count, white] (Shadow clone, rune rings, red look). */
 	private static final Map<Integer, Map<Integer, long[]>> ON_PLAYER = new HashMap<>();
 	private static final RandomSource RANDOM = RandomSource.create();
+	/** Geometry of the frame being drawn (sent to the submit queue at the end). */
+	private static dev.enderskills.client.fx.FxBuffers frame = new dev.enderskills.client.fx.FxBuffers();
 
 	private ShapeRenderer() {
 	}
@@ -124,7 +126,8 @@ final class ShapeRenderer {
 		if (mc.level == null) {
 			return;
 		}
-		MultiBufferSource buffers = ctx.consumers();
+		dev.enderskills.client.fx.FxBuffers buffers = new dev.enderskills.client.fx.FxBuffers();
+		frame = buffers;
 		if (buffers == null) {
 			return;
 		}
@@ -132,7 +135,7 @@ final class ShapeRenderer {
 		float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
 		double now = mc.level.getGameTime() + partial;
 		Vec3 cam = mc.gameRenderer.getMainCamera().position();
-		PoseStack pose = ctx.matrices();
+		PoseStack pose = new PoseStack();
 		if (cfg.vfxShapes && !SHAPES.isEmpty()) {
 			Matrix4f m = pose.last().pose();
 			VertexConsumer glow = buffers.getBuffer(RenderTypes.lightning());
@@ -161,6 +164,7 @@ final class ShapeRenderer {
 				}
 			}
 		}
+		buffers.submit(ctx);
 	}
 
 	private static int argb(int rgb, float alpha) {
@@ -335,9 +339,9 @@ final class ShapeRenderer {
 		state.isInvisibleToPlayer = false;
 		PlayerModel model = (PlayerModel) avatar.getModel();
 		Identifier texture = avatar.getTextureLocation(state);
-		VertexConsumer consumer = ctx.consumers().getBuffer(RenderTypes.entityTranslucent(texture));
+		VertexConsumer consumer = frame.getBuffer(RenderTypes.entityTranslucent(texture));
 		model.setupAnim(state);
-		PoseStack pose = ctx.matrices();
+		PoseStack pose = new PoseStack();
 		float scale = state.scale * 0.9375F;
 		float alpha = alphaStart;
 		for (double[] s : spots) {
@@ -407,8 +411,8 @@ final class ShapeRenderer {
 		long[] runes = fx.get(Shapes.RUNES);
 		if (runes != null) {
 			boolean white = runes[2] == 1;
-			VertexConsumer vc = ctx.consumers().getBuffer(dev.enderskills.client.fx.FxDraw.additive(white ? "fire_spirit_" : "fire_spirit"));
-			Matrix4f m = ctx.matrices().last().pose();
+			VertexConsumer vc = frame.getBuffer(dev.enderskills.client.fx.FxDraw.additive(white ? "fire_spirit_" : "fire_spirit"));
+			Matrix4f m = new Matrix4f();
 			int count = (int) Math.max(1, Math.min(2, runes[1]));
 			for (int i = 0; i < count; i++) {
 				double y = at.y - cam.y + 0.15 + i * 0.9;

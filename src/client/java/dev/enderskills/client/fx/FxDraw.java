@@ -177,6 +177,18 @@ public final class FxDraw {
 		vt(vc, m, cx - c - s, cy, cz - s + c, 0, v1, color);
 	}
 
+	/** Flat disc (both sides drawn: no culling) for the universe shaders, turning with the angle. */
+	public static void disc(VertexConsumer vc, Matrix4f m, double cx, double cy, double cz, double r, int color, int seg, double angle) {
+		for (int j = 0; j < seg; j++) {
+			double p0 = angle + Math.PI * 2 * j / seg;
+			double p1 = angle + Math.PI * 2 * (j + 1) / seg;
+			v(vc, m, cx, cy, cz, color);
+			v(vc, m, cx + r * Math.cos(p0), cy, cz + r * Math.sin(p0), color);
+			v(vc, m, cx + r * Math.cos(p1), cy, cz + r * Math.sin(p1), color);
+			v(vc, m, cx, cy, cz, color);
+		}
+	}
+
 	/** Square facing the camera. */
 	public static void sprite(VertexConsumer vc, Matrix4f m, Vector3fc left, Vector3fc up, double x, double y, double z, double half,
 			float roll, int color) {

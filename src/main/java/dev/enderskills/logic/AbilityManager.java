@@ -293,6 +293,7 @@ public final class AbilityManager {
 
 	private static void switchOff(ServerPlayer player, State s, String toggle) {
 		Fx.end(player, toggle);
+		dev.enderskills.registry.ModEffects.stop((ServerLevel) player.level(), player.position(), toggle);
 		s.activeUntil.remove(toggle);
 		s.cooldownUntil.put(toggle, now + (int) value(player, toggle, "COOLDOWN"));
 		s.dirty = true;
@@ -352,6 +353,7 @@ public final class AbilityManager {
 
 	/** A timed ability ran out. */
 	private static void end(ServerPlayer player, String skill) {
+		dev.enderskills.registry.ModEffects.stop((ServerLevel) player.level(), player.position(), skill);
 		if (skill.equals("portal")) {
 			State s = state(player);
 			s.portalZones.forEach(Zones::remove);
@@ -480,6 +482,7 @@ public final class AbilityManager {
 			if (active(s, skill)) {
 				s.activeUntil.remove(skill);
 				Fx.end(player, skill);
+				dev.enderskills.registry.ModEffects.stop((ServerLevel) player.level(), player.position(), skill);
 				passiveLook(player, skill, false);
 			} else {
 				s.activeUntil.put(skill, Integer.MAX_VALUE);

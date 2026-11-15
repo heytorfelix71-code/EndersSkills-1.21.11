@@ -72,7 +72,14 @@ public final class Vfx {
 	/** Volume factor for the extra (vanilla) sounds of the abilities. */
 	public static float vol() {
 		EsSettings s = EsSettings.get();
-		return s.extraSounds ? (float) s.soundVolume : 0.0F;
+		if (!s.extraSounds) {
+			return 0.0F;
+		}
+		// "Original" sound style: only the Ender Skills sound plays (when the ability has one)
+		if (s.soundFor(skill) == EsSettings.SoundStyle.ORIGINAL && !skill.isEmpty() && dev.enderskills.registry.ModEffects.hasSound(skill)) {
+			return 0.0F;
+		}
+		return (float) (s.soundVolume * s.skillVolume.getOrDefault(skill, 1.0));
 	}
 
 	/** Glow color that goes with a particle (used for the soft halo around cores). */

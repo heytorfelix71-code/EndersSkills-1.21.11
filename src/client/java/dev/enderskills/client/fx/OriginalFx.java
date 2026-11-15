@@ -90,6 +90,20 @@ public final class OriginalFx {
 	private static final Map<Integer, Fx> BOLTS = new HashMap<>();
 	private static final List<Sprite> SPRITES = new ArrayList<>();
 	private static final List<Fist> FISTS = new ArrayList<>();
+
+	/** A jagged electric arc between two points (the original Lightning effect). */
+	private static final class Arc {
+		Vec3 a;
+		Vec3 b;
+		int color;
+		int age;
+		int life;
+		long seed;
+	}
+
+	private static final List<Arc> ARCS = new ArrayList<>();
+	private static final java.util.Set<String> ELECTRIC = java.util.Set.of("shocking_aura", "electric_pulse", "magnetic_pull",
+			"power_drain", "energize", "voltaic_sentinel");
 	private static final RandomSource R = RandomSource.create();
 	private static int clock;
 
@@ -105,6 +119,7 @@ public final class OriginalFx {
 		BOLTS.clear();
 		SPRITES.clear();
 		FISTS.clear();
+		ARCS.clear();
 	}
 
 	// ------------------------------------------------------------------ incoming
@@ -423,6 +438,7 @@ public final class OriginalFx {
 				it.remove();
 			}
 		}
+		ARCS.removeIf(a -> ++a.age > a.life);
 		for (Iterator<Fist> it = FISTS.iterator(); it.hasNext();) {
 			Fist f = it.next();
 			f.prev = f.pos;
@@ -433,11 +449,76 @@ public final class OriginalFx {
 		}
 	}
 
+	private static void arc(Vec3 a, Vec3 b, int color, int life) {
+		if (ARCS.size() < 300) {
+			Arc arc = new Arc();
+			arc.a = a;
+			arc.b = b;
+			arc.color = color;
+			arc.life = life;
+			arc.seed = R.nextLong();
+			ARCS.add(arc);
+		}
+	}
+
+	private static Vec3 around(Vec3 c, double r) {
+		double a = R.nextDouble() * Math.PI * 2;
+		double d = r * (0.5 + R.nextDouble() * 0.5);
+		return c.add(Math.cos(a) * d, R.nextDouble() * 1.8, Math.sin(a) * d);
+	}
+
+	/** Electric arcs of the Electric tree. */
+	private static void electric(Fx e, Vec3 c) {
+		int col = color(e.skill, 0x9FEFFF);
+		Vec3 mid = c.add(0, 1, 0);
+		float r = Math.max(1.5F, Math.min(8F, e.radius));
+		switch (e.skill) {
+			case "shocking_aura" -> {
+				for (int i = 0; i < n(e.skill, 2); i++) {
+					arc(mid, around(c, r), col, 3);
+				}
+			}
+			case "electric_pulse" -> {
+				if (e.age < 8) {
+					for (int i = 0; i < n(e.skill, 4); i++) {
+						arc(mid, around(c, r * Math.min(1.0, e.age / 6.0 + 0.3)), col, 4);
+					}
+				}
+			}
+			case "magnetic_pull" -> {
+				for (int i = 0; i < n(e.skill, 2); i++) {
+					arc(around(c, r), mid, col, 3);
+				}
+			}
+			case "power_drain" -> {
+				if (e.age % 2 == 0) {
+					arc(e.to.add(0, 1, 0), mid, col, 3);
+				}
+			}
+			case "energize" -> {
+				if (e.age < 30 && e.age % 2 == 0) {
+					arc(c.add(0, 0.1, 0), c.add((R.nextDouble() - 0.5) * 1.2, 2.0, (R.nextDouble() - 0.5) * 1.2), col, 3);
+				}
+			}
+			case "voltaic_sentinel" -> {
+				if (e.age % 3 == 0) {
+					Vec3 at = e.to.add(0, 1.2, 0);
+					arc(at, around(e.to, 3), col, 3);
+				}
+			}
+			default -> {
+			}
+		}
+	}
+
 	/** Particles an effect makes while it lasts (zones, channels, auras). */
 	private static void emit(ClientLevel level, Fx e) {
 		Entity caster = level.getEntity(e.entity);
 		Vec3 c = e.phase == ZONE ? e.pos : (caster != null ? caster.position() : e.dest);
 		float r = e.radius;
+		if (ELECTRIC.contains(e.skill)) {
+			electric(e, c);
+		}
 		switch (e.skill) {
 			case "shadow_jab" -> {
 				if (caster != null) {
@@ -591,14 +672,14 @@ public final class OriginalFx {
 		if (mc.level == null || !enabled()) {
 			return;
 		}
-		MultiBufferSource buffers = ctx.consumers();
+		FxBuffers buffers = new FxBuffers();
 		if (buffers == null) {
 			return;
 		}
 		float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
 		Camera camera = mc.gameRenderer.getMainCamera();
 		Vec3 cam = camera.position();
-		Matrix4f m = ctx.matrices().last().pose();
+		Matrix4f m = new Matrix4f();
 		double time = clock + partial;
 
 		for (Fx e : EFFECTS) {
@@ -614,7 +695,14 @@ public final class OriginalFx {
 				FxDraw.box(black, m, at, f.motion, 0.25, 0.75, 0xFF000000);
 			}
 		}
+		if (!ARCS.isEmpty()) {
+			VertexConsumer vc = buffers.getBuffer(RenderTypes.lightning());
+			for (Arc a : ARCS) {
+				drawArc(vc, m, camera, cam, a);
+			}
+		}
 		drawSprites(buffers, m, camera, cam, partial);
+		buffers.submit(ctx);
 	}
 
 	private static float fade(Fx e, float partial) {
@@ -683,8 +771,10 @@ public final class OriginalFx {
 				// the ball itself is drawn with the bolt
 			}
 			case "hover" -> {
+				// a small platform of end sky under the feet, with a cosmic rim
 				Vec3 c = follow.subtract(cam);
-				FxDraw.sphere(buffers.getBuffer(FxDraw.universe()), m, c.x, c.y - 0.1, c.z, 0.45, FxDraw.argb(color(e.skill, VOID), 0.7F * f), 8);
+				FxDraw.disc(buffers.getBuffer(FxDraw.universeDark()), m, c.x, c.y - 0.02, c.z, 0.85, FxDraw.argb(0xFFFFFF, f), 24, time * 0.02);
+				FxDraw.disc(buffers.getBuffer(FxDraw.universe()), m, c.x, c.y - 0.04, c.z, 1.05, FxDraw.argb(color(e.skill, VOID), 0.6F * f), 24, -time * 0.03);
 			}
 			case "teleport", "warp" -> {
 				if (life < 1) {
@@ -817,6 +907,36 @@ public final class OriginalFx {
 						FxDraw.argb(0xFFFFFF, (float) (1 - life)), 16, 4F, frame / 32F, (frame + 1) / 32F);
 			}
 			default -> {
+			}
+		}
+	}
+
+	/** Jagged glowing ribbon: a white core and a colored glow, facing the camera. */
+	private static void drawArc(VertexConsumer vc, Matrix4f m, Camera camera, Vec3 cam, Arc arc) {
+		RandomSource seeded = RandomSource.create(arc.seed + arc.age / 2);
+		int seg = Math.max(3, Math.min(14, (int) (arc.a.distanceTo(arc.b) * 2.5)));
+		Vec3[] p = new Vec3[seg + 1];
+		for (int i = 0; i <= seg; i++) {
+			double t = i / (double) seg;
+			Vec3 at = arc.a.lerp(arc.b, t);
+			if (i > 0 && i < seg) {
+				at = at.add(seeded.nextGaussian() * 0.18, seeded.nextGaussian() * 0.18, seeded.nextGaussian() * 0.18);
+			}
+			p[i] = at.subtract(cam);
+		}
+		float fade = 1F - arc.age / (float) (arc.life + 1);
+		Vec3 view = new Vec3(camera.forwardVector().x(), camera.forwardVector().y(), camera.forwardVector().z());
+		for (int pass = 0; pass < 2; pass++) {
+			double w = pass == 0 ? 0.09 : 0.03;
+			int col = pass == 0 ? FxDraw.argb(arc.color, 0.55F * fade) : FxDraw.argb(0xFFFFFF, 0.95F * fade);
+			for (int i = 0; i < seg; i++) {
+				Vec3 d = p[i + 1].subtract(p[i]);
+				Vec3 side = d.cross(view);
+				side = side.lengthSqr() < 1.0E-8 ? new Vec3(w, 0, 0) : side.normalize().scale(w);
+				vc.addVertex(m, (float) (p[i].x - side.x), (float) (p[i].y - side.y), (float) (p[i].z - side.z)).setColor(col);
+				vc.addVertex(m, (float) (p[i].x + side.x), (float) (p[i].y + side.y), (float) (p[i].z + side.z)).setColor(col);
+				vc.addVertex(m, (float) (p[i + 1].x + side.x), (float) (p[i + 1].y + side.y), (float) (p[i + 1].z + side.z)).setColor(col);
+				vc.addVertex(m, (float) (p[i + 1].x - side.x), (float) (p[i + 1].y - side.y), (float) (p[i + 1].z - side.z)).setColor(col);
 			}
 		}
 	}

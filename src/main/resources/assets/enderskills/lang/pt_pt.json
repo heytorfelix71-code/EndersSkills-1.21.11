@@ -573,5 +573,15 @@
   "enderskills.config.player_damage_multiplier": "Dano contra jogadores",
   "enderskills.config.player_damage_multiplier.desc": "Multiplica o dano das habilidades em outros jogadores, para um PvP justo (0,4 = 40%).",
   "enderskills.config.boss_damage_multiplier": "Dano contra chefes",
-  "enderskills.config.boss_damage_multiplier.desc": "Multiplica o dano das habilidades em chefes: Wither, Dragão do Ender, Warden (0,6 = 60%)."
+  "enderskills.config.boss_damage_multiplier.desc": "Multiplica o dano das habilidades em chefes: Wither, Dragão do Ender, Warden (0,6 = 60%).",
+  "enderskills.config.sound_style": "Sons das habilidades",
+  "enderskills.config.sound_style.desc": "Original: os sons do Ender Skills. Minecraft: os sons do Minecraft das primeiras versões do port (mais baixos). Ambos: todos. Cada habilidade também pode escolher o seu (no grupo dela).",
+  "enderskills.config.sound_style.original": "Original",
+  "enderskills.config.sound_style.minecraft": "Minecraft",
+  "enderskills.config.sound_style.both": "Ambos",
+  "enderskills.config.sound_style.default": "Configuração geral",
+  "enderskills.config.skill_sound_style": "Som",
+  "enderskills.config.skill_sound_style.desc": "Som desta habilidade: a configuração geral, Original, Minecraft ou ambos. A árvore Elétrica começa com Minecraft.",
+  "enderskills.config.open": "Abrir ›",
+  "enderskills.config.category.passives": "Passivas"
 }

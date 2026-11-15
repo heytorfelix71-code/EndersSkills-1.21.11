@@ -339,10 +339,14 @@ public final class ClientAbilities {
 			cells.remove(cells.size() - 1);
 		}
 		if (cfg.hudShowSpecial) {
-			for (String special : new String[] {"dash", "warp", "smash", "hover", "extra_jump"}) {
-				if (data.owns(special)) {
-					cells.add(special);
-					keys.add("");
+			// only the special / passive abilities of the tree shown right now (not of every tree)
+			Skills.Page page = groupPage(data);
+			if (page != null) {
+				for (String special : page.abilities()) {
+					if (data.owns(special) && dev.enderskills.skill.Abilities.special(special) && !cells.contains(special)) {
+						cells.add(special);
+						keys.add("");
+					}
 				}
 			}
 		}

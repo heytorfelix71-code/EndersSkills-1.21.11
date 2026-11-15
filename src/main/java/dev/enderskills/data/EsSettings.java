@@ -193,6 +193,27 @@ public final class EsSettings {
 	/** Seconds the black fire and the blood stay. */
 	public int environmentSeconds = 6;
 
+	/** Sounds of the abilities: the original Ender Skills sounds, the Minecraft sounds of the first port versions, or both. */
+	public enum SoundStyle { ORIGINAL, MINECRAFT, BOTH }
+
+	public SoundStyle soundStyle = SoundStyle.ORIGINAL;
+	/** Per ability ("ORIGINAL", "MINECRAFT", "BOTH"; missing = the general setting). The Electric tree starts with Minecraft. */
+	public java.util.Map<String, String> skillSoundStyle = new java.util.HashMap<>(java.util.Map.of(
+			"shocking_aura", "MINECRAFT", "electric_pulse", "MINECRAFT", "magnetic_pull", "MINECRAFT",
+			"power_drain", "MINECRAFT", "energize", "MINECRAFT", "voltaic_sentinel", "MINECRAFT"));
+
+	public SoundStyle soundFor(String skill) {
+		String s = skill == null ? null : skillSoundStyle.get(skill);
+		if (s != null) {
+			try {
+				return SoundStyle.valueOf(s);
+			} catch (IllegalArgumentException ignored) {
+				// fall back to the general setting
+			}
+		}
+		return soundStyle;
+	}
+
 	public EffectStyle effectStyle = EffectStyle.CURRENT;
 
 	/** Sneak + ability key on Portal or Teleport asks for coordinates. */
