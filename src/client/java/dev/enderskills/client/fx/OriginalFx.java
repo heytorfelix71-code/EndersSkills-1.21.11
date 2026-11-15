@@ -751,6 +751,9 @@ public final class OriginalFx {
 		double life = (e.age + partial) / Math.max(1.0, e.life);
 		switch (e.skill) {
 			case "black_hole" -> {
+				if (e.phase == CAST) {
+					return; // only where it lands (the cast event sits on the caster)
+				}
 				Vec3 c = e.pos.add(0, 1, 0).subtract(cam);
 				double core = Math.max(0.8, r * 0.3) * (1 + 0.04 * Math.sin(time * 0.3)) * Math.min(1F, (e.age + partial) / 10F);
 				int tint = FxDraw.argb(color(e.skill, VOID), 0.9F * f);
@@ -772,6 +775,9 @@ public final class OriginalFx {
 				FxDraw.sphere(buffers.getBuffer(FxDraw.universe()), m, c.x, c.y, c.z, core, FxDraw.argb(color(e.skill, VOID), 0.97F * f), 16);
 			}
 			case "gas_cloud" -> {
+				if (e.phase == CAST) {
+					return; // only where it lands (the cast event sits on the caster)
+				}
 				Vec3 c = e.pos.add(0, Math.max(0.6, r * 0.45), 0).subtract(cam);
 				VertexConsumer vc = buffers.getBuffer(FxDraw.universe());
 				int tint = FxDraw.argb(color(e.skill, VOID), 0.82F * f);
@@ -935,6 +941,9 @@ public final class OriginalFx {
 				}
 			}
 			case "blood_pool" -> {
+				if (e.phase == CAST) {
+					return; // only where it lands (the cast event sits on the caster)
+				}
 				if (EsSettings.get().modifyEnvironment) {
 					return; // the blood blocks on the ground show the pool (and follow the terrain)
 				}
