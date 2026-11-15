@@ -273,29 +273,107 @@ public final class ClientAbilities {
 		}
 		Font font = client.font;
 		List<String> cells = new java.util.ArrayList<>(Abilities.slots(data));
-		java.util.List<String> keys = new java.util.ArrayList<>();
+		List<String> keys = new java.util.ArrayList<>();
 		for (int i = 0; i < cells.size() && i < SLOT_KEYS.length; i++) {
 			keys.add(SLOT_KEYS[i].getTranslatedKeyMessage().getString());
 		}
 		while (cells.size() > keys.size()) {
 			cells.remove(cells.size() - 1);
 		}
-		for (String special : new String[] {"dash", "warp", "smash", "hover", "extra_jump"}) {
-			if (data.owns(special)) {
-				cells.add(special);
-				keys.add("");
+		if (cfg.hudShowSpecial) {
+			for (String special : new String[] {"dash", "warp", "smash", "hover", "extra_jump"}) {
+				if (data.owns(special)) {
+					cells.add(special);
+					keys.add("");
+				}
 			}
 		}
-		int x = cfg.hudX;
-		int y = cfg.hudY;
+		var pose = g.pose();
+		pose.pushMatrix();
+		pose.translate(cfg.hudX, cfg.hudY);
+		float scale = (float) Math.max(0.25, Math.min(4.0, cfg.hudScale));
+		pose.scale(scale, scale);
+		switch (cfg.hudStyle) {
+			case LIST -> list(g, font, cells, keys, cfg);
+			case ORIGINAL -> original(g, font, cells, cfg);
+			default -> modern(g, font, cells, keys, cfg);
+		}
+		pose.popMatrix();
+	}
+
+	private static int panelAlpha(dev.enderskills.data.EsSettings cfg) {
+		return (int) (255 * Math.max(0, Math.min(1, cfg.hudPanelOpacity))) << 24;
+	}
+
+	/** Modern: glass panel, gradient endurance bar, ability cells side by side. */
+	private static void modern(GuiGraphics g, Font font, List<String> cells, List<String> keys, dev.enderskills.data.EsSettings cfg) {
 		int width = Math.max(110, cells.size() * 22 + 6);
-		Cosmos.chip(g, x, y, width, 46, 0xB00A0614, 0x60000000 | cfg.hudBarColor);
-		g.drawString(font, "✦", x + 4, y + 4, 0xFF000000 | cfg.hudBarColor, true);
-		Cosmos.bar(g, x + 13, y + 5, width - 50, 6, endurance / maxEndurance, cfg.hudBarColor, brighten(cfg.hudBarColor));
+		if (cfg.hudPanelOpacity > 0) {
+			Cosmos.chip(g, 0, 0, width, 46, panelAlpha(cfg) | 0x0A0614, (panelAlpha(cfg) >>> 1 & 0xFF000000) | cfg.hudBarColor);
+		}
+		g.drawString(font, "✦", 4, 4, 0xFF000000 | cfg.hudBarColor, true);
+		Cosmos.bar(g, 13, 5, width - 50, 6, endurance / maxEndurance, cfg.hudBarColor, brighten(cfg.hudBarColor));
 		String e = Math.round(endurance) + "/" + Math.round(maxEndurance);
-		g.drawString(font, e, x + width - 4 - font.width(e), y + 4, 0xFF000000 | cfg.hudTextColor, true);
+		g.drawString(font, e, width - 4 - font.width(e), 4, 0xFF000000 | cfg.hudTextColor, true);
 		for (int i = 0; i < cells.size(); i++) {
-			cell(g, font, cells.get(i), keys.get(i), x + 4 + i * 22, y + 17, cfg);
+			cell(g, font, cells.get(i), keys.get(i), 4 + i * 22, 17, cfg);
+		}
+	}
+
+	/** List (versions 1.0 to 1.2): thin bar and one ability per line. */
+	private static void list(GuiGraphics g, Font font, List<String> cells, List<String> keys, dev.enderskills.data.EsSettings cfg) {
+		int w = 90;
+		g.fill(0, 0, w, 7, panelAlpha(cfg));
+		g.fill(1, 1, 1 + Math.round((w - 2) * Math.min(1F, endurance / maxEndurance)), 6, 0xFF000000 | cfg.hudBarColor);
+		g.drawString(font, Math.round(endurance) + "/" + Math.round(maxEndurance), w + 4, 0, 0xFF000000 | cfg.hudTextColor, true);
+		int y = 12;
+		for (int i = 0; i < cells.size(); i++) {
+			String skill = cells.get(i);
+			int cooldown = COOLDOWNS.getOrDefault(skill, 0);
+			int active = ACTIVE.getOrDefault(skill, 0);
+			g.fill(0, y, 18, y + 18, active > 0 ? 0xC0205030 : panelAlpha(cfg));
+			g.blit(RenderPipelines.GUI_TEXTURED, EnderSkills.id("textures/skill/" + skill + ".png"), 1, y + 1, 0.0F, 0.0F,
+					16, 16, 32, 32, 32, 32, cooldown > 0 ? 0xFF606060 : 0xFFFFFFFF);
+			String text = cooldown > 0 ? (cooldown + 19) / 20 + "s" : active > 1_000_000 ? "ON  " + keys.get(i)
+					: active > 0 ? "▶ " + (active + 19) / 20 + "s" : keys.get(i);
+			g.drawString(font, text, 22, y + 5, cooldown > 0 ? 0xFF000000 | cfg.hudCooldownColor
+					: active > 0 ? 0xFF000000 | cfg.hudActiveColor : 0xFF000000 | cfg.hudReadyColor, true);
+			y += 20;
+		}
+	}
+
+	private static final net.minecraft.resources.Identifier BOSS_BG = net.minecraft.resources.Identifier.withDefaultNamespace("boss_bar/blue_background");
+	private static final net.minecraft.resources.Identifier BOSS_FG = net.minecraft.resources.Identifier.withDefaultNamespace("boss_bar/blue_progress");
+	private static final net.minecraft.resources.Identifier NOTCH_BG = net.minecraft.resources.Identifier.withDefaultNamespace("boss_bar/notched_20_background");
+	private static final net.minecraft.resources.Identifier NOTCH_FG = net.minecraft.resources.Identifier.withDefaultNamespace("boss_bar/notched_20_progress");
+
+	/** Original Ender Skills (1.12.2): "Endurance" title with a blue notched boss bar, abilities in a column below. */
+	private static void original(GuiGraphics g, Font font, List<String> cells, dev.enderskills.data.EsSettings cfg) {
+		Component title = Component.translatable("enderskills.hud.title");
+		g.drawString(font, title, 0, 0, 0xFFFFFFFF, true);
+		String amount = Math.round(endurance) + "";
+		g.drawString(font, amount, 182 - font.width(amount), 0, 0xFFFFFFFF, true);
+		int filled = Math.round(182 * Math.min(1F, endurance / maxEndurance));
+		g.blitSprite(RenderPipelines.GUI_TEXTURED, BOSS_BG, 0, 10, 182, 5);
+		g.blitSprite(RenderPipelines.GUI_TEXTURED, NOTCH_BG, 0, 10, 182, 5);
+		if (filled > 0) {
+			g.blitSprite(RenderPipelines.GUI_TEXTURED, BOSS_FG, 182, 5, 0, 0, 0, 10, filled, 5);
+			g.blitSprite(RenderPipelines.GUI_TEXTURED, NOTCH_FG, 182, 5, 0, 0, 0, 10, filled, 5);
+		}
+		int y = 24;
+		for (String skill : cells) {
+			int cooldown = COOLDOWNS.getOrDefault(skill, 0);
+			int active = ACTIVE.getOrDefault(skill, 0);
+			g.blit(RenderPipelines.GUI_TEXTURED, EnderSkills.id("textures/gui/skill_background.png"), 0, y, 0.0F, 0.0F,
+					16, 16, 64, 64, 64, 64, 0xFFFFFFFF);
+			g.blit(RenderPipelines.GUI_TEXTURED, EnderSkills.id("textures/skill/" + skill + ".png"), 1, y + 1, 0.0F, 0.0F,
+					14, 14, 32, 32, 32, 32, cooldown > 0 ? 0xFF606060 : 0xFFFFFFFF);
+			if (cooldown > 0) {
+				g.drawString(font, (cooldown + 19) / 20 + "s", 20, y + 4, 0xFFFFFFFF, true);
+			} else if (active > 0) {
+				g.drawString(font, active > 1_000_000 ? "ON" : (active + 19) / 20 + "s", 20, y + 4, 0xFF80FF80, true);
+			}
+			y += 17;
 		}
 	}
 
@@ -325,15 +403,15 @@ public final class ClientAbilities {
 		Cosmos.chip(g, x, y, 20, 20, 0xC0000000, border);
 		g.blit(RenderPipelines.GUI_TEXTURED, EnderSkills.id("textures/skill/" + skill + ".png"), x + 2, y + 2, 0.0F, 0.0F,
 				16, 16, 32, 32, 32, 32, cooldown > 0 ? 0xFF707070 : 0xFFFFFFFF);
-		if (cooldown > 0) { // dark sweep that shrinks as the cooldown ends
+		if (cooldown > 0) {
 			int max = Math.max(cooldown, COOLDOWN_MAX.getOrDefault(skill, cooldown));
 			int hgt = Math.round(16F * cooldown / max);
 			g.fill(x + 2, y + 18 - hgt, x + 18, y + 18, 0xA0000000);
-			String s = Integer.toString((cooldown + 19) / 20);
-			g.drawString(font, s, x + 10 - font.width(s) / 2, y + 6, 0xFF000000 | cfg.hudCooldownColor, true);
+			String t = Integer.toString((cooldown + 19) / 20);
+			g.drawString(font, t, x + 10 - font.width(t) / 2, y + 6, 0xFF000000 | cfg.hudCooldownColor, true);
 		} else if (active > 0 && active < 1_000_000) {
-			String s = Integer.toString((active + 19) / 20);
-			g.drawString(font, s, x + 10 - font.width(s) / 2, y + 6, 0xFF000000 | cfg.hudActiveColor, true);
+			String t = Integer.toString((active + 19) / 20);
+			g.drawString(font, t, x + 10 - font.width(t) / 2, y + 6, 0xFF000000 | cfg.hudActiveColor, true);
 		}
 		if (!key.isEmpty()) {
 			String k = key.length() > 2 ? key.substring(0, 2) : key;

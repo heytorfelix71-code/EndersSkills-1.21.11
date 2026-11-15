@@ -69,7 +69,11 @@ public class CoordScreen extends Screen {
 
 	@Override
 	public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-		Cosmos.background(g, width, height);
+		switch (dev.enderskills.data.EsSettings.get().altarBackground) {
+			case BLUR -> super.renderBackground(g, mouseX, mouseY, partialTick);
+			case TRANSPARENT -> g.fill(0, 0, width, height, 0x30000000);
+			default -> Cosmos.background(g, width, height);
+		}
 		Cosmos.panel(g, width / 2 - 112, height / 2 - 44, 224, 100, 0x9A4DFF);
 	}
 

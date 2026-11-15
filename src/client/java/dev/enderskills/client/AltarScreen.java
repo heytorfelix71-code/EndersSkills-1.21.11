@@ -163,7 +163,11 @@ public class AltarScreen extends Screen {
 
 	@Override
 	public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-		Cosmos.background(g, width, height);
+		switch (dev.enderskills.data.EsSettings.get().altarBackground) {
+			case BLUR -> super.renderBackground(g, mouseX, mouseY, partialTick);
+			case TRANSPARENT -> g.fill(0, 0, width, height, 0x30000000);
+			default -> Cosmos.background(g, width, height);
+		}
 	}
 
 	@Override

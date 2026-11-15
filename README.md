@@ -44,3 +44,8 @@ Commands (operators): `/enderskills level <n> [player]`, `/enderskills reset [pl
 - Sound settings: master volume, extra Minecraft sounds on/off, volume per ability; effects density.
 - Prettier effects: glowing halos, rings, shock waves and forked lightning (bright particles bloom with shader packs).
 - Option: in creative, everything is free (off by default).
+
+## 1.4.0
+- HUD styles: Modern, List (1.0-1.2) and Original (1.12.2 blue boss bar); HUD size, background opacity, show movement abilities.
+- Skill tree background option: Cosmic (default), Blur or Transparent.
+- Clear descriptions for every setting.

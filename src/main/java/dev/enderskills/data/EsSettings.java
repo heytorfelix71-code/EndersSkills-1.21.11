@@ -132,6 +132,22 @@ public final class EsSettings {
 	/** In creative mode every skill can be unlocked and upgraded for free, without the tree rules. */
 	public boolean creativeFree = false;
 
+	/** Background behind the skill tree screen. */
+	public enum ScreenBackground { COSMIC, BLUR, TRANSPARENT }
+
+	public ScreenBackground altarBackground = ScreenBackground.COSMIC;
+
+	/** HUD look: modern panel, the vertical list of 1.0-1.2, or the original mod's boss-bar style. */
+	public enum HudStyle { MODERN, LIST, ORIGINAL }
+
+	public HudStyle hudStyle = HudStyle.MODERN;
+	/** HUD size (1 = normal). */
+	public double hudScale = 1.0;
+	/** Opacity of the HUD background panel (0 = invisible, 1 = solid). */
+	public double hudPanelOpacity = 0.7;
+	/** Also show Dash, Warp, Smash, Hover and Extra Jump in the HUD. */
+	public boolean hudShowSpecial = true;
+
 	// ---- HUD (colors are RGB)
 	/** Colored frame on the screen while you have an Ender Skills status effect. */
 	public boolean statusOverlay = true;
