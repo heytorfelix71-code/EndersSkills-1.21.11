@@ -76,6 +76,13 @@ public final class FxDraw {
 				RenderSetup.builder(pipeline).withTexture("Sampler0", texture).sortOnUpload().createRenderSetup()));
 	}
 
+	private static final Identifier SOLID = EnderSkills.id("textures/fx/solid.png");
+
+	/** Opaque shapes that are drawn first (black fists, the black hole's horizon): a plain entity type, so shader packs draw it. */
+	public static RenderType dark() {
+		return RenderTypes.entityCutoutNoCull(SOLID);
+	}
+
 	private static long compatAt;
 	private static boolean compatValue;
 
@@ -112,7 +119,7 @@ public final class FxDraw {
 
 	/** Dark layered end sky (black hole core, raging flame ball, unstable portal). */
 	public static RenderType universeDark() {
-		return compat() ? RenderTypes.debugQuads() : type("universe_default", UNIVERSE_DEFAULT, END_PORTAL);
+		return compat() ? dark() : type("universe_default", UNIVERSE_DEFAULT, END_PORTAL);
 	}
 
 	/** White layered sky (Solar Lance, Final Flash). */

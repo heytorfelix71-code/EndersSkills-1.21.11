@@ -112,6 +112,9 @@ public final class FxBuffers implements MultiBufferSource {
 				if ((f & 2) != 0) {
 					out.setUv(data[o + UV], data[o + UV + 1]);
 				}
+				if ((f & 2) == 0) {
+					out.setUv(0F, 0F);
+				}
 				// entity-style formats (vanilla types used with shader packs) need these; other formats ignore them
 				if ((f & 4) != 0) {
 					out.setUv1((int) data[o + UV1], (int) data[o + UV1 + 1]);

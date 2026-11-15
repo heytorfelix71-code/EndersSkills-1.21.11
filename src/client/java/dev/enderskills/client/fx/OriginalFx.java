@@ -177,6 +177,17 @@ public final class OriginalFx {
 			}
 			return;
 		}
+		if (p.skill().endsWith("_view") && p.id() != 0) {
+			// a portal ring that is kept alive by the server: refresh it instead of stacking a new one
+			for (Fx old : EFFECTS) {
+				if (old.id == p.id() && old.skill.equals(p.skill())) {
+					old.pos = new Vec3(p.x(), p.y(), p.z());
+					old.radius = Math.max(0.3F, p.radius());
+					old.life = old.age + Math.max(10, p.ticks());
+					return;
+				}
+			}
+		}
 		Fx e = fx(p);
 		if (p.phase() == HIT) {
 			e.life = 20;
@@ -287,6 +298,14 @@ public final class OriginalFx {
 		Vec3 t = e.to;
 		Vec3 d = e.dest;
 		switch (e.skill) {
+			case "teleport", "warp" -> {
+				for (Vec3 end : new Vec3[] {c, d}) {
+					for (int i = 0; i < n(e.skill, 14); i++) {
+						glow(end.x + rr() * 1.6, end.y + R.nextDouble() * 2.8, end.z + rr() * 1.6, g() * 0.03, 0.02 + R.nextDouble() * 0.03, g() * 0.03,
+								R.nextBoolean() ? 0xE070FF : 0xFFFFFF, 1.5F + R.nextFloat() * 2F, 30 + R.nextInt(20));
+					}
+				}
+			}
 			case "explode" -> {
 				for (int i = 0; i < n(e.skill, 25); i++) {
 					glow(d.x + rr(), d.y + 1 + rr(), d.z + rr(), g() * 0.25, g() * 0.25, g() * 0.25, color(e.skill, FIRE), 3F + R.nextFloat() * 3F, 20);
@@ -611,6 +630,16 @@ public final class OriginalFx {
 			electric(e, c);
 		}
 		switch (e.skill) {
+			case "portal_view", "unstable_view" -> {
+				if (e.age % 3 == 0) {
+					double a = R.nextDouble() * Math.PI * 2;
+					double rx = Math.max(0.6, e.radius);
+					double ry = Math.max(1.1, Math.min(e.radius, 2.2));
+					glow(e.pos.x + Math.cos(a) * rx * 0.9 * R.nextDouble(), e.pos.y + 1.0 + Math.sin(a) * ry * 0.9 * R.nextDouble(), e.pos.z + rr() * 0.3,
+							g() * 0.01, 0.01 + R.nextDouble() * 0.02, g() * 0.01, e.skill.equals("portal_view") ? 0xB8A0FF : 0xFF90E0,
+							1.2F + R.nextFloat() * 1.5F, 25 + R.nextInt(15));
+				}
+			}
 			case "shadow_jab" -> {
 				if (caster != null) {
 					for (int i = 0; i < Math.max(1, n(e.skill, 1)); i++) {
@@ -772,7 +801,7 @@ public final class OriginalFx {
 		Vec3 cam = camera.position();
 		Matrix4f m = new Matrix4f();
 		double time = clock + partial;
-		buffers.getBuffer(RenderTypes.debugQuads()); // first: black shapes are replayed before the glowing ones
+		buffers.getBuffer(dev.enderskills.client.fx.FxDraw.dark()); // first: black shapes are replayed before the glowing ones
 
 		for (Fx e : EFFECTS) {
 			draw(mc.level, buffers, m, camera, cam, e, partial, time);
@@ -784,7 +813,7 @@ public final class OriginalFx {
 			drawBolt(buffers, m, cam, b, time);
 		}
 		if (!FISTS.isEmpty()) {
-			VertexConsumer black = buffers.getBuffer(RenderTypes.debugQuads());
+			VertexConsumer black = buffers.getBuffer(dev.enderskills.client.fx.FxDraw.dark());
 			for (Fist f : FISTS) {
 				Vec3 at = f.prev.lerp(f.pos, partial).subtract(cam);
 				FxDraw.box(black, m, at, f.motion, 0.25, 0.75, 0xFF000000);
@@ -822,7 +851,7 @@ public final class OriginalFx {
 					return; // only where it lands (the cast event sits on the caster)
 				}
 				Vec3 c = e.pos.add(0, 1, 0).subtract(cam);
-				BlackHoleFx.draw(buffers.getBuffer(RenderTypes.lightning()), buffers.getBuffer(RenderTypes.debugQuads()), m, c.x, c.y, c.z,
+				BlackHoleFx.draw(buffers.getBuffer(RenderTypes.lightning()), buffers.getBuffer(dev.enderskills.client.fx.FxDraw.dark()), m, c.x, c.y, c.z,
 						r, time, f, (float) Math.min(1F, (e.age + partial) / 10F));
 			}
 			case "gas_cloud" -> {
@@ -850,11 +879,14 @@ public final class OriginalFx {
 				FxDraw.sphere(buffers.getBuffer(FxDraw.universe()), m, c.x, c.y, c.z, s, FxDraw.argb(color(e.skill, VOID), 0.9F * f), 10);
 			}
 			case "unstable_portal" -> {
-				Vec3 c = e.to.add(0, 1.2, 0).subtract(cam);
-				double s = 0.7 + 0.1 * Math.sin(time * 0.2);
-				FxDraw.cube(buffers.getBuffer(FxDraw.universeDark()), m, c.x, c.y, c.z, s, time * 0.05, time * 0.03, FxDraw.argb(0xFFFFFF, f));
-				FxDraw.cube(buffers.getBuffer(FxDraw.universe()), m, c.x, c.y, c.z, s * 1.25, -time * 0.04, time * 0.02,
-						FxDraw.argb(color(e.skill, VOID), 0.6F * f));
+				// the ring itself is drawn by the portal view the server keeps refreshing
+			}
+			case "portal_view", "unstable_view" -> {
+				boolean normal = e.skill.equals("portal_view");
+				double rx = Math.max(0.6, e.radius);
+				double ry = Math.max(1.1, Math.min(e.radius, 2.2));
+				galaxy(buffers, m, e.pos.add(0, 1.0, 0).subtract(cam), e.seed, rx, ry, 1F, f, time,
+						normal ? 0xB8B8FF : 0xFFA0F0, normal ? 0x7A5CFF : 0xFF4FD8, 11);
 			}
 			case "black_raging_flame_ball" -> {
 				// the ball itself is drawn with the bolt
@@ -870,9 +902,13 @@ public final class OriginalFx {
 			}
 			case "teleport", "warp" -> {
 				if (life < 1) {
-					double h = e.skill.equals("warp") ? 3.4 : 2.0;
-					rift(buffers, m, e.pos.subtract(cam), e.seed, f, color(e.skill, VOID), h);
-					rift(buffers, m, e.dest.subtract(cam), e.seed ^ 0x5DEECE66DL, f, color(e.skill, VOID), h);
+					// a crack in reality: opens fast, stays a moment, closes (about 2 seconds in all)
+					double t = Math.max(0.0, Math.min(1.0, life));
+					double open = Math.min(1.0, t / 0.22) * Math.min(1.0, (1.0 - t) / 0.28);
+					open = open * open * (3 - 2 * open);
+					double h = e.skill.equals("warp") ? 1.9 : 1.5;
+					galaxy(buffers, m, e.pos.add(0, h, 0).subtract(cam), e.seed, 0.95, h, (float) open, 1F, time, 0xFFFFFF, 0xC84CFF, 9);
+					galaxy(buffers, m, e.dest.add(0, h, 0).subtract(cam), e.seed ^ 0x5DEECE66DL, 0.95, h, (float) open, 1F, time, 0xFFFFFF, 0xC84CFF, 9);
 				}
 			}
 			case "solar_lance", "final_flash" -> {
@@ -1108,23 +1144,64 @@ public final class OriginalFx {
 		}
 	}
 
-	/** Jagged cosmic crack where someone teleported (TeleportRift / WarpRift of the original). */
-	private static void rift(MultiBufferSource buffers, Matrix4f m, Vec3 base, long seed, float alpha, int tint, double height) {
-		RandomSource seeded = RandomSource.create(seed);
-		int pts = 10;
-		Vec3[] p = new Vec3[pts];
-		double[] rad = new double[pts];
-		for (int i = 0; i < pts; i++) {
-			double t = i / (double) (pts - 1);
-			p[i] = base.add(seeded.nextGaussian() * 0.35 * Math.sin(t * Math.PI), 0.1 + t * height, seeded.nextGaussian() * 0.35 * Math.sin(t * Math.PI));
-			rad[i] = 0.15 * (height / 2.0) * Math.sin(t * Math.PI) + 0.01;
+	/**
+	 * A jagged, faceted shard filled with a galaxy (nebula and stars), always facing the camera, with a glowing rim.
+	 * open = 0 is a thin line, 1 is fully open (the crack of a Warp / Teleport); portals keep it at 1.
+	 * center is camera-relative; rx / ry are the half width and height.
+	 */
+	private static void galaxy(MultiBufferSource buffers, Matrix4f m, Vec3 center, long seed, double rx, double ry, float open, float fade,
+			double time, int tint, int rim, int points) {
+		if (open <= 0.01F || fade <= 0.01F) {
+			return;
 		}
-		FxDraw.tube(buffers.getBuffer(FxDraw.universeDark()), m, p, rad, FxDraw.argb(0xFFFFFF, 0.92F * alpha), 8);
-		double[] glow = new double[pts];
-		for (int i = 0; i < pts; i++) {
-			glow[i] = rad[i] * 1.6 + 0.02;
+		RandomSource rnd = RandomSource.create(seed);
+		Vec3 h = new Vec3(center.x, 0, center.z);
+		Vec3 right = h.lengthSqr() < 1.0E-6 ? new Vec3(1, 0, 0) : new Vec3(h.z, 0, -h.x).normalize();
+		Vec3 toCam = h.lengthSqr() < 1.0E-6 ? new Vec3(0, 0, 1) : h.normalize().scale(-1);
+		double w = rx * (0.25 + 0.75 * open);
+		double hh = ry * open;
+		double[] px = new double[points];
+		double[] py = new double[points];
+		for (int i = 0; i < points; i++) {
+			double a = Math.PI * 2 * i / points + (rnd.nextDouble() - 0.5) * 0.5;
+			double k = 0.62 + rnd.nextDouble() * 0.38;
+			px[i] = Math.cos(a) * k;
+			py[i] = Math.sin(a) * k;
 		}
-		FxDraw.tube(buffers.getBuffer(FxDraw.universe()), m, p, glow, FxDraw.argb(tint, 0.6F * alpha), 8);
+		VertexConsumer vc = buffers.getBuffer(FxDraw.alpha("galaxy"));
+		int base = FxDraw.argb(tint, 0.95F * fade);
+		for (int i = 0; i < points; i++) {
+			int j = (i + 1) % points;
+			float shade = 0.72F + 0.28F * (float) ((i * 37L + seed) % 7) / 6F; // each facet a little different
+			int col = FxDraw.argb(tint, 0.95F * fade * shade);
+			Vec3[] v = {center, vertex(center, right, w, hh, px[i], py[i], toCam, 0), vertex(center, right, w, hh, px[j], py[j], toCam, 0)};
+			double drift = 0.06 * Math.sin(time * 0.04);
+			float[][] uv = {{0.5F, 0.5F}, {(float) (0.5 + px[i] * 0.42 + drift), (float) (0.5 - py[i] * 0.42)},
+					{(float) (0.5 + px[j] * 0.42 + drift), (float) (0.5 - py[j] * 0.42)}};
+			for (int q = 0; q < 4; q++) {
+				int idx = q == 3 ? 2 : q;
+				vc.addVertex(m, (float) v[idx].x, (float) v[idx].y, (float) v[idx].z).setUv(uv[idx][0], uv[idx][1]).setColor(col);
+			}
+		}
+		// glowing rim
+		VertexConsumer glow = buffers.getBuffer(RenderTypes.lightning());
+		for (int i = 0; i < points; i++) {
+			int j = (i + 1) % points;
+			Vec3 a0 = vertex(center, right, w, hh, px[i], py[i], toCam, 0);
+			Vec3 a1 = vertex(center, right, w, hh, px[j], py[j], toCam, 0);
+			Vec3 b0 = vertex(center, right, w, hh, px[i] * 1.22, py[i] * 1.22, toCam, 0);
+			Vec3 b1 = vertex(center, right, w, hh, px[j] * 1.22, py[j] * 1.22, toCam, 0);
+			int in = FxDraw.argb(rim, 0.65F * fade * open);
+			int outc = FxDraw.argb(rim, 0F);
+			glow.addVertex(m, (float) a0.x, (float) a0.y, (float) a0.z).setColor(in);
+			glow.addVertex(m, (float) a1.x, (float) a1.y, (float) a1.z).setColor(in);
+			glow.addVertex(m, (float) b1.x, (float) b1.y, (float) b1.z).setColor(outc);
+			glow.addVertex(m, (float) b0.x, (float) b0.y, (float) b0.z).setColor(outc);
+		}
+	}
+
+	private static Vec3 vertex(Vec3 c, Vec3 right, double w, double hh, double x, double y, Vec3 toCam, double lift) {
+		return c.add(right.scale(x * w)).add(0, y * hh, 0).add(toCam.scale(lift));
 	}
 
 	private static void drawBolt(MultiBufferSource buffers, Matrix4f m, Vec3 cam, Fx b, double time) {

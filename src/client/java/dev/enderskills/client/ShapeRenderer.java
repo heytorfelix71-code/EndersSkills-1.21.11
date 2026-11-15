@@ -140,7 +140,7 @@ final class ShapeRenderer {
 		PoseStack pose = new PoseStack();
 		if (cfg.vfxShapes && !SHAPES.isEmpty()) {
 			Matrix4f m = pose.last().pose();
-			buffers.getBuffer(RenderTypes.debugQuads()); // black shapes first
+			buffers.getBuffer(dev.enderskills.client.fx.FxDraw.dark()); // black shapes first
 			VertexConsumer glow = buffers.getBuffer(RenderTypes.lightning());
 			for (Shape s : SHAPES) {
 				double age = now - s.start();
@@ -219,7 +219,7 @@ final class ShapeRenderer {
 			}
 			case Shapes.BLACK_HOLE -> {
 				if (!dev.enderskills.client.fx.OriginalFx.active()) { // with the original style the effect draws it
-					dev.enderskills.client.fx.BlackHoleFx.draw(glow, buffers.getBuffer(RenderTypes.debugQuads()), m, x, y, z,
+					dev.enderskills.client.fx.BlackHoleFx.draw(glow, buffers.getBuffer(dev.enderskills.client.fx.FxDraw.dark()), m, x, y, z,
 							Math.max(s.h(), s.r() / 0.3), now, Math.max(0.2F, fade), Math.min(1F, (float) (now - s.start()) / 10F));
 				}
 			}

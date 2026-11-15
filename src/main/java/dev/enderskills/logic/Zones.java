@@ -84,6 +84,9 @@ public final class Zones {
 			// the visible ring: an Unstable Portal's size grows with the level, so it is capped
 			double ring = z.exit() == null ? Math.min(z.radius(), Math.max(0.5, es.unstableMaxRadius)) : z.radius();
 			double r = Math.max(0.5, ring);
+			if (now % 10 == 0 && z.radius() > 0) {
+				Fx.send(z.level(), z.exit() != null ? "portal_view" : "unstable_view", Fx.ZONE, System.identityHashCode(z), -1, c, null, r, 22);
+			}
 			if (now % 2 == 0) {
 				z.level().sendParticles(z.exit() == null && z.radius() > 0 ? ParticleTypes.REVERSE_PORTAL : ParticleTypes.PORTAL,
 						c.x, c.y + 1.0, c.z, Vfx.n(8), r / 2, 0.7, r / 2, 0.2);
