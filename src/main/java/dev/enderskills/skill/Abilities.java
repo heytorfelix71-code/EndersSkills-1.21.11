@@ -29,6 +29,28 @@ public final class Abilities {
 	private Abilities() {
 	}
 
+	/** Ability with its own trigger or passive (no ability key). */
+	public static boolean special(String ability) {
+		return SPECIAL.contains(ability);
+	}
+
+	/** Usable abilities of each tree the player has, in tree order (the HUD groups). */
+	public static List<java.util.Map.Entry<Skills.Page, List<String>>> groups(SkillData data) {
+		List<java.util.Map.Entry<Skills.Page, List<String>>> list = new ArrayList<>();
+		for (Skills.Page page : Skills.PAGES) {
+			List<String> skills = new ArrayList<>();
+			for (String id : page.abilities()) {
+				if (data.owns(id) && IMPLEMENTED.contains(id) && !SPECIAL.contains(id)) {
+					skills.add(id);
+				}
+			}
+			if (!skills.isEmpty()) {
+				list.add(java.util.Map.entry(page, skills));
+			}
+		}
+		return list;
+	}
+
 	public static boolean implemented(String ability) {
 		return IMPLEMENTED.contains(ability);
 	}

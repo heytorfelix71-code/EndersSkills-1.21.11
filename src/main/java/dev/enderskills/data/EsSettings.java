@@ -104,6 +104,14 @@ public final class EsSettings {
 	/** Seconds before portals close by themselves at level 0 and just below the top level. */
 	public int portalAutoCloseStart = 30;
 	public int portalAutoCloseEnd = 60;
+	/** Teleport only when you aim at a block (never into the sky). */
+	public boolean teleportNoSky = true;
+
+	/** Status effects of the abilities: Minecraft's own (blindness, slowness...), the mod's own, or both. */
+	public enum EffectStyle { ORIGINAL, BOTH, CURRENT }
+
+	public EffectStyle effectStyle = EffectStyle.CURRENT;
+
 	/** Sneak + ability key on Portal or Teleport asks for coordinates. */
 	public boolean coordinateTargeting = true;
 	/** Teleport always lands on the ground (never in the air). */
@@ -146,7 +154,9 @@ public final class EsSettings {
 	/** Opacity of the HUD background panel (0 = invisible, 1 = solid). */
 	public double hudPanelOpacity = 0.7;
 	/** Also show Dash, Warp, Smash, Hover and Extra Jump in the HUD. */
-	public boolean hudShowSpecial = true;
+	public boolean hudShowSpecial = false;
+	/** Name of the current ability group above the hearts, food and XP bar. */
+	public boolean hudGroupLabel = true;
 
 	// ---- HUD (colors are RGB)
 	/** Colored frame on the screen while you have an Ender Skills status effect. */

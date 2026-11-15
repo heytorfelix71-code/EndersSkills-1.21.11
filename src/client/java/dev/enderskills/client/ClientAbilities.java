@@ -25,6 +25,7 @@ import dev.enderskills.dsl.SkillConfigs;
 import dev.enderskills.logic.Progression;
 import dev.enderskills.network.EsNetwork;
 import dev.enderskills.skill.Abilities;
+import dev.enderskills.skill.Skills;
 
 /** Client side of the abilities: keys, the movement abilities (felt instantly) and the HUD. */
 public final class ClientAbilities {
@@ -34,6 +35,29 @@ public final class ClientAbilities {
 			InputConstants.KEY_B, InputConstants.KEY_N, InputConstants.KEY_M, InputConstants.UNKNOWN.getValue(),
 			InputConstants.UNKNOWN.getValue(), InputConstants.UNKNOWN.getValue()};
 	private static KeyMapping dashKey;
+	private static KeyMapping prevGroup;
+	private static KeyMapping nextGroup;
+	/** Ability group (tree) shown in the HUD and used by the ability keys. */
+	private static int group;
+
+	private static List<java.util.Map.Entry<Skills.Page, List<String>>> groups(SkillData data) {
+		return Abilities.groups(data);
+	}
+
+	/** Abilities of the current group (empty when the player has none). */
+	static List<String> groupSkills(SkillData data) {
+		var list = groups(data);
+		if (list.isEmpty()) {
+			return List.of();
+		}
+		group = Math.floorMod(group, list.size());
+		return list.get(group).getValue();
+	}
+
+	private static Skills.Page groupPage(SkillData data) {
+		var list = groups(data);
+		return list.isEmpty() ? null : list.get(Math.floorMod(group, list.size())).getKey();
+	}
 
 	private static float endurance;
 	private static float maxEndurance;
@@ -57,6 +81,10 @@ public final class ClientAbilities {
 			SLOT_KEYS[i] = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.enderskills.ability_" + (i + 1),
 					InputConstants.Type.KEYSYM, DEFAULT_KEYS[i], CATEGORY));
 		}
+		prevGroup = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.enderskills.prev_group", InputConstants.Type.KEYSYM,
+				InputConstants.KEY_LEFT, CATEGORY));
+		nextGroup = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.enderskills.next_group", InputConstants.Type.KEYSYM,
+				InputConstants.KEY_RIGHT, CATEGORY));
 		dashKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.enderskills.dash", InputConstants.Type.KEYSYM,
 				InputConstants.KEY_LALT, CATEGORY));
 	}
@@ -116,7 +144,22 @@ public final class ClientAbilities {
 		boolean free = client.screen == null && !player.isSpectator();
 
 		// ability keys
-		List<String> slots = Abilities.slots(data);
+		while (prevGroup.consumeClick()) {
+			if (free) {
+				group--;
+				groupShown = 60;
+			}
+		}
+		while (nextGroup.consumeClick()) {
+			if (free) {
+				group++;
+				groupShown = 60;
+			}
+		}
+		if (groupShown > 0) {
+			groupShown--;
+		}
+		List<String> slots = groupSkills(data);
 		for (int i = 0; i < SLOT_KEYS.length; i++) {
 			while (SLOT_KEYS[i].consumeClick()) {
 				if (free && i < slots.size()) {
@@ -272,7 +315,7 @@ public final class ClientAbilities {
 			return;
 		}
 		Font font = client.font;
-		List<String> cells = new java.util.ArrayList<>(Abilities.slots(data));
+		List<String> cells = new java.util.ArrayList<>(groupSkills(data));
 		List<String> keys = new java.util.ArrayList<>();
 		for (int i = 0; i < cells.size() && i < SLOT_KEYS.length; i++) {
 			keys.add(SLOT_KEYS[i].getTranslatedKeyMessage().getString());
@@ -385,6 +428,37 @@ public final class ClientAbilities {
 	}
 
 	private static final Map<String, Integer> COOLDOWN_MAX = new HashMap<>();
+	/** Ticks the group name stays bright after switching. */
+	private static int groupShown;
+
+	/** "◀ Mobility: Void ▶" above the hearts, food and XP bar. */
+	static void groupLabel(GuiGraphics g, DeltaTracker delta) {
+		Minecraft client = Minecraft.getInstance();
+		LocalPlayer player = client.player;
+		dev.enderskills.data.EsSettings cfg = dev.enderskills.data.EsSettings.get();
+		if (player == null || client.options.hideGui || !cfg.hudVisible || !cfg.hudGroupLabel || player.isSpectator()) {
+			return;
+		}
+		SkillData data = data(player);
+		Skills.Page page = groupPage(data);
+		if (page == null) {
+			return;
+		}
+		int count = groups(data).size();
+		Component name = Component.translatable("enderskills.hud.group", Component.translatable("enderskills.tab." + page.tab().id),
+				Component.translatable("enderskills.page." + page.element()));
+		Font font = client.font;
+		int y = g.guiHeight() - (player.getAbilities().instabuild ? 46 : 62);
+		int cx = g.guiWidth() / 2;
+		int w = font.width(name);
+		int alpha = groupShown > 0 ? 0xFF : 0xC0;
+		Cosmos.chip(g, cx - w / 2 - 22, y - 3, w + 44, 14, 0x90000000, (alpha << 24) | page.tab().color);
+		g.drawString(font, name, cx - w / 2, y, (alpha << 24) | 0xFFFFFF, true);
+		if (count > 1) {
+			g.drawString(font, "◀", cx - w / 2 - 16, y, (alpha << 24) | page.tab().color, true);
+			g.drawString(font, "▶", cx + w / 2 + 9, y, (alpha << 24) | page.tab().color, true);
+		}
+	}
 
 	private static void cell(GuiGraphics g, Font font, String skill, String key, int x, int y, dev.enderskills.data.EsSettings cfg) {
 		int cooldown = COOLDOWNS.getOrDefault(skill, 0);

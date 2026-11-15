@@ -49,3 +49,9 @@ Commands (operators): `/enderskills level <n> [player]`, `/enderskills reset [pl
 - HUD styles: Modern, List (1.0-1.2) and Original (1.12.2 blue boss bar); HUD size, background opacity, show movement abilities.
 - Skill tree background option: Cosmic (default), Blur or Transparent.
 - Clear descriptions for every setting.
+
+## 1.5.0
+- HUD ability groups: one group per tree (e.g. "Mobility: Void") shown above the hearts/food/XP; Left/Right arrows switch group; the ability keys use the current group. Movement abilities hidden by default.
+- Status effects option: Original (Minecraft's blindness, darkness, poison, slowness...), Both, Current (the mod's own, default).
+- Portals appear at once, are easier to enter, and you go through only when you step in (no bouncing back).
+- Teleport: original Ender Skills sound; option "never into the sky" (on by default).

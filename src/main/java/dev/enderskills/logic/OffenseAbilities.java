@@ -87,12 +87,12 @@ public final class OffenseAbilities {
 	}
 
 	private static void bleed(LivingEntity t, double ticks) {
-		t.addEffect(new MobEffectInstance(dev.enderskills.registry.ModEffects.BLEEDING, (int) Math.max(20, ticks), 0, false, true, true));
+		AbilityManager.status(t, dev.enderskills.registry.ModEffects.BLEEDING, null, (int) Math.max(20, ticks), 0);
 	}
 
 	private static void dot(ServerPlayer p, LivingEntity t, double dot, double truePercent, double ticks) {
 		if (truePercent > 0) {
-			t.addEffect(new MobEffectInstance(dev.enderskills.registry.ModEffects.BLACK_FLAME, (int) Math.max(20, ticks), 0, false, true, true));
+			AbilityManager.status(t, dev.enderskills.registry.ModEffects.BLACK_FLAME, null, (int) Math.max(20, ticks), 0);
 		}
 		DefenseAbilities.dot(p, t, (dot + truePercent * t.getMaxHealth()) * AbilityManager.power(p), (int) ticks);
 	}
@@ -231,6 +231,7 @@ public final class OffenseAbilities {
 				b.onHit = (e, at) -> {
 					hit(p, e, v(p, skill, "DAMAGE"), 0);
 					dot(p, e, v(p, skill, "DOT"), 0, v(p, skill, "DOT_DURATION"));
+					AbilityManager.status(e, null, MobEffects.DARKNESS, 60, 0);
 				};
 				sound(level, p.position(), SoundEvents.WARDEN_SONIC_CHARGE, 0.5F, 1.8F);
 			}
@@ -256,9 +257,9 @@ public final class OffenseAbilities {
 						hit(p, e, v(p, skill, "DAMAGE"), 0);
 					}
 					zone(p, at, r, (int) Math.max(40, v(p, skill, "DURATION")), 10, ParticleTypes.SNEEZE, e -> {
-						if (!e.hasEffect(dev.enderskills.registry.ModEffects.GASSED)) {
+						if (!e.hasEffect(dev.enderskills.registry.ModEffects.GASSED) && !e.hasEffect(MobEffects.POISON)) {
 							dot(p, e, v(p, skill, "DOT"), 0, v(p, skill, "DOT_DURATION"));
-							e.addEffect(new MobEffectInstance(dev.enderskills.registry.ModEffects.GASSED, (int) v(p, skill, "DOT_DURATION"), 0, false, true, true));
+							AbilityManager.status(e, dev.enderskills.registry.ModEffects.GASSED, MobEffects.POISON, (int) v(p, skill, "DOT_DURATION"), 0);
 						}
 					});
 					sound(level, at, SoundEvents.GENERIC_EXPLODE.value(), 0.6F, 1.6F);
@@ -267,7 +268,7 @@ public final class OffenseAbilities {
 			case "grasp" -> {
 				Vec3 at = AbilityManager.aim(level, p, v(p, skill, "RANGE"));
 				zone(p, at, v(p, skill, "SIZE") / 2, (int) v(p, skill, "DURATION"), 10, ParticleTypes.SCULK_SOUL, e -> {
-					e.addEffect(new MobEffectInstance(dev.enderskills.registry.ModEffects.ROOTED, 15, 0, false, true, true));
+					AbilityManager.status(e, dev.enderskills.registry.ModEffects.ROOTED, MobEffects.SLOWNESS, 15, 10);
 					e.setDeltaMovement(0, Math.min(0, e.getDeltaMovement().y), 0);
 					if (now % 20 == 0) {
 						dot(p, e, v(p, skill, "DOT"), 0, v(p, skill, "DOT_DURATION"));
@@ -519,6 +520,7 @@ public final class OffenseAbilities {
 				later((int) v(p, skill, "DELAY"), () -> {
 					for (LivingEntity e : enemies(p, at, r)) {
 						hit(p, e, v(p, skill, "DAMAGE"), 0);
+						AbilityManager.status(e, null, MobEffects.BLINDNESS, 40, 0);
 						glow(p, e);
 					}
 					burst(level, at, ParticleTypes.FIREWORK, 30, 0.6);

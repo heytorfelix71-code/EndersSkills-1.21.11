@@ -457,5 +457,18 @@
   "enderskills.config.altar_background.cosmic": "Cósmico",
   "enderskills.config.altar_background.blur": "Desfoque",
   "enderskills.config.altar_background.transparent": "Transparente",
-  "enderskills.hud.title": "Energia"
+  "enderskills.hud.title": "Energia",
+  "key.enderskills.prev_group": "Grupo de habilidades anterior",
+  "key.enderskills.next_group": "Próximo grupo de habilidades",
+  "enderskills.hud.group": "%s: %s",
+  "enderskills.config.hud_group_label": "Mostrar o grupo atual",
+  "enderskills.config.hud_group_label.desc": "Mostra o grupo de habilidades atual (por exemplo \"Mobilidade: Vazio\") acima da vida, da comida e do XP. O HUD e as teclas de habilidade só usam as habilidades deste grupo; troque com as setas Esquerda e Direita.",
+  "enderskills.teleport.no_target": "Mire num bloco para teleportar.",
+  "enderskills.config.teleport_no_sky": "Teleporte nunca para o céu",
+  "enderskills.config.teleport_no_sky.desc": "Ligado: o Teleporte só funciona quando você mira num bloco; mirando no céu nada acontece (sem gastar nada).",
+  "enderskills.config.effect_style": "Efeitos de status",
+  "enderskills.config.effect_style.desc": "Originais: os efeitos do Minecraft, como nas primeiras versões (cegueira, escuridão, veneno, lentidão, fraqueza, resistência ao fogo). Atuais: os efeitos próprios do mod (Atordoado, Eletrificado, Enraizado, Intoxicado...) sem escurecer a tela. Ambos: todos juntos.",
+  "enderskills.config.effect_style.original": "Originais",
+  "enderskills.config.effect_style.both": "Ambos",
+  "enderskills.config.effect_style.current": "Atuais"
 }

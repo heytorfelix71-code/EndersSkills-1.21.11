@@ -63,6 +63,7 @@ public final class EsConfigScreen {
 				.option(integer("portal_close_start", def.portalAutoCloseStart, 1, 100000, () -> c.portalAutoCloseStart, v -> c.portalAutoCloseStart = v))
 				.option(integer("portal_close_end", def.portalAutoCloseEnd, 1, 100000, () -> c.portalAutoCloseEnd, v -> c.portalAutoCloseEnd = v))
 				.option(bool("coordinates", def.coordinateTargeting, () -> c.coordinateTargeting, v -> c.coordinateTargeting = v))
+				.option(bool("teleport_no_sky", def.teleportNoSky, () -> c.teleportNoSky, v -> c.teleportNoSky = v))
 				.option(bool("teleport_ground", def.teleportGroundOnly, () -> c.teleportGroundOnly, v -> c.teleportGroundOnly = v))
 				.option(num("portal_range_start", def.portalRangeStart, 1, 30_000_000, () -> c.portalRangeStart, v -> c.portalRangeStart = v))
 				.option(num("portal_range_max", def.portalRangeMax, 1, 30_000_000, () -> c.portalRangeMax, v -> c.portalRangeMax = v))
@@ -79,6 +80,7 @@ public final class EsConfigScreen {
 						.build())
 				.option(slider("hud_scale", def.hudScale, 0.25, 4, () -> c.hudScale, v -> c.hudScale = v))
 				.option(slider("hud_panel", def.hudPanelOpacity, 0, 1, () -> c.hudPanelOpacity, v -> c.hudPanelOpacity = v))
+				.option(bool("hud_group_label", def.hudGroupLabel, () -> c.hudGroupLabel, v -> c.hudGroupLabel = v))
 				.option(bool("hud_special", def.hudShowSpecial, () -> c.hudShowSpecial, v -> c.hudShowSpecial = v))
 				.option(Option.<EsSettings.ScreenBackground>createBuilder().name(t("altar_background")).description(d("altar_background"))
 						.binding(def.altarBackground, () -> c.altarBackground, v -> c.altarBackground = v)
@@ -123,6 +125,11 @@ public final class EsConfigScreen {
 				.group(OptionGroup.createBuilder().name(t("group.global"))
 						.option(slider("sound_volume", def.soundVolume, 0, 2, () -> c.soundVolume, v -> c.soundVolume = v))
 						.option(bool("extra_sounds", def.extraSounds, () -> c.extraSounds, v -> c.extraSounds = v))
+						.option(Option.<EsSettings.EffectStyle>createBuilder().name(t("effect_style")).description(d("effect_style"))
+								.binding(def.effectStyle, () -> c.effectStyle, v -> c.effectStyle = v)
+								.controller(o -> dev.isxander.yacl3.api.controller.EnumControllerBuilder.create(o).enumClass(EsSettings.EffectStyle.class)
+										.formatValue(v -> t("effect_style." + v.name().toLowerCase())))
+								.build())
 						.option(slider("vfx_density", def.vfxDensity, 0.1, 4, () -> c.vfxDensity, v -> c.vfxDensity = v))
 						.build());
 		for (Skills.Page page : Skills.PAGES) {

@@ -337,6 +337,7 @@ public final class DefenseAbilities {
 				STAR_NEXT.put(p.getUUID(), now);
 				for (LivingEntity e : around(p, pos, v(p, skill, "RANGE"), true)) {
 					FIRE_IMMUNE.put(e, new Timed(p, now + duration, 0));
+					AbilityManager.status(e, null, MobEffects.FIRE_RESISTANCE, duration, 0);
 				}
 				fx(level, pos, ParticleTypes.FLAME, 60, v(p, skill, "RANGE") / 2, SoundEvents.BLAZE_AMBIENT, 0.6F);
 			}
@@ -350,7 +351,7 @@ public final class DefenseAbilities {
 	private static final Map<LivingEntity, Timed> HEALS = new WeakHashMap<>();
 
 	private static void slow(LivingEntity e, int ticks) {
-		e.addEffect(new MobEffectInstance(dev.enderskills.registry.ModEffects.ELECTRIFIED, ticks, 0, false, true, true));
+		AbilityManager.status(e, dev.enderskills.registry.ModEffects.ELECTRIFIED, MobEffects.SLOWNESS, ticks, 2);
 	}
 
 	private static void raise(ServerLevel level, ServerPlayer p, BlockPos column, int height, int duration, double force) {

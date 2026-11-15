@@ -349,14 +349,12 @@ public final class AbilityManager {
 	private static boolean moveTo(ServerLevel level, ServerPlayer player, Vec3 spot) {
 		Vec3 base = player.position();
 		level.sendParticles(ParticleTypes.PORTAL, base.x, base.y + 1, base.z, 30, 0.3, 0.6, 0.3, 0.3);
-		level.playSound(null, player.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 1.0F);
 		if (player.isPassenger()) {
 			player.stopRiding();
 		}
 		player.teleportTo(spot.x, spot.y, spot.z);
 		player.resetFallDistance();
 		level.sendParticles(ParticleTypes.PORTAL, spot.x, spot.y + 1, spot.z, 30, 0.3, 0.6, 0.3, 0.3);
-		level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 1.0F);
 		return true;
 	}
 
@@ -439,6 +437,12 @@ public final class AbilityManager {
 					Vec3 spot = safeSpot(level, player, aimAt, EsSettings.get().teleportGroundOnly);
 					done = spot != null && moveTo(level, player, spot);
 				} else {
+					BlockHitResult aimHit = level.clip(new ClipContext(eye, eye.add(look.scale(range)), ClipContext.Block.COLLIDER,
+							ClipContext.Fluid.NONE, player));
+					if (EsSettings.get().teleportNoSky && aimHit.getType() == HitResult.Type.MISS) {
+						player.displayClientMessage(net.minecraft.network.chat.Component.translatable("enderskills.teleport.no_target"), true);
+						return;
+					}
 					done = teleport(level, player, eye, look, range);
 				}
 			}
@@ -462,6 +466,7 @@ public final class AbilityManager {
 					done = false;
 				} else {
 					int duration = (int) value(player, skill, "DURATION");
+					status(target, null, MobEffects.BLINDNESS, duration, 0);
 					if (target instanceof Mob mob) {
 						mob.setTarget(null);
 						FOGGED.put(mob, now + duration);
@@ -493,6 +498,7 @@ public final class AbilityManager {
 					s.lastUse = now;
 					s.dirty = true;
 					Zones.add(new Zones.Zone(level, spot, 0.0, now + 1200, null, 0));
+					Zones.flash(level, spot);
 					level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.PORTAL_AMBIENT, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.5F, 1.4F);
 					return; // the exit is placed with the next use
 				}
@@ -506,6 +512,8 @@ public final class AbilityManager {
 				Zones.Zone b = new Zones.Zone(level, spot, 1.0, life, s.portalEntrance, 0);
 				Zones.add(a);
 				Zones.add(b);
+				Zones.flash(level, a.center());
+				Zones.flash(level, spot);
 				s.portalZones = java.util.List.of(a, b);
 				s.activeUntil.put(skill, life);
 				s.portalEntrance = null;
@@ -586,15 +594,13 @@ public final class AbilityManager {
 				}
 				if (level.noCollision(player, box)) {
 					level.sendParticles(ParticleTypes.PORTAL, base.x, base.y + 1, base.z, 30, 0.3, 0.6, 0.3, 0.3);
-					level.playSound(null, player.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 1.0F);
-					if (player.isPassenger()) {
+								if (player.isPassenger()) {
 						player.stopRiding();
 					}
 					player.teleportTo(spot.x, spot.y, spot.z);
 					player.resetFallDistance();
 					level.sendParticles(ParticleTypes.PORTAL, spot.x, spot.y + 1, spot.z, 30, 0.3, 0.6, 0.3, 0.3);
-					level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, dev.enderskills.logic.Vfx.vol() * 0.8F, 1.0F);
-					return true;
+								return true;
 				}
 			}
 		}
@@ -637,9 +643,34 @@ public final class AbilityManager {
 
 	/** Stun (until the status effects phase: can't move and hits for almost nothing). */
 	public static void stun(LivingEntity target, int ticks) {
-		target.addEffect(new MobEffectInstance(dev.enderskills.registry.ModEffects.STUNNED, ticks, 0, false, true, true));
+		status(target, dev.enderskills.registry.ModEffects.STUNNED, MobEffects.SLOWNESS, ticks, 10);
+		if (useVanilla()) {
+			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, ticks, 10, false, true, true));
+		}
 		if (target instanceof Mob mob) {
 			mob.getNavigation().stop();
+		}
+	}
+
+	private static boolean useVanilla() {
+		return EsSettings.get().effectStyle != EsSettings.EffectStyle.CURRENT;
+	}
+
+	private static boolean useCustom() {
+		return EsSettings.get().effectStyle != EsSettings.EffectStyle.ORIGINAL;
+	}
+
+	/**
+	 * Applies a status effect following the "status effects" setting: the mod's own effect, Minecraft's equivalent
+	 * (vanilla, may be null) or both.
+	 */
+	public static void status(LivingEntity target, net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> custom,
+			net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> vanilla, int ticks, int vanillaAmplifier) {
+		if (custom != null && useCustom()) {
+			target.addEffect(new MobEffectInstance(custom, ticks, 0, false, true, true));
+		}
+		if (vanilla != null && useVanilla()) {
+			target.addEffect(new MobEffectInstance(vanilla, ticks, vanillaAmplifier, false, true, true));
 		}
 	}
 

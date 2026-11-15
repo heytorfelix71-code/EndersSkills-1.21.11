@@ -39,18 +39,29 @@ public final class Zones {
 		ZONES.add(zone);
 	}
 
+	/** Entities that are standing inside a portal right now (they go through only when they step in). */
+	private static final java.util.Set<UUID> INSIDE = new java.util.HashSet<>();
+
+	/** Bright burst so a new portal shows up at once. */
+	public static void flash(ServerLevel level, Vec3 c) {
+		level.sendParticles(ParticleTypes.REVERSE_PORTAL, c.x, c.y + 1.0, c.z, Vfx.n(60), 0.4, 0.8, 0.4, 0.15);
+		level.sendParticles(ParticleTypes.END_ROD, c.x, c.y + 1.0, c.z, Vfx.n(20), 0.3, 0.7, 0.3, 0.05);
+	}
+
 	static void tick(int now) {
 		if (ZONES.isEmpty()) {
+			INSIDE.clear();
 			return;
 		}
 		ZONES.removeIf(z -> z.until() <= now);
 		RECENT.values().removeIf(t -> t <= now);
-		for (Zone z : ZONES) {
+		java.util.Set<UUID> insideNow = new java.util.HashSet<>();
+		for (Zone z : List.copyOf(ZONES)) {
 			Vec3 c = z.center();
-			if (now % 4 == 0) {
-				double r = Math.max(0.5, z.radius());
+			double r = Math.max(0.5, z.radius());
+			if (now % 2 == 0) {
 				z.level().sendParticles(z.exit() == null && z.radius() > 0 ? ParticleTypes.REVERSE_PORTAL : ParticleTypes.PORTAL,
-						c.x, c.y + 1.0, c.z, Vfx.n(16), r / 2, 0.7, r / 2, 0.2);
+						c.x, c.y + 1.0, c.z, Vfx.n(8), r / 2, 0.7, r / 2, 0.2);
 				if (z.radius() > 0) {
 					for (int i = 0; i < 12; i++) { // standing portal ring
 						double a = Math.PI * 2 * i / 12 + now * 0.08;
@@ -63,22 +74,30 @@ public final class Zones {
 			if (z.radius() <= 0) {
 				continue;
 			}
-			double r = z.radius();
+			double reach = z.radius() + 0.4;
 			for (LivingEntity e : z.level().getEntitiesOfClass(LivingEntity.class,
-					new AABB(c.x - r, c.y - 0.5, c.z - r, c.x + r, c.y + 2.5, c.z + r), x -> x.isAlive() && !x.isSpectator())) {
-				if (RECENT.containsKey(e.getUUID())) {
-					continue;
+					new AABB(c.x - reach, c.y - 0.5, c.z - reach, c.x + reach, c.y + 2.5, c.z + reach), x -> x.isAlive() && !x.isSpectator())) {
+				UUID id = e.getUUID();
+				insideNow.add(id);
+				if (INSIDE.contains(id) || RECENT.containsKey(id)) {
+					continue; // already standing in a portal: no ping-pong
 				}
 				Vec3 to = z.exit() != null ? z.exit() : randomSpot(z, e);
 				if (to == null) {
 					continue;
 				}
-				RECENT.put(e.getUUID(), now + 30);
+				RECENT.put(id, now + 4);
+				Vec3 motion = e.getDeltaMovement();
 				e.teleportTo(to.x, to.y, to.z);
+				e.setDeltaMovement(motion);
 				e.resetFallDistance();
-				z.level().playSound(null, to.x, to.y, to.z, SoundEvents.ENDERMAN_TELEPORT, SoundSource.NEUTRAL, 0.6F, 1.3F);
+				flash(z.level(), to);
+				dev.enderskills.registry.ModEffects.play(z.level(), to, "portal_active");
 			}
 		}
+		INSIDE.clear();
+		INSIDE.addAll(insideNow);
+		INSIDE.addAll(RECENT.keySet());
 	}
 
 	private static Vec3 randomSpot(Zone z, LivingEntity e) {

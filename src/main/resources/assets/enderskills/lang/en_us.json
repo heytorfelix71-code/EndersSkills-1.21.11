@@ -457,5 +457,18 @@
   "enderskills.config.altar_background.cosmic": "Cosmic",
   "enderskills.config.altar_background.blur": "Blur",
   "enderskills.config.altar_background.transparent": "Transparent",
-  "enderskills.hud.title": "Endurance"
+  "enderskills.hud.title": "Endurance",
+  "key.enderskills.prev_group": "Previous ability group",
+  "key.enderskills.next_group": "Next ability group",
+  "enderskills.hud.group": "%s: %s",
+  "enderskills.config.hud_group_label": "Show the current group",
+  "enderskills.config.hud_group_label.desc": "Shows the current ability group (for example \"Mobility: Void\") above the hearts, food and XP bar. The HUD and the ability keys only use the abilities of this group; change it with the Left and Right arrow keys.",
+  "enderskills.teleport.no_target": "Aim at a block to teleport.",
+  "enderskills.config.teleport_no_sky": "Teleport never into the sky",
+  "enderskills.config.teleport_no_sky.desc": "On: Teleport only works when you aim at a block; aiming at the sky does nothing (no cost).",
+  "enderskills.config.effect_style": "Status effects",
+  "enderskills.config.effect_style.desc": "Original: Minecraft's effects, as in the first versions (blindness, darkness, poison, slowness, weakness, fire resistance). Current: the mod's own effects (Stunned, Electrified, Rooted, Gassed...) without darkening the screen. Both: all of them.",
+  "enderskills.config.effect_style.original": "Original",
+  "enderskills.config.effect_style.both": "Both",
+  "enderskills.config.effect_style.current": "Current"
 }
