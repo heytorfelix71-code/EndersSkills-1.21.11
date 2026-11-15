@@ -109,6 +109,7 @@ public final class ClientAbilities {
 		countDown(COOLDOWNS);
 		countDown(ACTIVE);
 		SkillData data = data(player);
+		dev.enderskills.logic.SpeedHooks.clientBoost = ACTIVE.containsKey("speed_boost") ? value(data, "speed_boost", "SPEED") : 0.0;
 		if (data.skills().isEmpty()) {
 			return;
 		}
@@ -222,7 +223,8 @@ public final class ClientAbilities {
 	static void render(GuiGraphics g, DeltaTracker delta) {
 		Minecraft client = Minecraft.getInstance();
 		LocalPlayer player = client.player;
-		if (player == null || client.options.hideGui || maxEndurance <= 0) {
+		dev.enderskills.data.EsSettings cfg = dev.enderskills.data.EsSettings.get();
+		if (player == null || client.options.hideGui || maxEndurance <= 0 || !cfg.hudVisible) {
 			return;
 		}
 		SkillData data = data(player);
@@ -230,13 +232,13 @@ public final class ClientAbilities {
 			return;
 		}
 		Font font = client.font;
-		int x = 5;
-		int y = 5;
+		int x = cfg.hudX;
+		int y = cfg.hudY;
 		int w = 90;
 		g.fill(x, y, x + w, y + 7, 0xA0000000);
-		g.fill(x + 1, y + 1, x + 1 + Math.round((w - 2) * Math.min(1F, endurance / maxEndurance)), y + 6, 0xFF3C8CFF);
+		g.fill(x + 1, y + 1, x + 1 + Math.round((w - 2) * Math.min(1F, endurance / maxEndurance)), y + 6, 0xFF000000 | cfg.hudBarColor);
 		g.drawString(font, Component.translatable("enderskills.hud.endurance", Math.round(endurance), Math.round(maxEndurance)),
-				x + w + 4, y, 0xFFB0D0FF, true);
+				x + w + 4, y, 0xFF000000 | cfg.hudTextColor, true);
 		y += 12;
 		List<String> slots = Abilities.slots(data);
 		for (int i = 0; i < slots.size() && i < SLOT_KEYS.length; i++) {
@@ -250,6 +252,7 @@ public final class ClientAbilities {
 	}
 
 	private static int row(GuiGraphics g, Font font, String skill, String key, int x, int y) {
+		dev.enderskills.data.EsSettings cfg = dev.enderskills.data.EsSettings.get();
 		int cooldown = COOLDOWNS.getOrDefault(skill, 0);
 		int active = ACTIVE.getOrDefault(skill, 0);
 		g.fill(x, y, x + 18, y + 18, active > 0 ? 0xC0205030 : 0xA0000000);
@@ -257,7 +260,8 @@ public final class ClientAbilities {
 				16, 16, 32, 32, 32, 32, cooldown > 0 ? 0xFF606060 : 0xFFFFFFFF);
 		String text = cooldown > 0 ? (cooldown + 19) / 20 + "s"
 				: active > 1_000_000 ? "ON  " + key : active > 0 ? "▶ " + (active + 19) / 20 + "s" : key;
-		g.drawString(font, text, x + 22, y + 5, cooldown > 0 ? 0xFFFF8080 : active > 0 ? 0xFF80FF80 : 0xFFFFFFFF, true);
+		g.drawString(font, text, x + 22, y + 5, cooldown > 0 ? 0xFF000000 | cfg.hudCooldownColor
+				: active > 0 ? 0xFF000000 | cfg.hudActiveColor : 0xFF000000 | cfg.hudReadyColor, true);
 		return y + 20;
 	}
 }

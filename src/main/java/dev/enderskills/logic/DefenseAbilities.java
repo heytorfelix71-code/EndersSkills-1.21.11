@@ -333,7 +333,6 @@ public final class DefenseAbilities {
 				STAR_NEXT.put(p.getUUID(), now);
 				for (LivingEntity e : around(p, pos, v(p, skill, "RANGE"), true)) {
 					FIRE_IMMUNE.put(e, new Timed(p, now + duration, 0));
-					e.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, duration, 0, false, false, true));
 				}
 				fx(level, pos, ParticleTypes.FLAME, 60, v(p, skill, "RANGE") / 2, SoundEvents.BLAZE_AMBIENT, 0.6F);
 			}

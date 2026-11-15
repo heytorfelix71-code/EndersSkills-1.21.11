@@ -52,6 +52,8 @@ public final class AbilityManager {
 		double smashStartY;
 		int smashStarted;
 		Vec3 portalEntrance;
+		ServerLevel portalLevel;
+		java.util.List<Zones.Zone> portalZones = java.util.List.of();
 		boolean dirty = true;
 		float sentEndurance = -1;
 	}
@@ -68,7 +70,10 @@ public final class AbilityManager {
 	}
 
 	public static void forget(ServerPlayer player) {
-		STATES.remove(player.getUUID());
+		State st = STATES.get(player.getUUID());
+		if (st != null && st.portalZones.isEmpty()) {
+			STATES.remove(player.getUUID());
+		}
 	}
 
 	private static double maxEndurance(ServerPlayer player) {
@@ -95,9 +100,38 @@ public final class AbilityManager {
 
 	/** Strength multiplier of abilities: Ability Power attribute + Power Boost. */
 	public static double power(ServerPlayer player) {
-		return 1.0 + AttributeEffects.modifier(player, "ability_power") + DefenseAbilities.boost(player)
+		return BOOST.getOrDefault(player.getUUID(), EsSettings.get().abilityDamageMultiplier) * (1.0 + AttributeEffects.modifier(player, "ability_power") + DefenseAbilities.boost(player)
 				+ (isActive(player, "sacrifice") ? value(player, "sacrifice", "POWER") : 0.0)
-				+ (player.hasEffect(dev.enderskills.registry.ModEffects.ABILITY_POWER) ? 0.25 * (player.getEffect(dev.enderskills.registry.ModEffects.ABILITY_POWER).getAmplifier() + 1) : 0.0);
+				+ (player.hasEffect(dev.enderskills.registry.ModEffects.ABILITY_POWER) ? 0.25 * (player.getEffect(dev.enderskills.registry.ModEffects.ABILITY_POWER).getAmplifier() + 1) : 0.0));
+	}
+
+	private static final Map<UUID, Double> BOOST = new HashMap<>();
+
+	/** Power of the ability about to run: global multiplier x tree multiplier x overdrive that grows with the skill level. */
+	private static void boostFor(ServerPlayer p, String skill) {
+		EsSettings e = EsSettings.get();
+		dev.enderskills.skill.Skills.Page page = dev.enderskills.skill.Skills.pageOf(skill);
+		double group = page == null ? 1.0 : e.groupPower.getOrDefault(page.tab().id + "." + page.element(), 1.0);
+		int cap = Math.max(1, Math.min(50, SkillConfigs.maxLevel(skill)));
+		double f = Math.min(1.0, Math.max(0, Progression.data(p).level(skill)) / (double) cap);
+		BOOST.put(p.getUUID(), e.abilityDamageMultiplier * group * (1.0 + e.maxLevelOverdrive * Math.pow(f, e.overdriveCurve)));
+	}
+
+	/** Distance that grows geometrically from a start value (level 0) to a maximum (level 50 or the skill's top level). */
+	private static double scaled(ServerPlayer p, String skill, double start, double max) {
+		int cap = Math.max(1, Math.min(50, SkillConfigs.maxLevel(skill)));
+		double f = Math.min(1.0, Math.max(0, Progression.data(p).level(skill)) / (double) cap);
+		start = Math.max(1.0, start);
+		return start * Math.pow(Math.max(start, max) / start, f);
+	}
+
+	private static void closePortals(ServerPlayer player, State s) {
+		s.portalZones.forEach(Zones::remove);
+		s.portalZones = java.util.List.of();
+		s.activeUntil.remove("portal");
+		s.cooldownUntil.put("portal", now + 40);
+		s.dirty = true;
+		player.level().playSound(null, player.blockPosition(), SoundEvents.PORTAL_TRAVEL, SoundSource.PLAYERS, 0.3F, 1.8F);
 	}
 
 	/** Passive on-hit abilities: owned, off cooldown and enough endurance; pays and starts the cooldown. */
@@ -107,11 +141,13 @@ public final class AbilityManager {
 		}
 		State s = state(player);
 		double cost = value(player, skill, "ENDURANCE");
+		boostFor(player, skill);
 		if (s.cooldownUntil.getOrDefault(skill, 0) > now || s.endurance < cost) {
 			return false;
 		}
 		s.endurance -= cost;
 		s.lastUse = now;
+		boostFor(player, skill);
 		s.cooldownUntil.put(skill, now + (int) value(player, skill, "COOLDOWN"));
 		s.dirty = true;
 		ModEffectsHook.sound(player, skill);
@@ -259,6 +295,11 @@ public final class AbilityManager {
 		}
 		State s = state(player);
 		ServerLevel level = (ServerLevel) player.level();
+		boostFor(player, skill);
+		if (skill.equals("portal") && active(s, skill)) {
+			closePortals(player, s); // the portals stay until you close them
+			return;
+		}
 		double cost = value(player, skill, "ENDURANCE");
 		boolean secondPortal = skill.equals("portal") && s.portalEntrance != null;
 		if (TOGGLES.contains(skill) && active(s, skill)) {
@@ -304,11 +345,10 @@ public final class AbilityManager {
 				dir = dir.normalize();
 				done = teleport(level, player, player.position().add(0, 0.5, 0), dir, value(player, skill, "RANGE"));
 			}
-			case "teleport" -> done = teleport(level, player, eye, look, value(player, skill, "RANGE"));
+			case "teleport" -> done = teleport(level, player, eye, look,
+					scaled(player, skill, EsSettings.get().teleportRangeStart, EsSettings.get().teleportRangeMax));
 			case "speed_boost" -> {
 				s.activeUntil.put(skill, now + (int) value(player, skill, "DURATION"));
-				AttributeEffects.set(player, Attributes.MOVEMENT_SPEED, "speed_boost", value(player, skill, "SPEED"),
-						AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 				effect(level, player, ParticleTypes.CLOUD, SoundEvents.BREEZE_WIND_CHARGE_BURST.value());
 			}
 			case "hasten" -> {
@@ -327,7 +367,6 @@ public final class AbilityManager {
 					done = false;
 				} else {
 					int duration = (int) value(player, skill, "DURATION");
-					target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, duration, 0, false, true, true));
 					if (target instanceof Mob mob) {
 						mob.setTarget(null);
 						FOGGED.put(mob, now + duration);
@@ -343,19 +382,29 @@ public final class AbilityManager {
 				level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.PORTAL_TRIGGER, SoundSource.PLAYERS, 0.4F, 1.6F);
 			}
 			case "portal" -> {
-				Vec3 spot = aim(level, player, 16.0);
-				if (!secondPortal) {
+				EsSettings cfg = EsSettings.get();
+				Vec3 spot = aim(level, player, cfg.portalAimRange);
+				if (!secondPortal || s.portalLevel != level) {
 					s.portalEntrance = spot;
+					s.portalLevel = level;
 					s.endurance -= cost;
 					s.lastUse = now;
 					s.dirty = true;
-					Zones.add(new Zones.Zone(level, spot, 0.0, now + 600, null, 0));
+					Zones.add(new Zones.Zone(level, spot, 0.0, now + 1200, null, 0));
 					level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.PORTAL_AMBIENT, SoundSource.PLAYERS, 0.5F, 1.4F);
-					return; // the exit is placed with the next use; the cooldown starts then
+					return; // the exit is placed with the next use
 				}
-				int until = now + (int) value(player, skill, "DURATION");
-				Zones.add(new Zones.Zone(level, s.portalEntrance, 1.0, until, spot, 0));
-				Zones.add(new Zones.Zone(level, spot, 0.0, until, null, 0));
+				double range = scaled(player, skill, cfg.portalRangeStart, cfg.portalRangeMax);
+				if (s.portalEntrance.distanceTo(spot) > range) {
+					player.displayClientMessage(net.minecraft.network.chat.Component.translatable("enderskills.portal.too_far", (long) range), true);
+					return;
+				}
+				Zones.Zone a = new Zones.Zone(level, s.portalEntrance, 1.0, Integer.MAX_VALUE, spot, 0);
+				Zones.Zone b = new Zones.Zone(level, spot, 1.0, Integer.MAX_VALUE, s.portalEntrance, 0);
+				Zones.add(a);
+				Zones.add(b);
+				s.portalZones = java.util.List.of(a, b);
+				s.activeUntil.put(skill, Integer.MAX_VALUE);
 				s.portalEntrance = null;
 				cost = 0;
 				level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.PORTAL_TRIGGER, SoundSource.PLAYERS, 0.4F, 1.6F);
@@ -388,6 +437,9 @@ public final class AbilityManager {
 		}
 		if (active(s, "hasten") && !skill.equals("hasten")) {
 			cooldown *= 1.0 - Math.min(0.95, value(player, "hasten", "REDUCTION"));
+		}
+		if (skill.equals("portal")) {
+			cooldown = 0;
 		}
 		if (cooldown >= 1) {
 			s.cooldownUntil.put(skill, now + (int) cooldown);

@@ -49,6 +49,7 @@ public final class ModEffects {
 			.addAttributeModifier(Attributes.MOVEMENT_SPEED, EnderSkills.id("rooted"), -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
 			.addAttributeModifier(Attributes.JUMP_STRENGTH, EnderSkills.id("rooted"), -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
 	public static final Holder<MobEffect> BLEEDING = effect("bleeding", new EsEffect(MobEffectCategory.HARMFUL, 0x8B0000));
+	public static final Holder<MobEffect> GASSED = effect("gassed", new EsEffect(MobEffectCategory.HARMFUL, 0x6B8E23));
 	public static final Holder<MobEffect> BLACK_FLAME = effect("black_flame", new EsEffect(MobEffectCategory.HARMFUL, 0x1A0A2A));
 
 	// ---- potion effects

@@ -13,7 +13,8 @@
   "environment": "*",
   "entrypoints": {
     "main": ["dev.enderskills.EnderSkills"],
-    "client": ["dev.enderskills.client.EnderSkillsClient"]
+    "client": ["dev.enderskills.client.EnderSkillsClient"],
+    "modmenu": ["dev.enderskills.client.config.ModMenuIntegration"]
   },
   "mixins": [
     "enderskills.mixins.json"
@@ -23,5 +24,9 @@
     "minecraft": "~1.21.11",
     "java": ">=21",
     "fabric-api": "*"
+  },
+  "suggests": {
+    "modmenu": "*",
+    "yet_another_config_lib_v3": "*"
   }
 }

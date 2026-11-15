@@ -36,7 +36,6 @@ public final class AttributeEffects {
 		set(player, Attributes.MAX_HEALTH, "heart_boost", modifier(player, "heart_boost"), AttributeModifier.Operation.ADD_VALUE);
 		set(player, Attributes.KNOCKBACK_RESISTANCE, "knockback_resistance", modifier(player, "knockback_resistance"),
 				AttributeModifier.Operation.ADD_VALUE);
-		set(player, Attributes.MOVEMENT_SPEED, "speed", modifier(player, "speed"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 		set(player, Attributes.JUMP_STRENGTH, "jump_height", modifier(player, "jump_height"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 		set(player, Attributes.WATER_MOVEMENT_EFFICIENCY, "swim_speed", modifier(player, "swim_speed"), AttributeModifier.Operation.ADD_VALUE);
 		set(player, Attributes.ATTACK_DAMAGE, "damage", modifier(player, "damage"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);

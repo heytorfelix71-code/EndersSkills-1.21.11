@@ -23,3 +23,9 @@ Textures, skill values (`.cfg`) and texts come from the original mod under the M
 | 5 | Status effects (Stunned, Electrified, Rooted, Bleeding, Black Flame), 4 potions with brewing, the 105 original sounds | done (1.0.0) |
 
 Commands (operators): `/enderskills level <n> [player]`, `/enderskills reset [player]`, `/enderskills reload`.
+
+## 1.1.0
+- Config screen (Mod Menu + YACL): ability power, max-level overdrive, power per tree, portal/teleport distances, HUD position and colors, costs and rules.
+- Portal works like a portal gun: the two portals stay until you use the ability again; the distance between them grows from 100 blocks to the whole world.
+- Power scales with the skill level: balanced early, overwhelming at the top level.
+- Speed and Speed Boost no longer stretch the camera FOV; no more blindness/darkness/poison on the screen.

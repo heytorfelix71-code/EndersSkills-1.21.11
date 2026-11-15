@@ -230,7 +230,6 @@ public final class OffenseAbilities {
 				b.onHit = (e, at) -> {
 					hit(p, e, v(p, skill, "DAMAGE"), 0);
 					dot(p, e, v(p, skill, "DOT"), 0, v(p, skill, "DOT_DURATION"));
-					e.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 60, 0, false, false, true));
 				};
 				sound(level, p.position(), SoundEvents.WARDEN_SONIC_CHARGE, 0.5F, 1.8F);
 			}
@@ -256,9 +255,9 @@ public final class OffenseAbilities {
 						hit(p, e, v(p, skill, "DAMAGE"), 0);
 					}
 					zone(p, at, r, (int) Math.max(40, v(p, skill, "DURATION")), 10, ParticleTypes.SNEEZE, e -> {
-						if (!e.hasEffect(MobEffects.POISON)) {
+						if (!e.hasEffect(dev.enderskills.registry.ModEffects.GASSED)) {
 							dot(p, e, v(p, skill, "DOT"), 0, v(p, skill, "DOT_DURATION"));
-							e.addEffect(new MobEffectInstance(MobEffects.POISON, (int) v(p, skill, "DOT_DURATION"), 0, false, true, true));
+							e.addEffect(new MobEffectInstance(dev.enderskills.registry.ModEffects.GASSED, (int) v(p, skill, "DOT_DURATION"), 0, false, true, true));
 						}
 					});
 					sound(level, at, SoundEvents.GENERIC_EXPLODE.value(), 0.6F, 1.6F);
@@ -519,7 +518,6 @@ public final class OffenseAbilities {
 				later((int) v(p, skill, "DELAY"), () -> {
 					for (LivingEntity e : enemies(p, at, r)) {
 						hit(p, e, v(p, skill, "DAMAGE"), 0);
-						e.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 40, 0, false, false, true));
 						glow(p, e);
 					}
 					burst(level, at, ParticleTypes.FIREWORK, 30, 0.6);

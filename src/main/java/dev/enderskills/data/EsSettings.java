@@ -72,6 +72,52 @@ public final class EsSettings {
 		return m;
 	}
 
+	// ---- ability power (meant to be pushed to the extreme)
+	/** Multiplies the damage and healing of every ability, from level 0. */
+	public double abilityDamageMultiplier = 2.0;
+	/** Extra power at the maximum level: a skill at its top level is (1 + this) times stronger than at level 0. */
+	public double maxLevelOverdrive = 30.0;
+	/** How late the overdrive kicks in (1 = steady, 3 = only near the top level). */
+	public double overdriveCurve = 3.0;
+	/** Extra multiplier for each skill tree, keyed "class.element" (defense.light, offense.void ...). */
+	public java.util.Map<String, Double> groupPower = defaultGroups();
+
+	private static java.util.Map<String, Double> defaultGroups() {
+		java.util.Map<String, Double> m = new java.util.LinkedHashMap<>();
+		for (dev.enderskills.skill.Skills.Page p : dev.enderskills.skill.Skills.PAGES) {
+			m.put(p.tab().id + "." + p.element(), 1.0);
+		}
+		return m;
+	}
+
+	// ---- portal gun style Portal and long range Teleport
+	/** Blocks between the two portals at level 0; grows up to the maximum at the top level. */
+	public double portalRangeStart = 100.0;
+	public double portalRangeMax = 29999984.0;
+	/** How far you can aim to place a portal (the pair distance is limited by the range above). */
+	public double portalAimRange = 256.0;
+	public double teleportRangeStart = 100.0;
+	public double teleportRangeMax = 2000.0;
+
+	// ---- HUD (colors are RGB)
+	public boolean hudVisible = true;
+	public int hudX = 5;
+	public int hudY = 5;
+	public int hudBarColor = 0x3C8CFF;
+	public int hudTextColor = 0xB0D0FF;
+	public int hudReadyColor = 0xFFFFFF;
+	public int hudCooldownColor = 0xFF8080;
+	public int hudActiveColor = 0x80FF80;
+
+	public static void save() {
+		Path file = SkillConfigs.dir().resolve("settings.json");
+		try (Writer w = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
+			GSON.toJson(instance, w);
+		} catch (IOException e) {
+			EnderSkills.LOGGER.error("Could not save {}: {}", file, e.toString());
+		}
+	}
+
 	public static EsSettings get() {
 		return instance;
 	}

@@ -31,6 +31,10 @@ public final class Zones {
 	private Zones() {
 	}
 
+	public static void remove(Zone zone) {
+		ZONES.remove(zone);
+	}
+
 	public static void add(Zone zone) {
 		ZONES.add(zone);
 	}
