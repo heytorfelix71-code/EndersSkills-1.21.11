@@ -196,6 +196,14 @@ public final class EsSettings {
 	public int gloomMaxShots = 5;
 	/** Level from which Fire Spirit / Black Blessing Flame show a second rune circle around the player. */
 	public int secondRuneRingLevel = 40;
+	/** Shadow: from this level, shadows of you walk around and fight hostile mobs near you (2 at first). */
+	public int shadowMinionLevel = 20;
+	/** Shadow: how many fighting shadows at the top level (one more every few levels until then; up to 100). */
+	public int shadowMinionMax = 5;
+	/** Shadow: damage of each hit of a shadow (times your ability power). */
+	public double shadowMinionDamage = 4.0;
+	/** Shadow: how far from you the shadows look for hostile mobs, in blocks. */
+	public double shadowMinionRange = 16.0;
 	/** How long the areas of the abilities stay (gas cloud, black hole, blood pool, flaming rain...): 1 = original time. */
 	public double areaDurationMultiplier = 1.5;
 	/** Size of the Gas Cloud (1 = original). */

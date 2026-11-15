@@ -624,5 +624,17 @@
   "enderskills.config.invis_mobs_forget": "Invisible: mobs forget you",
   "enderskills.config.invis_mobs_forget.desc": "While Invisibility is on, mobs stop chasing you, even the ones you hit: they don't know where you are.",
   "enderskills.config.invis_particles": "Invisible: hide all particles",
-  "enderskills.config.invis_particles.desc": "No particle shows around an invisible player (potion swirls, steps, hits, ability effects)."
+  "enderskills.config.invis_particles.desc": "No particle shows around an invisible player (potion swirls, steps, hits, ability effects).",
+  "enderskills.config.shadow_minion_level": "Fighting shadows from level",
+  "enderskills.config.shadow_minion_level.desc": "From this Shadow level, shadows of you walk around and fight hostile mobs near you (2 at first).",
+  "enderskills.config.shadow_minion_max": "Most fighting shadows",
+  "enderskills.config.shadow_minion_max.desc": "How many fighting shadows at the top level; one more comes every few levels until then (up to 100).",
+  "enderskills.config.shadow_minion_damage": "Shadow hit damage",
+  "enderskills.config.shadow_minion_damage.desc": "Damage of each hit of a fighting shadow, times your ability power.",
+  "enderskills.config.shadow_minion_range": "Shadow guard range",
+  "enderskills.config.shadow_minion_range.desc": "How far from you (blocks) the shadows look for hostile mobs.",
+  "entity.enderskills.shadow": "Shadow",
+  "enderskills.shadows.title": "Fighting shadows",
+  "enderskills.shadows.slider": "Shadows: %s",
+  "enderskills.shadows.count": "Shadows: %s (your level allows %s)"
 }

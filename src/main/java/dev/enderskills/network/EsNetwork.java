@@ -145,6 +145,18 @@ public final class EsNetwork {
 		}
 	}
 
+	/** Client → server: how many fighting shadows the player wants (sneak + Shadow key). */
+	public record ShadowCount(int count) implements CustomPacketPayload {
+		public static final Type<ShadowCount> TYPE = new Type<>(EnderSkills.id("shadow_count"));
+		public static final StreamCodec<RegistryFriendlyByteBuf, ShadowCount> CODEC = StreamCodec.composite(
+				ByteBufCodecs.VAR_INT, ShadowCount::count, ShadowCount::new);
+
+		@Override
+		public Type<? extends CustomPacketPayload> type() {
+			return TYPE;
+		}
+	}
+
 	/** Server → client: draw a 3D effect (see Shapes). */
 	/** What an ability is doing, for the original-style rendering on the client (see logic.Fx). */
 	public record SkillFx(String skill, int phase, int id, int entity, double x, double y, double z, double tx, double ty, double tz,
@@ -225,6 +237,9 @@ public final class EsNetwork {
 		PayloadTypeRegistry.playC2S().register(UseAbility.TYPE, UseAbility.CODEC);
 		PayloadTypeRegistry.playC2S().register(UseAbilityAt.TYPE, UseAbilityAt.CODEC);
 		PayloadTypeRegistry.playC2S().register(PortalAction.TYPE, PortalAction.CODEC);
+		PayloadTypeRegistry.playC2S().register(ShadowCount.TYPE, ShadowCount.CODEC);
+		ServerPlayNetworking.registerGlobalReceiver(ShadowCount.TYPE, (payload, context) ->
+				dev.enderskills.logic.ShadowMinions.choose(context.player(), payload.count()));
 		PayloadTypeRegistry.playS2C().register(PortalList.TYPE, PortalList.CODEC);
 		ServerPlayNetworking.registerGlobalReceiver(PortalAction.TYPE, (payload, context) ->
 				dev.enderskills.logic.AbilityManager.portalMenu(context.player(), payload.action(), payload.id(), payload.which(),

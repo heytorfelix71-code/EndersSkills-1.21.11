@@ -94,7 +94,16 @@ public final class ModContent {
 		return item;
 	}
 
+	/** Shadows of the player that fight at their side (Shadow, level 20 and up). Never saved. */
+	public static final net.minecraft.world.entity.EntityType<dev.enderskills.entity.ShadowEntity> SHADOW = Registry.register(
+			BuiltInRegistries.ENTITY_TYPE, EnderSkills.id("shadow"),
+			net.minecraft.world.entity.EntityType.Builder.<dev.enderskills.entity.ShadowEntity>of(dev.enderskills.entity.ShadowEntity::new,
+					net.minecraft.world.entity.MobCategory.MISC).sized(0.6F, 1.8F).noSave().clientTrackingRange(8)
+					.build(ResourceKey.create(Registries.ENTITY_TYPE, EnderSkills.id("shadow"))));
+
 	public static void init() {
+		net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry.register(SHADOW,
+				dev.enderskills.entity.ShadowEntity.attributes());
 		Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, EnderSkills.id("items"), FabricItemGroup.builder()
 				.title(Component.translatable("itemGroup.enderskills"))
 				.icon(() -> new ItemStack(TOKEN))

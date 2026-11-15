@@ -200,7 +200,9 @@ public final class ClientAbilities {
 			while (SLOT_KEYS[i].consumeClick()) {
 				if (free && i < slots.size()) {
 					String skill = slots.get(i);
-					if (client.options.keyShift.isDown() && skill.equals("portal")) {
+					if (client.options.keyShift.isDown() && skill.equals("shadow")) {
+						client.setScreen(new ShadowCountScreen()); // how many fighting shadows
+					} else if (client.options.keyShift.isDown() && skill.equals("portal")) {
 						PortalScreen.open(); // manage the portals: close, move, new portal at coordinates
 					} else if (client.options.keyShift.isDown() && dev.enderskills.data.EsSettings.get().coordinateTargeting
 							&& skill.equals("teleport")) {

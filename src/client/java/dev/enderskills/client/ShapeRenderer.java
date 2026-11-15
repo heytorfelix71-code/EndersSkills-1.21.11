@@ -146,6 +146,11 @@ final class ShapeRenderer {
 				drawShape(glow, buffers, m, s, cam, now, life, Math.max(0F, fade));
 			}
 		}
+		for (Entity ent : mc.level.entitiesForRendering()) {
+			if (ent instanceof dev.enderskills.entity.ShadowEntity shadow && mc.level.getEntity(shadow.ownerEntityId()) instanceof AbstractClientPlayer owner) {
+				minion(ctx, owner, shadow, cam, partial);
+			}
+		}
 		for (Map.Entry<Integer, Map<Integer, long[]>> e : ON_PLAYER.entrySet()) {
 			if (mc.level.getEntity(e.getKey()) instanceof AbstractClientPlayer p) {
 				onPlayer(ctx, p, e.getValue(), cam, partial, now);
@@ -467,6 +472,44 @@ final class ShapeRenderer {
 				}
 			}
 		}
+	}
+
+	/**
+	 * A fighting shadow: the owner's own look (skin, model, EMF / Fresh Animations), but standing, walking, looking and
+	 * hitting like the shadow entity, all in black.
+	 */
+	private static void minion(WorldRenderContext ctx, AbstractClientPlayer owner, dev.enderskills.entity.ShadowEntity shadow, Vec3 cam, float partial) {
+		Minecraft mc = Minecraft.getInstance();
+		net.minecraft.client.renderer.entity.EntityRenderDispatcher dispatcher = mc.getEntityRenderDispatcher();
+		net.minecraft.client.renderer.entity.state.EntityRenderState state = dispatcher.extractEntity(owner, partial);
+		Vec3 at = shadow.getPosition(partial);
+		state.nameTag = null;
+		state.shadowPieces.clear();
+		state.shadowRadius = 0F;
+		state.outlineColor = 0;
+		state.x = at.x;
+		state.y = at.y;
+		state.z = at.z;
+		if (state instanceof net.minecraft.client.renderer.entity.state.LivingEntityRenderState living) {
+			living.isInvisibleToPlayer = false;
+			living.bodyRot = net.minecraft.util.Mth.rotLerp(partial, shadow.yBodyRotO, shadow.yBodyRot);
+			float head = net.minecraft.util.Mth.rotLerp(partial, shadow.yHeadRotO, shadow.yHeadRot);
+			living.yRot = net.minecraft.util.Mth.wrapDegrees(head - living.bodyRot);
+			living.xRot = shadow.getXRot(partial);
+			living.walkAnimationPos = shadow.walkAnimation.position(partial);
+			living.walkAnimationSpeed = shadow.walkAnimation.speed(partial);
+			living.pose = net.minecraft.world.entity.Pose.STANDING;
+			living.isInWater = false;
+		}
+		if (state instanceof net.minecraft.client.renderer.entity.state.HumanoidRenderState humanoid) {
+			humanoid.isCrouching = false;
+			humanoid.swimAmount = 0F;
+		}
+		if (state instanceof net.minecraft.client.renderer.entity.state.ArmedEntityRenderState armed) {
+			armed.attackTime = shadow.getAttackAnim(partial);
+		}
+		dispatcher.submit(state, ctx.worldState().cameraRenderState, at.x - cam.x, at.y - cam.y, at.z - cam.z, new PoseStack(),
+				new TintCollector(ctx.commandQueue(), argb(0x000000, 0.9F)));
 	}
 
 	/** A few blurred copies shaking around the player (Reverse Flash look). */

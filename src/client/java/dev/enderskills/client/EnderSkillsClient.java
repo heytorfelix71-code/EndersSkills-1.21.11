@@ -16,6 +16,8 @@ public final class EnderSkillsClient implements ClientModInitializer {
 		ClientPlayNetworking.registerGlobalReceiver(EsNetwork.OpenAltar.TYPE, (payload, context) ->
 				Minecraft.getInstance().setScreen(new AltarScreen(payload)));
 		ClientAbilities.init();
+		net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry.register(ModContent.SHADOW,
+				net.minecraft.client.renderer.entity.NoopRenderer::new); // drawn by ShapeRenderer as a copy of the owner
 		ClientPlayNetworking.registerGlobalReceiver(EsNetwork.PortalList.TYPE, (payload, context) -> PortalScreen.receive(payload));
 		ClientPlayNetworking.registerGlobalReceiver(EsNetwork.VfxShape.TYPE, (payload, context) -> ShapeRenderer.add(payload));
 		ClientPlayNetworking.registerGlobalReceiver(EsNetwork.SkillFx.TYPE, (payload, context) -> dev.enderskills.client.fx.OriginalFx.add(payload));

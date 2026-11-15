@@ -334,6 +334,12 @@ public final class EsConfigScreen {
 				g.option(num("speed_boost_power", def.speedBoostPower, 0, 5, () -> c.speedBoostPower, v -> c.speedBoostPower = v));
 				g.option(num("speed_boost_step", def.speedBoostStep, 0, 4, () -> c.speedBoostStep, v -> c.speedBoostStep = v));
 			}
+			case "shadow" -> {
+				g.option(integer("shadow_minion_level", def.shadowMinionLevel, 0, 1000, () -> c.shadowMinionLevel, v -> c.shadowMinionLevel = v));
+				g.option(integer("shadow_minion_max", def.shadowMinionMax, 0, 100, () -> c.shadowMinionMax, v -> c.shadowMinionMax = v));
+				g.option(num("shadow_minion_damage", def.shadowMinionDamage, 0, 1000, () -> c.shadowMinionDamage, v -> c.shadowMinionDamage = v));
+				g.option(num("shadow_minion_range", def.shadowMinionRange, 4, 64, () -> c.shadowMinionRange, v -> c.shadowMinionRange = v));
+			}
 			case "fire_spirit", "black_blessing_flame" -> g.option(integer("second_rune_ring_level", def.secondRuneRingLevel, 1, 1000,
 					() -> c.secondRuneRingLevel, v -> c.secondRuneRingLevel = v));
 			case "gas_cloud" -> {

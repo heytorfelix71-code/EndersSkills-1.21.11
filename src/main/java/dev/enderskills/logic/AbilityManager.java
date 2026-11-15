@@ -175,6 +175,7 @@ public final class AbilityManager {
 		now = srv.getTickCount();
 		Zones.tick(now);
 		Portals.tick(now);
+		ShadowMinions.tick(srv, now);
 		DefenseAbilities.tick(now);
 		EarthStructures.tick(now);
 		OffenseAbilities.tick(now);
