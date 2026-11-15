@@ -738,5 +738,14 @@
   "enderskills.config.crit_chance_power": "Critical chance power (x)",
   "enderskills.config.crit_chance_power.desc": "Multiplies the Critical Chance passive (40% at its last level; 2 = 80%). Never above 100%.",
   "key.enderskills.warp": "Warp",
-  "enderskills.warp.blocked": "Warp: no free space there"
+  "enderskills.warp.blocked": "Warp: no free space there",
+  "enderskills.config.black_hole_suction": "Suction speed (x)",
+  "enderskills.config.black_hole_suction.desc": "How fast the Black Hole sucks the blocks in (1 = slow, 2 = fast, up to 10).",
+  "enderskills.config.black_hole_depth": "Crater depth at the top level",
+  "enderskills.config.black_hole_depth.desc": "How deep the crater goes at the last level, in blocks (it grows with the level from 3).",
+  "enderskills.config.shader_compat": "Shader pack compatibility",
+  "enderskills.config.shader_compat.desc": "With a shader pack on (Iris), effects use Minecraft's own render types so they show up. Auto: only while a shader pack is on. On: always. Off: never.",
+  "enderskills.config.shader_compat.auto": "Auto",
+  "enderskills.config.shader_compat.on": "On",
+  "enderskills.config.shader_compat.off": "Off"
 }

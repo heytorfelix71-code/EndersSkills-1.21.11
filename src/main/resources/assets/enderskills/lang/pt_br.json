@@ -738,5 +738,14 @@
   "enderskills.config.crit_chance_power": "Força da chance crítica (x)",
   "enderskills.config.crit_chance_power.desc": "Multiplica a passiva Chance Crítica (40% no último nível; 2 = 80%). Nunca passa de 100%.",
   "key.enderskills.warp": "Distorção",
-  "enderskills.warp.blocked": "Distorção: sem espaço livre ali"
+  "enderskills.warp.blocked": "Distorção: sem espaço livre ali",
+  "enderskills.config.black_hole_suction": "Velocidade de sucção (x)",
+  "enderskills.config.black_hole_suction.desc": "Quão rápido o Buraco Negro suga os blocos (1 = devagar, 2 = rápido, até 10).",
+  "enderskills.config.black_hole_depth": "Profundidade da cratera no nível máximo",
+  "enderskills.config.black_hole_depth.desc": "Quão funda a cratera fica no último nível, em blocos (cresce com o nível a partir de 3).",
+  "enderskills.config.shader_compat": "Compatibilidade com shaders",
+  "enderskills.config.shader_compat.desc": "Com shaders ligados (Iris), os efeitos usam os tipos de render do próprio Minecraft para aparecerem. Auto: só com shaders ligados. Ligado: sempre. Desligado: nunca.",
+  "enderskills.config.shader_compat.auto": "Auto",
+  "enderskills.config.shader_compat.on": "Ligado",
+  "enderskills.config.shader_compat.off": "Desligado"
 }

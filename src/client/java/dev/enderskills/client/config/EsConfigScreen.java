@@ -157,6 +157,11 @@ public final class EsConfigScreen {
 								.controller(o -> dev.isxander.yacl3.api.controller.EnumControllerBuilder.create(o).enumClass(EsSettings.VfxStyle.class)
 										.formatValue(v -> t("vfx_style." + v.name().toLowerCase())))
 								.build())
+						.option(Option.<EsSettings.ShaderCompat>createBuilder().name(t("shader_compat")).description(d("shader_compat"))
+								.binding(def.shaderCompat, () -> c.shaderCompat, v -> c.shaderCompat = v)
+								.controller(o -> dev.isxander.yacl3.api.controller.EnumControllerBuilder.create(o).enumClass(EsSettings.ShaderCompat.class)
+										.formatValue(v -> t("shader_compat." + v.name().toLowerCase())))
+								.build())
 						.option(Option.<EsSettings.SoundStyle>createBuilder().name(t("sound_style")).description(d("sound_style"))
 								.binding(def.soundStyle, () -> c.soundStyle, v -> c.soundStyle = v)
 								.controller(o -> dev.isxander.yacl3.api.controller.EnumControllerBuilder.create(o).enumClass(EsSettings.SoundStyle.class)
@@ -397,6 +402,8 @@ public final class EsConfigScreen {
 				g.option(integer("black_hole_blocks", def.blackHoleBlocksPerTick, 0, 30, () -> c.blackHoleBlocksPerTick, v -> c.blackHoleBlocksPerTick = v));
 				g.option(num("black_hole_top_bonus", def.blackHoleTopBonus, 0, 1000, () -> c.blackHoleTopBonus, v -> c.blackHoleTopBonus = v));
 				g.option(num("black_hole_block_radius", def.blackHoleMaxBlockRadius, 2, 1000, () -> c.blackHoleMaxBlockRadius, v -> c.blackHoleMaxBlockRadius = v));
+				g.option(num("black_hole_suction", def.blackHoleSuctionSpeed, 0.1, 10, () -> c.blackHoleSuctionSpeed, v -> c.blackHoleSuctionSpeed = v));
+				g.option(integer("black_hole_depth", def.blackHoleCraterDepth, 3, 100, () -> c.blackHoleCraterDepth, v -> c.blackHoleCraterDepth = v));
 				g.option(num("black_hole_damage_second", def.blackHoleDamagePerSecond, 0, 100, () -> c.blackHoleDamagePerSecond, v -> c.blackHoleDamagePerSecond = v));
 			}
 			case "blood_pool" -> g.option(slider("blood_pool_size", def.bloodPoolSize, 0.5, 3, () -> c.bloodPoolSize, v -> c.bloodPoolSize = v));

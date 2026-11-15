@@ -213,8 +213,12 @@ public final class OffenseAbilities {
 		if (cfg.destroyEnvironment) {
 			// rips blocks out of the ground inside the pull range (up to the configured radius), more of them the bigger it is
 			double rb = Math.min(Math.max(2.0, cfg.blackHoleMaxBlockRadius), Math.max(2.0, reach));
-			int per = Math.max(0, cfg.blackHoleBlocksPerTick) * Math.max(1, (int) (rb / 8.0));
-			for (int i = 0, tries = 0; i < per && tries < per * 12 && bag.size() < 200; tries++) {
+			int per = Math.min(60, Math.max(0, cfg.blackHoleBlocksPerTick) * Math.max(1, (int) (rb / 8.0)));
+			// the crater gets deeper with the level of the ability (3 blocks at the start, the configured depth at the top)
+			int cap = Math.max(1, Math.min(50, dev.enderskills.dsl.SkillConfigs.maxLevel("black_hole")));
+			double share = Math.min(1.0, Math.max(0, Progression.data(p).level("black_hole")) / (double) cap);
+			int depth = 3 + (int) Math.round(Math.max(0, cfg.blackHoleCraterDepth - 3) * share);
+			for (int i = 0, tries = 0; i < per && tries < per * 12 && bag.size() < 600; tries++) {
 				double ang = level.getRandom().nextDouble() * Math.PI * 2;
 				double rad = Math.sqrt(level.getRandom().nextDouble()) * rb;
 				int bx = (int) Math.floor(at.x + Math.cos(ang) * rad);
@@ -222,7 +226,7 @@ public final class OffenseAbilities {
 				if (!level.hasChunk(bx >> 4, bz >> 4)) {
 					continue; // never loads chunks just to tear them
 				}
-				int by = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, bx, bz) - 1 - level.getRandom().nextInt(3);
+				int by = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, bx, bz) - 1 - level.getRandom().nextInt(depth);
 				net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(bx, by, bz);
 				if (at.distanceToSqr(bx + 0.5, by + 0.5, bz + 0.5) > rb * rb) {
 					continue;
@@ -250,7 +254,7 @@ public final class OffenseAbilities {
 				it.remove();
 				continue;
 			}
-			fb.setDeltaMovement(d.scale(1.0 / dist).scale(Math.min(0.5, 0.2 + dist * 0.02)));
+			fb.setDeltaMovement(d.scale(1.0 / dist).scale(Math.min(1.6, (0.3 + dist * 0.03) * Math.max(0.1, cfg.blackHoleSuctionSpeed))));
 			fb.hurtMarked = true;
 		}
 	}
@@ -437,7 +441,7 @@ public final class OffenseAbilities {
 				List<net.minecraft.world.entity.item.FallingBlockEntity> bag = new ArrayList<>();
 				channel(p, total, 1, () -> blackHoleTick(p, level, at, reach, r, damage, age, bag, age[0] >= total - 2));
 				sound(level, at, SoundEvents.END_PORTAL_SPAWN, 0.6F, 0.5F);
-				later(total, () -> Environment.blast(level, at, Math.min(16.0, reach * 0.8))); // collapses and tears the ground
+				later(total, () -> Environment.blast(level, at, Math.min(20.0, reach * 0.8))); // collapses and tears the ground
 			}
 			// ---------------- Blood
 			case "blood_pool" -> {

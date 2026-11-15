@@ -16,6 +16,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
 
@@ -75,29 +76,58 @@ public final class FxDraw {
 				RenderSetup.builder(pipeline).withTexture("Sampler0", texture).sortOnUpload().createRenderSetup()));
 	}
 
+	private static long compatAt;
+	private static boolean compatValue;
+
+	/**
+	 * Shader packs (Iris) don't know this mod's own pipelines, so the effects can come out invisible or broken. While one is on
+	 * (or when forced in the settings) the effects use Minecraft's own render types, which every shader pack handles.
+	 */
+	public static boolean compat() {
+		dev.enderskills.data.EsSettings.ShaderCompat mode = dev.enderskills.data.EsSettings.get().shaderCompat;
+		if (mode == dev.enderskills.data.EsSettings.ShaderCompat.ON) {
+			return true;
+		}
+		if (mode == dev.enderskills.data.EsSettings.ShaderCompat.OFF) {
+			return false;
+		}
+		long now = System.nanoTime();
+		if (compatAt == 0 || now - compatAt > 1_000_000_000L) {
+			compatAt = now;
+			try {
+				Class<?> api = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
+				Object instance = api.getMethod("getInstance").invoke(null);
+				compatValue = (Boolean) api.getMethod("isShaderPackInUse").invoke(instance);
+			} catch (Throwable t) {
+				compatValue = false;
+			}
+		}
+		return compatValue;
+	}
+
 	/** Volumetric star field tinted with the vertex color (gas cloud, black hole arms, rifts, grasp). */
 	public static RenderType universe() {
-		return type("universe", UNIVERSE, tex("gas_cloud"));
+		return compat() ? RenderTypes.lightning() : type("universe", UNIVERSE, tex("gas_cloud"));
 	}
 
 	/** Dark layered end sky (black hole core, raging flame ball, unstable portal). */
 	public static RenderType universeDark() {
-		return type("universe_default", UNIVERSE_DEFAULT, END_PORTAL);
+		return compat() ? RenderTypes.debugQuads() : type("universe_default", UNIVERSE_DEFAULT, END_PORTAL);
 	}
 
 	/** White layered sky (Solar Lance, Final Flash). */
 	public static RenderType universeWhite() {
-		return type("universe_white", UNIVERSE_WHITE, END_PORTAL);
+		return compat() ? RenderTypes.lightning() : type("universe_white", UNIVERSE_WHITE, END_PORTAL);
 	}
 
 	/** Glowing textured quads (added light). */
 	public static RenderType additive(String texture) {
-		return type("add/" + texture, ADD, tex(texture));
+		return compat() ? RenderTypes.eyes(tex(texture)) : type("add/" + texture, ADD, tex(texture));
 	}
 
 	/** Textured quads with transparency. */
 	public static RenderType alpha(String texture) {
-		return type("alpha/" + texture, ALPHA, tex(texture));
+		return compat() ? RenderTypes.entityTranslucentEmissive(tex(texture)) : type("alpha/" + texture, ALPHA, tex(texture));
 	}
 
 	// ------------------------------------------------------------------ shapes (positions relative to the camera)

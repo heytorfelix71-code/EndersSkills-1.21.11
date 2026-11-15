@@ -181,7 +181,7 @@ public final class EsSettings {
 	/** Black Hole: extra radius at the top level, in blocks (0 to 1000); it grows with the level. */
 	public double blackHoleTopBonus = 50.0;
 	/** Black Hole: how far from its center it rips blocks out of the ground (with "destroy the environment"). */
-	public double blackHoleMaxBlockRadius = 64.0;
+	public double blackHoleMaxBlockRadius = 96.0;
 	/** Black Hole: continuous damage to the mobs inside, as a share of its damage per second. */
 	public double blackHoleDamagePerSecond = 0.4;
 	public int teleportCooldownStartLevel = 40;
@@ -250,6 +250,11 @@ public final class EsSettings {
 
 	public VfxStyle vfxStyle = VfxStyle.ORIGINAL;
 
+	/** Shader packs (Iris): AUTO uses Minecraft's own render types while a shader pack is on, ON always, OFF never. */
+	public enum ShaderCompat { AUTO, ON, OFF }
+
+	public ShaderCompat shaderCompat = ShaderCompat.AUTO;
+
 	// ---- Fog
 	/** Radius of the Fog cloud around you (blocks); enemies inside are blinded. */
 	public double fogRadius = 8.0;
@@ -294,7 +299,11 @@ public final class EsSettings {
 	/** Black Hole: its cooldown starts when the hole is gone (instead of when you cast it). */
 	public boolean blackHoleCooldownAfter = true;
 	/** Black Hole with "destroy the environment": blocks torn out of the ground and swallowed, per tick. */
-	public int blackHoleBlocksPerTick = 3;
+	public int blackHoleBlocksPerTick = 12;
+	/** Black Hole: how fast the blocks are sucked in (1 = slow, 2 = fast). */
+	public double blackHoleSuctionSpeed = 2.0;
+	/** Black Hole: how deep the crater goes at the top level, in blocks (it grows with the level from 3). */
+	public int blackHoleCraterDepth = 12;
 	/** Size of the Blood Pool (1 = original); the blood follows the ground. */
 	public double bloodPoolSize = 1.4;
 
@@ -462,6 +471,13 @@ public final class EsSettings {
 							read.speedPassivePower = fresh.speedPassivePower;
 							read.swimEfficiencyScale = fresh.swimEfficiencyScale;
 							read.balanceVersion = 6;
+						}
+						if (read.balanceVersion < 7) {
+							// 1.20.1: a Black Hole that sucks more blocks, faster, into a bigger crater
+							EsSettings fresh = new EsSettings();
+							read.blackHoleBlocksPerTick = fresh.blackHoleBlocksPerTick;
+							read.blackHoleMaxBlockRadius = fresh.blackHoleMaxBlockRadius;
+							read.balanceVersion = 7;
 						}
 						instance = read;
 					}
