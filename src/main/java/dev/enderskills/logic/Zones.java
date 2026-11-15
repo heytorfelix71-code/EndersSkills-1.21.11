@@ -80,7 +80,10 @@ public final class Zones {
 		for (Zone z : List.copyOf(ZONES)) {
 			Vfx.skill = z.exit() != null ? "portal" : "unstable_portal";
 			Vec3 c = z.center();
-			double r = Math.max(0.5, z.radius());
+			dev.enderskills.data.EsSettings es = dev.enderskills.data.EsSettings.get();
+			// the visible ring: an Unstable Portal's size grows with the level, so it is capped
+			double ring = z.exit() == null ? Math.min(z.radius(), Math.max(0.5, es.unstableMaxRadius)) : z.radius();
+			double r = Math.max(0.5, ring);
 			if (now % 2 == 0) {
 				z.level().sendParticles(z.exit() == null && z.radius() > 0 ? ParticleTypes.REVERSE_PORTAL : ParticleTypes.PORTAL,
 						c.x, c.y + 1.0, c.z, Vfx.n(8), r / 2, 0.7, r / 2, 0.2);
@@ -98,7 +101,9 @@ public final class Zones {
 			}
 				// only stepping (almost) into the middle sends you through, not standing a block or two away
 				dev.enderskills.data.EsSettings cfg = dev.enderskills.data.EsSettings.get();
-				double reach = z.exit() != null ? Math.max(0.1, cfg.portalReach) : Math.max(0.1, cfg.unstableReach);
+				// the whole round portal works (not only its middle): the collision is a share of the visible ring
+				double share = Math.max(0.1, Math.min(1.0, z.exit() != null ? cfg.portalReach : cfg.unstableReach));
+				double reach = Math.max(0.3, ring * share);
 				for (LivingEntity e : z.level().getEntitiesOfClass(LivingEntity.class,
 						new AABB(c.x - reach - 1, c.y - 0.5, c.z - reach - 1, c.x + reach + 1, c.y + 2.5, c.z + reach + 1),
 						x -> x.isAlive() && !x.isSpectator() && Math.hypot(x.getX() - c.x, x.getZ() - c.z) <= reach

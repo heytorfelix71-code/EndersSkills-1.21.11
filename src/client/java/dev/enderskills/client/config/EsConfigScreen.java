@@ -340,7 +340,8 @@ public final class EsConfigScreen {
 				g.option(slider("unstable_dimension_chance", def.unstableDimensionChance, 0, 1, () -> c.unstableDimensionChance, v -> c.unstableDimensionChance = v));
 				g.option(num("unstable_return_distance", def.unstableReturnDistance, 0, 30_000_000, () -> c.unstableReturnDistance, v -> c.unstableReturnDistance = v));
 				g.option(integer("unstable_return_seconds", def.unstableReturnSeconds, 5, 86400, () -> c.unstableReturnSeconds, v -> c.unstableReturnSeconds = v));
-				g.option(num("unstable_reach", def.unstableReach, 0.1, 3, () -> c.unstableReach, v -> c.unstableReach = v));
+				g.option(num("unstable_max_radius", def.unstableMaxRadius, 0.5, 20, () -> c.unstableMaxRadius, v -> c.unstableMaxRadius = v));
+				g.option(num("unstable_reach", def.unstableReach, 0.1, 1, () -> c.unstableReach, v -> c.unstableReach = v));
 			}
 			case "portal" -> {
 				g.option(bool("portal_always_open", def.portalAlwaysOpen, () -> c.portalAlwaysOpen, v -> c.portalAlwaysOpen = v));
@@ -350,7 +351,7 @@ public final class EsConfigScreen {
 				g.option(num("portal_range_max", def.portalRangeMax, 1, 30_000_000, () -> c.portalRangeMax, v -> c.portalRangeMax = v));
 				g.option(num("portal_aim_range", def.portalAimRange, 8, 1024, () -> c.portalAimRange, v -> c.portalAimRange = v));
 				g.option(integer("portal_max_pairs", def.portalMaxPairs, 1, 100, () -> c.portalMaxPairs, v -> c.portalMaxPairs = v));
-				g.option(num("portal_reach", def.portalReach, 0.1, 3, () -> c.portalReach, v -> c.portalReach = v));
+				g.option(num("portal_reach", def.portalReach, 0.1, 1, () -> c.portalReach, v -> c.portalReach = v));
 				g.option(bool("coordinates", def.coordinateTargeting, () -> c.coordinateTargeting, v -> c.coordinateTargeting = v));
 			}
 			case "speed_boost" -> {

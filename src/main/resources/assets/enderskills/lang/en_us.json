@@ -639,8 +639,8 @@
   "enderskills.shadows.count": "Shadows: %s (your level allows %s)",
   "enderskills.config.invis_unbreakable": "Invisible: damage doesn't break it from level",
   "enderskills.config.invis_unbreakable.desc": "From this Invisibility level on, taking damage no longer breaks it (0 = it never breaks).",
-  "enderskills.config.portal_reach": "Portal reach (blocks)",
-  "enderskills.config.portal_reach.desc": "How close to the middle of a portal you must step to go through it (0.5 = half a block).",
+  "enderskills.config.portal_reach": "Portal collision (share of the ring)",
+  "enderskills.config.portal_reach.desc": "How much of the visible round portal works as the portal: 0.85 = almost the whole ring, 1 = all of it. Before, only the middle counted.",
   "enderskills.config.hasten_refill_level": "Refill from level",
   "enderskills.config.hasten_refill_level.desc": "From this Hasten level on, using it resets the cooldown of every other ability (0 = never).",
   "enderskills.config.hasten_cooldown_factor": "Own cooldown (x)",
@@ -678,8 +678,8 @@
   "enderskills.config.unstable_return_distance.desc": "When you land at least this far from the Unstable Portal (or in another dimension) a portal back to it opens where you land. Using it dissipates it; the original stays.",
   "enderskills.config.unstable_return_seconds": "Return portal time (s)",
   "enderskills.config.unstable_return_seconds.desc": "How long the portal back stays open.",
-  "enderskills.config.unstable_reach": "Unstable Portal reach (blocks)",
-  "enderskills.config.unstable_reach.desc": "How close to the middle of the Unstable Portal you must step to be thrown (0.5 = half a block).",
+  "enderskills.config.unstable_reach": "Unstable Portal collision (share of the ring)",
+  "enderskills.config.unstable_reach.desc": "How much of the visible ring of the Unstable Portal throws you: 0.85 = almost the whole ring, 1 = all of it.",
   "enderskills.config.infinite_endurance": "Infinite energy",
   "enderskills.config.infinite_endurance.desc": "Energy never runs out: costs are not charged. The energy value itself has no limit either (billions, trillions...).",
   "enderskills.config.teleport_cooldown_level": "Faster cooldown from level",
@@ -718,5 +718,7 @@
   "enderskills.config.swim_vision_level": "Clear sight under water from level",
   "enderskills.config.swim_vision_level.desc": "From this Swim Speed level you see clearly under water (0 = never).",
   "enderskills.config.swim_air_level": "Infinite air from level",
-  "enderskills.config.swim_air_level.desc": "From this Swim Speed level your air never runs out and the bubbles don't even show (0 = never)."
+  "enderskills.config.swim_air_level.desc": "From this Swim Speed level your air never runs out and the bubbles don't even show (0 = never).",
+  "enderskills.config.unstable_max_radius": "Unstable Portal ring radius (max)",
+  "enderskills.config.unstable_max_radius.desc": "The widest the Unstable Portal can be, in blocks (it grows with the level up to 4; the collision follows it)."
 }

@@ -639,8 +639,8 @@
   "enderskills.shadows.count": "Sombras: %s (seu nível permite %s)",
   "enderskills.config.invis_unbreakable": "Invisível: dano não quebra a partir do nível",
   "enderskills.config.invis_unbreakable.desc": "A partir deste nível da Invisibilidade, levar dano não quebra mais ela (0 = nunca quebra).",
-  "enderskills.config.portal_reach": "Alcance do portal (blocos)",
-  "enderskills.config.portal_reach.desc": "O quanto você precisa chegar perto do meio do portal para atravessar (0,5 = meio bloco).",
+  "enderskills.config.portal_reach": "Colisão do portal (parte do anel)",
+  "enderskills.config.portal_reach.desc": "Quanto do portal redondo visível funciona como portal: 0,85 = quase o anel todo, 1 = ele inteiro. Antes só o centro valia.",
   "enderskills.config.hasten_refill_level": "Recarga total a partir do nível",
   "enderskills.config.hasten_refill_level.desc": "A partir deste nível do Apressar, usá-lo zera a recarga de todas as outras habilidades (0 = nunca).",
   "enderskills.config.hasten_cooldown_factor": "Recarga dele mesmo (x)",
@@ -678,8 +678,8 @@
   "enderskills.config.unstable_return_distance.desc": "Ao pousar pelo menos tão longe do Portal Instável (ou em outra dimensão) um portal de volta para ele abre onde você pousou. Usá-lo o dissipa; o original fica.",
   "enderskills.config.unstable_return_seconds": "Tempo do portal de volta (s)",
   "enderskills.config.unstable_return_seconds.desc": "Quanto tempo o portal de volta fica aberto.",
-  "enderskills.config.unstable_reach": "Alcance do Portal Instável (blocos)",
-  "enderskills.config.unstable_reach.desc": "O quanto você precisa chegar perto do meio do Portal Instável para ser lançado (0,5 = meio bloco).",
+  "enderskills.config.unstable_reach": "Colisão do Portal Instável (parte do anel)",
+  "enderskills.config.unstable_reach.desc": "Quanto do anel visível do Portal Instável te lança: 0,85 = quase o anel todo, 1 = ele inteiro.",
   "enderskills.config.infinite_endurance": "Energia infinita",
   "enderskills.config.infinite_endurance.desc": "A energia nunca acaba: os custos não são cobrados. O valor da energia também não tem limite (bilhões, trilhões...).",
   "enderskills.config.teleport_cooldown_level": "Recarga menor a partir do nível",
@@ -718,5 +718,7 @@
   "enderskills.config.swim_vision_level": "Visão clara na água a partir do nível",
   "enderskills.config.swim_vision_level.desc": "A partir deste nível da Velocidade de Nado você enxerga bem embaixo d'água (0 = nunca).",
   "enderskills.config.swim_air_level": "Ar infinito a partir do nível",
-  "enderskills.config.swim_air_level.desc": "A partir deste nível da Velocidade de Nado o seu ar nunca acaba e as bolhas nem aparecem (0 = nunca)."
+  "enderskills.config.swim_air_level.desc": "A partir deste nível da Velocidade de Nado o seu ar nunca acaba e as bolhas nem aparecem (0 = nunca).",
+  "enderskills.config.unstable_max_radius": "Raio do anel do Portal Instável (máx.)",
+  "enderskills.config.unstable_max_radius.desc": "O mais largo que o Portal Instável pode ficar, em blocos (cresce com o nível até 4; a colisão acompanha)."
 }

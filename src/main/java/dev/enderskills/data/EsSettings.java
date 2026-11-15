@@ -126,18 +126,21 @@ public final class EsSettings {
 	/** How many pairs of portals can be open at once; a new pair past this closes the oldest. */
 	public int portalMaxPairs = 5;
 	/** How close to the middle of a portal you must step to go through it, in blocks. */
-	public double portalReach = 0.75;
+	/** Share of the visible ring that works as the portal (0.85 = almost all of it). */
+	public double portalReach = 0.85;
+	/** Largest radius of the ring of an Unstable Portal, in blocks (its size grows with the level, up to 4). */
+	public double unstableMaxRadius = 2.0;
 	// ---- Unstable Portal: it throws you ridiculously far, with a way back
 	public boolean unstableFar = true;
 	public double unstableMinDistance = 5000.0;
 	public double unstableMaxDistance = 1_000_000.0;
 	public boolean unstableRandomDimension = true;
-	public double unstableDimensionChance = 0.2;
+	public double unstableDimensionChance = 0.1;
 	/** A portal back to the original one opens where you land when it is at least this far (or in another dimension). */
 	public double unstableReturnDistance = 1000.0;
 	public int unstableReturnSeconds = 180;
 	/** How close to the middle of an Unstable Portal you must step to be thrown (blocks). */
-	public double unstableReach = 0.5;
+	public double unstableReach = 0.85;
 	/** Energy ("mana") never runs out: no costs, no limit. */
 	public boolean infiniteEndurance = false;
 	/** Teleport: from this level on its cooldown goes down to the top value at the last level (0 = off). */
@@ -430,6 +433,14 @@ public final class EsSettings {
 							read.swimSpeedPower = fresh.swimSpeedPower;
 							read.speedPassivePower = fresh.speedPassivePower;
 							read.balanceVersion = 4;
+						}
+						if (read.balanceVersion < 5) {
+							// 1.19.2: the collision follows the ring of the portal instead of its middle only
+							EsSettings fresh = new EsSettings();
+							read.portalReach = fresh.portalReach;
+							read.unstableReach = fresh.unstableReach;
+							read.unstableDimensionChance = fresh.unstableDimensionChance; // 10%
+							read.balanceVersion = 5;
 						}
 						instance = read;
 					}
