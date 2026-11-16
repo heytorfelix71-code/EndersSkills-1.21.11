@@ -54,6 +54,28 @@ public final class UnstableTravel {
 	private UnstableTravel() {
 	}
 
+	/** Destinations picked ahead for the open unstable portals, so the way there is already loaded when someone steps in. */
+	private static final Map<Zones.Zone, Job> PREP = new java.util.IdentityHashMap<>();
+
+	/** Called every tick for an open unstable portal: picks its destination once and keeps its chunks loaded. */
+	static void prepare(MinecraftServer server, Zones.Zone zone, int now) {
+		Job job = PREP.get(zone);
+		if (job == null) {
+			job = new Job(zone);
+			if (pick(server, server.overworld().getRandom(), job)) {
+				PREP.put(zone, job);
+			}
+		} else if (now % 200 == 0) {
+			job.level.getChunkSource().addTicketAndLoadWithRadius(TicketType.PORTAL, new ChunkPos(job.cx, job.cz), 1);
+		}
+	}
+
+	static void forgetClosed(List<Zones.Zone> open) {
+		if (!PREP.isEmpty()) {
+			PREP.keySet().removeIf(z -> !open.contains(z));
+		}
+	}
+
 	public static boolean busy(UUID id) {
 		return JOBS.containsKey(id);
 	}
@@ -64,7 +86,14 @@ public final class UnstableTravel {
 
 	public static void start(ServerPlayer p, Zones.Zone origin) {
 		Job job = new Job(origin);
-		if (!pick(p, job)) {
+		Job ready = PREP.remove(origin);
+		if (ready != null) {
+			ready.waited = 0; // the destination was picked and its chunks loading since the portal opened
+			JOBS.put(p.getUUID(), ready);
+			say(p, "enderskills.unstable.travel");
+			return;
+		}
+		if (!pick(p.level().getServer(), p.getRandom(), job)) {
 			say(p, "enderskills.unstable.no_place");
 			return;
 		}
@@ -73,10 +102,10 @@ public final class UnstableTravel {
 	}
 
 	/** A random destination (a random dimension now and then), and its chunk requested. */
-	private static boolean pick(ServerPlayer p, Job job) {
+	private static boolean pick(MinecraftServer server, RandomSource rnd, Job job) {
 		EsSettings c = EsSettings.get();
-		MinecraftServer server = p.level().getServer();
-		RandomSource rnd = p.getRandom();
+		
+		
 		ServerLevel current = job.origin.level();
 		ServerLevel dest = current;
 		if (c.unstableRandomDimension && rnd.nextDouble() < c.unstableDimensionChance) {
@@ -118,7 +147,7 @@ public final class UnstableTravel {
 		job.cx = (int) Math.floor(x) >> 4;
 		job.cz = (int) Math.floor(z) >> 4;
 		job.waited = 0;
-		dest.getChunkSource().addTicketAndLoadWithRadius(TicketType.PORTAL, new ChunkPos(job.cx, job.cz), 2);
+		dest.getChunkSource().addTicketAndLoadWithRadius(TicketType.PORTAL, new ChunkPos(job.cx, job.cz), 1);
 		return true;
 	}
 
@@ -138,7 +167,7 @@ public final class UnstableTravel {
 			if (job.level.getChunkSource().getChunkNow(job.cx, job.cz) != null) {
 				Vec3 spot = landing(p, job.level, job.x, job.z);
 				if (spot == null) {
-					if (++job.tries < 6 && pick(p, job)) {
+					if (++job.tries < 6 && pick(server, p.getRandom(), job)) {
 						continue; // nowhere safe here (void, lava...): another place
 					}
 					it.remove();
@@ -278,5 +307,6 @@ public final class UnstableTravel {
 	/** Server stopping. */
 	public static void clear() {
 		JOBS.clear();
+		PREP.clear();
 	}
 }

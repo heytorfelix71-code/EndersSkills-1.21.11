@@ -109,10 +109,16 @@ public final class Zones {
 			return;
 		}
 		ZONES.removeIf(z -> z.until() <= now);
+		if (now % 100 == 0) {
+			UnstableTravel.forgetClosed(unstableZones());
+		}
 		RECENT.values().removeIf(t -> t <= now);
 		java.util.Set<UUID> insideNow = new java.util.HashSet<>();
 		for (Zone z : List.copyOf(ZONES)) {
 			Vfx.skill = z.exit() != null ? "portal" : "unstable_portal";
+			if (z.exit() == null && z.radius() > 0 && dev.enderskills.data.EsSettings.get().unstableFar) {
+				UnstableTravel.prepare(z.level().getServer(), z, now);
+			}
 			Vec3 c = z.center();
 			dev.enderskills.data.EsSettings es = dev.enderskills.data.EsSettings.get();
 			// the visible ring: an Unstable Portal's size grows with the level, so it is capped
