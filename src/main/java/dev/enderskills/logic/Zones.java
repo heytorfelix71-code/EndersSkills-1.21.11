@@ -116,7 +116,8 @@ public final class Zones {
 		java.util.Set<UUID> insideNow = new java.util.HashSet<>();
 		for (Zone z : List.copyOf(ZONES)) {
 			Vfx.skill = z.exit() != null ? "portal" : "unstable_portal";
-			if (z.exit() == null && z.radius() > 0 && dev.enderskills.data.EsSettings.get().unstableFar) {
+			if (z.exit() == null && z.radius() > 0 && dev.enderskills.data.EsSettings.get().unstableFar
+					&& z.level().getNearestPlayer(z.center().x, z.center().y, z.center().z, 24.0, false) != null) { // only when someone is close: no far chunks for nothing
 				UnstableTravel.prepare(z.level().getServer(), z, now);
 			}
 			Vec3 c = z.center();

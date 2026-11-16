@@ -133,7 +133,7 @@ public final class EsSettings {
 	// ---- Unstable Portal: it throws you ridiculously far, with a way back
 	public boolean unstableFar = true;
 	public double unstableMinDistance = 5000.0;
-	public double unstableMaxDistance = 1_000_000.0;
+	public double unstableMaxDistance = 100_000.0;
 	public boolean unstableRandomDimension = true;
 	public double unstableDimensionChance = 0.1;
 	/** A portal back to the original one opens where you land when it is at least this far (or in another dimension). */
@@ -512,6 +512,13 @@ public final class EsSettings {
 							read.blackHoleBlocksPerTick = fresh.blackHoleBlocksPerTick;
 							read.blackHoleMaxBlocks = fresh.blackHoleMaxBlocks;
 							read.balanceVersion = 10;
+						}
+						if (read.balanceVersion < 11) {
+							// 1.20.13: arriving a million blocks away made heavy world generation freeze some games; 100000 by default
+							if (read.unstableMaxDistance >= 1_000_000.0) {
+								read.unstableMaxDistance = new EsSettings().unstableMaxDistance;
+							}
+							read.balanceVersion = 11;
 						}
 						instance = read;
 					}
