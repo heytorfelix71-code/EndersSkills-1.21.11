@@ -171,6 +171,8 @@ public final class EsSettings {
 	public double dashStepHeight = 1.0;
 	/** Unstable Portal stays open until you come back through the way back, from this level on (0 = never). */
 	public int unstablePinLevel = 50;
+	/** Pick and load the Unstable Portal destination as soon as the portal opens (faster travel, but loads far chunks early). Off = only when someone steps in. */
+	public boolean unstablePreload = false;
 	/** Dash and Warp need two quick taps of their key (off = one press). */
 	public boolean dashDoubleTap = true;
 	public double attackSpeedPower = 2.0;

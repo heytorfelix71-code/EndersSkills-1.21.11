@@ -116,7 +116,10 @@ public final class Zones {
 		java.util.Set<UUID> insideNow = new java.util.HashSet<>();
 		for (Zone z : List.copyOf(ZONES)) {
 			Vfx.skill = z.exit() != null ? "portal" : "unstable_portal";
-			if (z.exit() == null && z.radius() > 0 && dev.enderskills.data.EsSettings.get().unstableFar
+			if (z.level().getNearestPlayer(z.center().x, z.center().y, z.center().z, 160.0, false) == null) {
+				continue; // standby: nobody near, so no particles, collisions or chunk work; it wakes up when someone comes close
+			}
+			if (z.exit() == null && z.radius() > 0 && dev.enderskills.data.EsSettings.get().unstableFar && dev.enderskills.data.EsSettings.get().unstablePreload
 					&& z.level().getNearestPlayer(z.center().x, z.center().y, z.center().z, 24.0, false) != null) { // only when someone is close: no far chunks for nothing
 				UnstableTravel.prepare(z.level().getServer(), z, now);
 			}

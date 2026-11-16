@@ -352,6 +352,7 @@ public final class EsConfigScreen {
 			}
 			case "unstable_portal" -> {
 				g.option(bool("unstable_far", def.unstableFar, () -> c.unstableFar, v -> c.unstableFar = v));
+				g.option(bool("unstable_preload", def.unstablePreload, () -> c.unstablePreload, v -> c.unstablePreload = v));
 				g.option(integer("unstable_pin", def.unstablePinLevel, 0, 50, () -> c.unstablePinLevel, v -> c.unstablePinLevel = v));
 				g.option(num("unstable_min", def.unstableMinDistance, 0, 30_000_000, () -> c.unstableMinDistance, v -> c.unstableMinDistance = v));
 				g.option(num("unstable_max", def.unstableMaxDistance, 1, 30_000_000, () -> c.unstableMaxDistance, v -> c.unstableMaxDistance = v));

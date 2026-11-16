@@ -762,5 +762,7 @@
   "enderskills.config.black_hole_leftover.vanish": "Vanish",
   "enderskills.config.black_hole_leftover.drop": "Fall and drop",
   "enderskills.config.black_hole_leftover_seconds": "Wait before they act (s)",
-  "enderskills.config.black_hole_leftover_seconds.desc": "Seconds those blocks wait, counted from when they load again, before vanishing or falling."
+  "enderskills.config.black_hole_leftover_seconds.desc": "Seconds those blocks wait, counted from when they load again, before vanishing or falling.",
+  "enderskills.config.unstable_preload": "Load the destination early",
+  "enderskills.config.unstable_preload.desc": "Picks and loads the far destination as soon as the portal opens (faster travel, but it loads far chunks early and can freeze heavy worlds). Off: the destination only appears when someone steps in."
 }
