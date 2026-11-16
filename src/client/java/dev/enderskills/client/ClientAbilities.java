@@ -309,7 +309,15 @@ public final class ClientAbilities {
 				double f = 0.8 + (0.54600006 - 0.8) * eff; // the water drag of this player
 				double k = (1.0 - (1.0 - f) / (1.0 + bonus)) / f;
 				net.minecraft.world.phys.Vec3 dm = player.getDeltaMovement();
-				player.setDeltaMovement(dm.x * k, player.isSwimming() ? dm.y * k : dm.y, dm.z * k);
+				// The push only raises the speed up to the top of this skill (1 + bonus times the plain swim speed): if something else
+				// (another mod's swim boost) already made you faster, nothing is added, so the faster of the two wins instead of both stacking.
+				double vh = Math.hypot(dm.x, dm.z);
+				if (vh > 1.0E-4) {
+					double accel = 0.02 + (player.getSpeed() - 0.02) * eff;
+					double top = accel * f / (1.0 - f) * (1.0 + bonus) * 1.15;
+					double scale = Math.min(k, Math.max(1.0, top / vh));
+					player.setDeltaMovement(dm.x * scale, player.isSwimming() ? dm.y * scale : dm.y, dm.z * scale);
+				}
 			}
 		}
 		if (data.skills().isEmpty()) {
