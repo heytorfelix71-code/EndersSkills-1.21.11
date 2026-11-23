@@ -228,15 +228,6 @@ public final class AbilityManager {
 			}
 			if (now % 20 == 0) {
 				AttributeEffects.apply(player); // every second (it changes nothing when nothing changed)
-				Integer at = REPORT_AT.get(player.getUUID());
-				if (at == null) {
-					REPORT_AT.put(player.getUUID(), now + 120);
-				} else if (at > 0 && now >= at) {
-					REPORT_AT.put(player.getUUID(), 0);
-					if (EsSettings.get().passiveReport) {
-						AttributeEffects.report(player);
-					}
-				}
 			}
 			if (now % 5 == 0 && active(s, "fog")) {
 				fogPulse(player, now % 10 == 0);

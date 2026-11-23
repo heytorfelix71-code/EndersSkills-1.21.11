@@ -182,8 +182,6 @@ public final class EsSettings {
 	public double damagePassivePower = 4.0;
 	/** Multiplies the Critical Chance passive (40% at its last level becomes 80%). */
 	public double critChancePower = 2.0;
-	/** Tells you in the chat, once after you join, what your passives really do. */
-	public boolean passiveReport = true;
 	/** Black Hole: extra radius at the top level, in blocks (0 to 1000); it grows with the level. */
 	public double blackHoleTopBonus = 65.0;
 	/** Black Hole: how far from its center it rips blocks out of the ground (with "destroy the environment"). */

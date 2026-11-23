@@ -120,7 +120,6 @@ public final class EsConfigScreen {
 						.option(num("crit_multiplier", def.critMultiplier, 1, 100, () -> c.critMultiplier, v -> c.critMultiplier = v))
 						.option(num("passive_damage_power", def.damagePassivePower, 0, 1000, () -> c.damagePassivePower, v -> c.damagePassivePower = v))
 						.option(num("crit_chance_power", def.critChancePower, 0, 100, () -> c.critChancePower, v -> c.critChancePower = v))
-						.option(bool("passive_report", def.passiveReport, () -> c.passiveReport, v -> c.passiveReport = v))
 						.option(num("fall_safe_bonus", def.fallSafeBonus, 0, 1000, () -> c.fallSafeBonus, v -> c.fallSafeBonus = v))
 						.option(integer("default_level", def.defaultEnderLevel, 0, 1000, () -> c.defaultEnderLevel, v -> c.defaultEnderLevel = v))
 						.option(bool("token_drops", def.enderTokenDrops, () -> c.enderTokenDrops, v -> c.enderTokenDrops = v))
