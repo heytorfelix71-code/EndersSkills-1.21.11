@@ -66,7 +66,7 @@ public final class UnstableTravel {
 				PREP.put(zone, job);
 			}
 		} else if (now % 200 == 0) {
-			job.level.getChunkSource().addTicketAndLoadWithRadius(TicketType.PORTAL, new ChunkPos(job.cx, job.cz), 1);
+			job.level.getChunkSource().addTicketAndLoadWithRadius(TicketType.PORTAL, new ChunkPos(job.cx, job.cz), 0);
 		}
 	}
 
@@ -147,7 +147,7 @@ public final class UnstableTravel {
 		job.cx = (int) Math.floor(x) >> 4;
 		job.cz = (int) Math.floor(z) >> 4;
 		job.waited = 0;
-		dest.getChunkSource().addTicketAndLoadWithRadius(TicketType.PORTAL, new ChunkPos(job.cx, job.cz), 1);
+		dest.getChunkSource().addTicketAndLoadWithRadius(TicketType.PORTAL, new ChunkPos(job.cx, job.cz), 0);
 		return true;
 	}
 
@@ -238,9 +238,10 @@ public final class UnstableTravel {
 	// ---- a safe place to stand in the loaded destination chunk
 
 	private static Vec3 landing(ServerPlayer p, ServerLevel level, double x, double z) {
-		int bx = (int) Math.floor(x);
-		int bz = (int) Math.floor(z);
-		for (int r = 0; r <= 6; r++) {
+		// inside the loaded chunk only: reading its neighbors would generate them one by one
+		int bx = Math.max(((int) Math.floor(x) & ~15) + 3, Math.min(((int) Math.floor(x) & ~15) + 12, (int) Math.floor(x)));
+		int bz = Math.max(((int) Math.floor(z) & ~15) + 3, Math.min(((int) Math.floor(z) & ~15) + 12, (int) Math.floor(z)));
+		for (int r = 0; r <= 2; r++) {
 			for (int dx = -r; dx <= r; dx++) {
 				for (int dz = -r; dz <= r; dz++) {
 					if (Math.max(Math.abs(dx), Math.abs(dz)) != r) {

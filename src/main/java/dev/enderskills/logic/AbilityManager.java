@@ -870,36 +870,9 @@ public final class AbilityManager {
 
 	/** Moves the player along a direction until something solid, to the nearest spot where they fit. */
 	private static boolean teleport(ServerLevel level, ServerPlayer player, Vec3 from, Vec3 dir, double range) {
-		Vec3 end = from.add(dir.scale(range));
-		BlockHitResult hit = level.clip(new ClipContext(from, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
-		double distance = hit.getType() == HitResult.Type.MISS ? range : from.distanceTo(hit.getLocation()) - 0.4;
-		Vec3 base = player.position();
-		Vec3 offset = from.subtract(base);
-		for (double d = distance; d > 0.5; d -= 0.5) {
-			Vec3 feet = from.add(dir.scale(d)).subtract(0, offset.y > 1 ? 0.2 : offset.y, 0);
-			for (double up = 0; up <= 1.5; up += 0.5) {
-				Vec3 spot = feet.add(0, up, 0);
-				AABB box = player.getBoundingBox().move(spot.subtract(base));
-				if (level.noCollision(player, box) && EsSettings.get().teleportGroundOnly) {
-					Vec3 ground = safeSpot(level, player, spot, true);
-					if (ground == null) {
-						continue;
-					}
-					return moveTo(level, player, ground);
-				}
-				if (level.noCollision(player, box)) {
-					level.sendParticles(ParticleTypes.PORTAL, base.x, base.y + 1, base.z, 30, 0.3, 0.6, 0.3, 0.3);
-								if (player.isPassenger()) {
-						player.stopRiding();
-					}
-					player.teleportTo(spot.x, spot.y, spot.z);
-					player.resetFallDistance();
-					level.sendParticles(ParticleTypes.PORTAL, spot.x, spot.y + 1, spot.z, 30, 0.3, 0.6, 0.3, 0.3);
-								return true;
-				}
-			}
-		}
-		return false;
+		// the loaded part with a ray, the rest from the terrain height, one chunk loaded where you land (see FarTeleport)
+		Vec3 spot = FarTeleport.find(level, player, from, dir, range, EsSettings.get().teleportGroundOnly);
+		return spot != null && moveTo(level, player, spot);
 	}
 
 	/** The living entity the player looks at. */
