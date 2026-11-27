@@ -171,6 +171,9 @@ public final class Zones {
 						continue;
 					}
 					ServerLevel target = z.exitLevel() != null ? z.exitLevel() : z.level();
+						if (z.exit() != null) {
+							to = stepOut(target, e, to);
+						}
 					if (target != z.level() && !(e instanceof ServerPlayer)) {
 						continue; // only players cross dimensions
 					}
@@ -193,6 +196,29 @@ public final class Zones {
 		INSIDE.clear();
 		INSIDE.addAll(insideNow);
 		INSIDE.addAll(RECENT.keySet());
+	}
+
+	/**
+	 * Arriving through a portal puts you a block in FRONT of it (the way you were facing), not inside its ring: inside, you would
+	 * walk straight back in and bounce between the two portals. The first free spot with ground that is found is used.
+	 */
+	private static Vec3 stepOut(ServerLevel level, LivingEntity e, Vec3 at) {
+		Vec3 front = Vec3.directionFromRotation(0, e.getYRot());
+		double[] turns = {0, 90, -90, 180, 45, -45, 135, -135};
+		double[] lifts = {0, 0.5, 1, -0.5, -1};
+		for (double turn : turns) {
+			Vec3 d = front.yRot((float) Math.toRadians(turn));
+			for (double dist : new double[] {1.4, 2.0}) {
+				for (double dy : lifts) {
+					Vec3 spot = at.add(d.x * dist, dy, d.z * dist);
+					AABB box = e.getBoundingBox().move(spot.subtract(e.position()));
+					if (level.noCollision(e, box) && !level.noCollision(e, box.move(0, -0.3, 0))) {
+						return spot;
+					}
+				}
+			}
+		}
+		return at; // nowhere around is free (or not loaded): the portal's own spot, as before
 	}
 
 	private static Vec3 randomSpot(Zone z, LivingEntity e) {
