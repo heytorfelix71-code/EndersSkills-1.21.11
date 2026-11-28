@@ -84,6 +84,7 @@ public final class EnderSkills implements ModInitializer {
 
 		net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents.BEFORE.register((world, player, pos, state, blockEntity) ->
 				dev.enderskills.logic.EarthStructures.onBreak(world, pos));
+		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server -> dev.enderskills.logic.PortalWindows.clear());
 		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server ->
 				dev.enderskills.logic.EarthStructures.restoreAll());
 		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server ->

@@ -764,5 +764,7 @@
   "enderskills.config.black_hole_leftover_seconds": "Espera antes de agir (s)",
   "enderskills.config.black_hole_leftover_seconds.desc": "Segundos que esses blocos esperam, contados de quando carregam de novo, antes de sumir ou cair.",
   "enderskills.config.unstable_preload": "Carregar o destino antes",
-  "enderskills.config.unstable_preload.desc": "Sorteia e carrega o destino distante assim que o portal abre (viagem mais rápida, mas carrega chunks distantes cedo e pode travar mundos pesados). Desligado: o destino só aparece quando alguém entra."
+  "enderskills.config.unstable_preload.desc": "Sorteia e carrega o destino distante assim que o portal abre (viagem mais rápida, mas carrega chunks distantes cedo e pode travar mundos pesados). Desligado: o destino só aparece quando alguém entra.",
+  "enderskills.config.portal_windows": "Portais transparentes",
+  "enderskills.config.portal_windows.desc": "Os portais mostram o que há do outro lado: uma pequena imagem traçada a partir da saída, só enquanto alguém olha para eles (leve para o jogo, funciona com shaders). Desligado = visual de galáxia."
 }

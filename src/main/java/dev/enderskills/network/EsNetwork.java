@@ -266,6 +266,10 @@ public final class EsNetwork {
 		ServerPlayNetworking.registerGlobalReceiver(ShadowCount.TYPE, (payload, context) ->
 				dev.enderskills.logic.ShadowMinions.choose(context.player(), payload.count()));
 		PayloadTypeRegistry.playS2C().register(PortalList.TYPE, PortalList.CODEC);
+		PayloadTypeRegistry.playC2S().register(WindowPayloads.Request.TYPE, WindowPayloads.Request.CODEC);
+		PayloadTypeRegistry.playS2C().register(WindowPayloads.Image.TYPE, WindowPayloads.Image.CODEC);
+		ServerPlayNetworking.registerGlobalReceiver(WindowPayloads.Request.TYPE, (payload, context) ->
+				dev.enderskills.logic.PortalWindows.request(context.player(), payload.view(), payload.yaw(), payload.pitch()));
 		ServerPlayNetworking.registerGlobalReceiver(PortalAction.TYPE, (payload, context) ->
 				dev.enderskills.logic.AbilityManager.portalMenu(context.player(), payload.action(), payload.id(), payload.which(),
 						new net.minecraft.world.phys.Vec3(payload.x(), payload.y(), payload.z()), payload.dim()));

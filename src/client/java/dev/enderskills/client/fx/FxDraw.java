@@ -132,6 +132,11 @@ public final class FxDraw {
 		return compat() ? RenderTypes.eyes(tex(texture)) : type("add/" + texture, ADD, tex(texture));
 	}
 
+	/** Any texture (the portal windows), with transparency; a plain entity type with shader packs. */
+	public static RenderType alphaTex(Identifier texture) {
+		return compat() ? RenderTypes.entityTranslucentEmissive(texture) : type("alphaid/" + texture, ALPHA, texture);
+	}
+
 	/** Textured quads with transparency. */
 	public static RenderType alpha(String texture) {
 		return compat() ? RenderTypes.entityTranslucentEmissive(tex(texture)) : type("alpha/" + texture, ALPHA, tex(texture));

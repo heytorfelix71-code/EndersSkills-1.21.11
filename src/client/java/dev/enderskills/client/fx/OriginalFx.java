@@ -467,6 +467,9 @@ public final class OriginalFx {
 				continue;
 			}
 			emit(level, e);
+			if (e.skill.equals("portal_view")) {
+				PortalWindowClient.want(e.id, e.pos.add(0, 1.0, 0));
+			}
 		}
 		for (Iterator<Fx> it = BOLTS.values().iterator(); it.hasNext();) {
 			Fx b = it.next();
@@ -885,8 +888,14 @@ public final class OriginalFx {
 				boolean normal = e.skill.equals("portal_view");
 				double rx = Math.max(0.6, e.radius);
 				double ry = Math.max(1.1, Math.min(e.radius, 2.2));
-				galaxy(buffers, m, e.pos.add(0, 1.0, 0).subtract(cam), e.seed, rx, ry, 1F, f, time,
-						normal ? 0xB8B8FF : 0xFFA0F0, normal ? 0x7A5CFF : 0xFF4FD8, 11);
+				net.minecraft.resources.Identifier view = normal ? PortalWindowClient.texture(e.id) : null;
+				if (view != null) {
+					// see-through: what is on the other side, inside a glowing ring
+					window(buffers, m, e.pos.add(0, 1.0, 0).subtract(cam), rx, ry, view, f, time, 0x7A5CFF);
+				} else {
+					galaxy(buffers, m, e.pos.add(0, 1.0, 0).subtract(cam), e.seed, rx, ry, 1F, f, time,
+							normal ? 0xB8B8FF : 0xFFA0F0, normal ? 0x7A5CFF : 0xFF4FD8, 11);
+				}
 			}
 			case "black_raging_flame_ball" -> {
 				// the ball itself is drawn with the bolt
@@ -1234,8 +1243,46 @@ public final class OriginalFx {
 		}
 	}
 
+	/** The view of the other side on a smooth oval facing you, with a soft glowing rim that breathes. */
+	private static void window(MultiBufferSource buffers, Matrix4f m, Vec3 center, double rx, double ry, net.minecraft.resources.Identifier texture,
+			float fade, double time, int rim) {
+		if (fade <= 0.01F) {
+			return;
+		}
+		Vec3 h = new Vec3(center.x, 0, center.z);
+		Vec3 right = h.lengthSqr() < 1.0E-6 ? new Vec3(1, 0, 0) : new Vec3(h.z, 0, -h.x).normalize();
+		int seg = 40;
+		VertexConsumer vc = buffers.getBuffer(FxDraw.alphaTex(texture));
+		int col = FxDraw.argb(0xFFFFFF, 0.97F * fade);
+		for (int i = 0; i < seg; i++) {
+			double a0 = Math.PI * 2 * i / seg;
+			double a1 = Math.PI * 2 * (i + 1) / seg;
+			double[][] pts = {{0, 0}, {Math.cos(a0), Math.sin(a0)}, {Math.cos(a1), Math.sin(a1)}, {Math.cos(a1), Math.sin(a1)}};
+			for (double[] q : pts) {
+				Vec3 p = vertex(center, right, rx, ry, q[0], q[1], null, 0);
+				vc.addVertex(m, (float) p.x, (float) p.y, (float) p.z).setUv((float) (0.5 - 0.5 * q[0]), (float) (0.5 - 0.5 * q[1])).setColor(col);
+			}
+		}
+		VertexConsumer glow = buffers.getBuffer(RenderTypes.lightning());
+		float pulse = 0.55F + 0.15F * (float) Math.sin(time * 0.15);
+		int in = FxDraw.argb(rim, pulse * fade);
+		int out = FxDraw.argb(rim, 0F);
+		for (int i = 0; i < seg; i++) {
+			double a0 = Math.PI * 2 * i / seg;
+			double a1 = Math.PI * 2 * (i + 1) / seg;
+			Vec3 p0 = vertex(center, right, rx, ry, Math.cos(a0) * 0.97, Math.sin(a0) * 0.97, null, 0);
+			Vec3 p1 = vertex(center, right, rx, ry, Math.cos(a1) * 0.97, Math.sin(a1) * 0.97, null, 0);
+			Vec3 q0 = vertex(center, right, rx, ry, Math.cos(a0) * 1.2, Math.sin(a0) * 1.2, null, 0);
+			Vec3 q1 = vertex(center, right, rx, ry, Math.cos(a1) * 1.2, Math.sin(a1) * 1.2, null, 0);
+			glow.addVertex(m, (float) p0.x, (float) p0.y, (float) p0.z).setColor(in);
+			glow.addVertex(m, (float) p1.x, (float) p1.y, (float) p1.z).setColor(in);
+			glow.addVertex(m, (float) q1.x, (float) q1.y, (float) q1.z).setColor(out);
+			glow.addVertex(m, (float) q0.x, (float) q0.y, (float) q0.z).setColor(out);
+		}
+	}
+
 	private static Vec3 vertex(Vec3 c, Vec3 right, double w, double hh, double x, double y, Vec3 toCam, double lift) {
-		return c.add(right.scale(x * w)).add(0, y * hh, 0).add(toCam.scale(lift));
+		return toCam == null ? c.add(right.scale(x * w)).add(0, y * hh, 0) : c.add(right.scale(x * w)).add(0, y * hh, 0).add(toCam.scale(lift));
 	}
 
 	private static void drawBolt(MultiBufferSource buffers, Matrix4f m, Vec3 cam, Fx b, double time) {

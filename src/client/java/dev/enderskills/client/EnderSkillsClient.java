@@ -22,6 +22,9 @@ public final class EnderSkillsClient implements ClientModInitializer {
 		ClientPlayNetworking.registerGlobalReceiver(EsNetwork.VfxShape.TYPE, (payload, context) -> ShapeRenderer.add(payload));
 		ClientPlayNetworking.registerGlobalReceiver(EsNetwork.SkillFx.TYPE, (payload, context) -> dev.enderskills.client.fx.OriginalFx.add(payload));
 		net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(dev.enderskills.client.fx.OriginalFx::tick);
+		net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(dev.enderskills.client.fx.PortalWindowClient::tick);
+		ClientPlayNetworking.registerGlobalReceiver(dev.enderskills.network.WindowPayloads.Image.TYPE, (payload, context) -> dev.enderskills.client.fx.PortalWindowClient.receive(payload));
+		net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> dev.enderskills.client.fx.PortalWindowClient.reset());
 		net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.AFTER_ENTITIES.register(dev.enderskills.client.fx.OriginalFx::render);
 		net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> dev.enderskills.client.fx.OriginalFx.reset());
 		net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(ShapeRenderer::tick);

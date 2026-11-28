@@ -70,6 +70,16 @@ public final class Zones {
 		}
 	}
 
+	/** The portal whose view id (what the clients know it by) is this, or null. */
+	public static Zone byView(int view) {
+		for (Zone z : ZONES) {
+			if (System.identityHashCode(z) == view) {
+				return z;
+			}
+		}
+		return null;
+	}
+
 	public static void remove(Zone zone) {
 		ZONES.remove(zone);
 	}

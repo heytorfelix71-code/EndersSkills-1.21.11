@@ -764,5 +764,7 @@
   "enderskills.config.black_hole_leftover_seconds": "Wait before they act (s)",
   "enderskills.config.black_hole_leftover_seconds.desc": "Seconds those blocks wait, counted from when they load again, before vanishing or falling.",
   "enderskills.config.unstable_preload": "Load the destination early",
-  "enderskills.config.unstable_preload.desc": "Picks and loads the far destination as soon as the portal opens (faster travel, but it loads far chunks early and can freeze heavy worlds). Off: the destination only appears when someone steps in."
+  "enderskills.config.unstable_preload.desc": "Picks and loads the far destination as soon as the portal opens (faster travel, but it loads far chunks early and can freeze heavy worlds). Off: the destination only appears when someone steps in.",
+  "enderskills.config.portal_windows": "See-through portals",
+  "enderskills.config.portal_windows.desc": "Portals show what is on the other side: a small picture traced from the exit, only while someone looks at them (light on the game, works with shader packs). Off = the galaxy look."
 }

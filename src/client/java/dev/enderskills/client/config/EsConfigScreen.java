@@ -363,6 +363,7 @@ public final class EsConfigScreen {
 				g.option(num("unstable_reach", def.unstableReach, 0.1, 1, () -> c.unstableReach, v -> c.unstableReach = v));
 			}
 			case "portal" -> {
+				g.option(bool("portal_windows", def.portalWindows, () -> c.portalWindows, v -> c.portalWindows = v));
 				g.option(bool("portal_always_open", def.portalAlwaysOpen, () -> c.portalAlwaysOpen, v -> c.portalAlwaysOpen = v));
 				g.option(integer("portal_close_start", def.portalAutoCloseStart, 1, 100000, () -> c.portalAutoCloseStart, v -> c.portalAutoCloseStart = v));
 				g.option(integer("portal_close_end", def.portalAutoCloseEnd, 1, 100000, () -> c.portalAutoCloseEnd, v -> c.portalAutoCloseEnd = v));

@@ -185,6 +185,7 @@ public final class AbilityManager {
 		Zones.tick(now);
 		Portals.tick(now);
 		UnstableTravel.tick(srv);
+		PortalWindows.tick(srv);
 		if (!DASH_STEP.isEmpty()) {
 			for (Iterator<Map.Entry<java.util.UUID, Integer>> it = DASH_STEP.entrySet().iterator(); it.hasNext();) {
 				Map.Entry<java.util.UUID, Integer> e = it.next();
